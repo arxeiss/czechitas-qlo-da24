@@ -1,0 +1,30 @@
+version: '3.7'
+
+services:
+  qloapps:
+    image: docker.io/tomaswidlak/czechitas-qloapps:test
+    ports:
+      - "8090:80"
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_DATABASE=qloapps_schema
+      - MYSQL_USER=qloapps_user
+      - MYSQL_PASSWORD=qloapps_pass
+    depends_on:
+      - mysql
+    volumes:
+      - ./app/upload:/var/www/html/upload
+#      - ./app/download:/var/www/html/download
+#    command: ["apache2-foreground"]
+
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: qloapps_schema
+      MYSQL_USER: qloapps_user
+      MYSQL_PASSWORD: qloapps_pass
+    ports:
+      - "33067:3306"
