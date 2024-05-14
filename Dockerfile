@@ -30,7 +30,12 @@ RUN echo "alias ll='ls -la'" >> ~/.bashrc
 # RUN echo "alias ll='ls -la'" >> ~/.profile
 
 
-COPY --chown=root:www-data qloapps /var/www/html
+
+COPY --chown=root:www-data qloapps /data/source
+
+#COPY --chown=root:www-data qloapps /var/www/html
+
+
 COPY --chown=root:www-data qloapps/upload /var/www/html/upload_bck
 
 
@@ -38,8 +43,6 @@ COPY --chown=root:www-data qloapps/upload /var/www/html/upload_bck
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-COPY init.sh /usr/local/bin/init.sh
-RUN chmod +x /usr/local/bin/init.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
