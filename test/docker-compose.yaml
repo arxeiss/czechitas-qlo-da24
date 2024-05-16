@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   qloapps:
-    image: docker.io/tomaswidlak/czechitas-qloapps:test
+    image: docker.io/tomaswidlak/czechitas-qloapps:latest
     ports:
       - "8090:80"
     environment:

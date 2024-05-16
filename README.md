@@ -14,13 +14,21 @@ rm qloapps/.git -rf
 
 ### Build
 ```bash
-docker build -t tomaswidlak/czechitas-qloapps:test .
+docker build -t tomaswidlak/czechitas-qloapps:<tag> .
 ```
 
 ### Push 
 ```bash
-docker push tomaswidlak/czechitas-qloapps:test
+docker push tomaswidlak/czechitas-qloapps:<tag>
 ```
+
+
+### Quick build
+```bash
+docker build -t tomaswidlak/czechitas-qloapps:latest .
+docker push tomaswidlak/czechitas-qloapps:latest
+```
+
 
 ## Running the app 
 First run image with `init` command (more in `/test/docker-compose.yaml`). After app installation, run container without init command
