@@ -25,9 +25,18 @@ docker push tomaswidlak/czechitas-qloapps:<tag>
 
 ### Quick build
 ```bash
-docker build -t tomaswidlak/czechitas-qloapps:latest .
-docker push tomaswidlak/czechitas-qloapps:latest
+docker build -t tomaswidlak/czechitas-qloapps:ins .
+docker push tomaswidlak/czechitas-qloapps:ins
 ```
+cleanup
+```bash
+sudo rm -rf ./test/appData
+```
+```bash
+sudo rm -rf ./test/mysql
+```
+
+
 
 
 ## Running the app 

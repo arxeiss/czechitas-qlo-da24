@@ -4,10 +4,9 @@ echo "TEST entrypoint"
 
 if [ "$1" = "bash" ]; then
     exec /bin/bash
-elif [ "$1" = "init" ]; then
-
+else
   if [ -e "/var/www/html/config/settings.inc.php" ]; then
-    echo "Already initiated project. Remove command 'init' "
+    echo "Already initiated project"
   else
     echo "RUNNING init script"
     # php index_cli.php --domain localhost:8090 --db_server mysql --db_user
@@ -39,18 +38,7 @@ elif [ "$1" = "init" ]; then
     chmod -R 664 /var/www/html/translations && chmod -R u+rwX,go+rX /var/www/html/translations
     chmod -R 664 /var/www/html/upload && chmod -R u+rwX,go+rX /var/www/html/upload
     chmod -R 664 /var/www/html/download && chmod -R u+rwX,go+rX /var/www/html/download
-
-
-    exec apache2-foreground
   fi
-else
-    if [ -d "/var/www/html/admin" ]; then
-        mv /var/www/html/admin /var/www/html/admin1
-    fi
-
-    if [ -d "/var/www/html/install" ]; then
-        mv /var/www/html/install /var/www/html/install_bck
-    fi
 
     exec apache2-foreground
 fi

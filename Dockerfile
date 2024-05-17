@@ -23,22 +23,11 @@ RUN a2enmod rewrite
 # Restart Apache to apply changes
 RUN service apache2 restart
 
-
 RUN echo "alias ll='ls -la'" >> ~/.bashrc
-
-# Or if using /bin/sh, you can add it to ~/.profile instead
-# RUN echo "alias ll='ls -la'" >> ~/.profile
 
 
 
 COPY --chown=root:www-data qloapps /data/source
-
-#COPY --chown=root:www-data qloapps /var/www/html
-
-
-COPY --chown=root:www-data qloapps/upload /var/www/html/upload_bck
-
-
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
