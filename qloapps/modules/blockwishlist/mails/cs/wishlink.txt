@@ -1,0 +1,13 @@
+
+[/{shop_url}] 
+
+Dobrý den, 
+
+{shop_name} vám umožňuje zaslat tento odkaz vašim přátelům,
+kteří skrze něj uvidí váš seznam přání: {wishlist}
+
+{message} [/{message}] 		 
+
+Obchod {shop_name} [/{shop_url}] funguje v systému Webkul(tm)
+[https://webkul.com] 
+

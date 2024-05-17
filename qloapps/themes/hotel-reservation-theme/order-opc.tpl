@@ -37,17 +37,15 @@
 					{capture name=path}{l s='Your booking cart'}{/capture}
 					<h2 class="page-heading">{l s='Your booking cart'}</h2>
 
-					<p class="alert alert-warning">{l s='The hotel is currently not accepting any bookings.'}</p>
+					<p class="alert alert-warning">{l s='The hotel is currently no accepting any bookings.'}</p>
 				{else}
-					{if $productNumber}
+					{if $productNumber && isset($cart_htl_data)}
 
 						<div class="col-md-8">
 							{include file="$tpl_dir./errors.tpl"}
 
 							{* Accordian for all blocks *}
 							<div class="accordion" id="oprder-opc-accordion">
-								<input type="hidden" name="opc_id_address_delivery" value="{$cart->id_address_delivery}" id="opc_id_address_delivery" />
-								<input type="hidden" name="opc_id_address_invoice" value="{$cart->id_address_invoice}" id="opc_id_address_invoice" />
 								{if isset($checkout_process_steps) && $checkout_process_steps}
 									{foreach $checkout_process_steps as $step}
 										{if $step->step_key == 'checkout_rooms_summary'}
@@ -80,80 +78,32 @@
 													<div id="collapse-guest-info" class="opc-collapse {if !$step->step_is_current}collapse{/if}" aria-labelledby="guest-info-head" data-parent="#oprder-opc-accordion">
 														<div class="card-body">
 															{if $is_logged || $isGuest}
-																{if $is_logged}
-																	<form id="customer_guest_detail_form">
-																		<p class="checkbox">
-																			<input type="checkbox" name="customer_guest_detail" id="customer_guest_detail" value="1" {if $id_customer_guest_detail}checked="checked"{/if}/>
-																			<label for="customer_guest_detail" id="customer_guest_detail_txt">{l s='Booking for someone else?'}</label>
-																		</p>
-																		<div id="customer-guest-detail-container" {if !$id_customer_guest_detail}style="display: none;"{/if}>
-																			<div class="row">
-																				<div class="required clearfix gender-line col-sm-2">
-																					<label>{l s='Social title'}</label>
-																					<select name="customer_guest_detail_gender" id="customer_guest_detail_gender">
-																						{foreach from=$genders key=k item=gender}
-																							<option value="{$gender->id_gender}"{if isset($smarty.post.customer_guest_detail_gender) && $smarty.post.customer_guest_detail_gender == $gender->id_gender || (isset($customer_guest_detail) && $customer_guest_detail.id_gender == $gender->id_gender)} selected="selected"{/if}>{$gender->name}</option>
-																						{/foreach}
-																					</select>
-																				</div>
-																				<div class="required form-group col-sm-5">
-																					<label for="firstname">{l s='First name'} <sup>*</sup></label>
-																					<input type="text" class="text form-control validate is_required" id="customer_guest_detail_firstname" name="customer_guest_detail_firstname" data-validate="isName"{if isset($smarty.post.customer_guest_detail_firstname) && $smarty.post.customer_guest_detail_firstname}  value="{$smarty.post.customer_guest_detail_firstname}"{elseif isset($customer_guest_detail) && $customer_guest_detail.firstname} value="{$customer_guest_detail.firstname}"{/if}/>
-																				</div>
-																				<div class="required form-group col-sm-5">
-																					<label for="lastname">{l s='Last name'} <sup>*</sup></label>
-																					<input type="text" class="form-control validate is_required" id="customer_guest_detail_lastname" name="customer_guest_detail_lastname" data-validate="isName"{if isset($smarty.post.customer_guest_detail_lastname) && $smarty.post.customer_guest_detail_lastname}  value="{$smarty.post.customer_guest_detail_lastname}"{elseif isset($customer_guest_detail) && $customer_guest_detail.lastname} value="{$customer_guest_detail.lastname}"{/if}/>
-																				</div>
-																			</div>
-																			<div class="row">
-																				<div class="required text form-group col-sm-6">
-																					<label for="email">{l s='Email'} <sup>*</sup></label>
-																					<input type="email" class="text form-control validate is_required" id="customer_guest_detail_email" name="customer_guest_detail_email" data-validate="isEmail"{if isset($smarty.post.customer_guest_detail_email) && $smarty.post.customer_guest_detail_email}  value="{$smarty.post.customer_guest_detail_email}"{elseif isset($customer_guest_detail) && $customer_guest_detail.email} value="{$customer_guest_detail.email}"{/if}/>
-																				</div>
-																			</div>
-																			<div class="row">
-																				<div class="{if isset($one_phone_at_least) && $one_phone_at_least}required {/if}form-group col-sm-6">
-																					<label for="phone_mobile">{l s='Mobile phone'}{if isset($one_phone_at_least) && $one_phone_at_least} <sup>**</sup>{/if}</label>
-																					<input type="text" class="text form-control validate is_required" name="customer_guest_detail_phone" id="customer_guest_detail_phone" data-validate="isPhoneNumber"{if isset($smarty.post.customer_guest_detail_phone) && $smarty.post.customer_guest_detail_phone}  value="{$smarty.post.customer_guest_detail_phone}"{elseif isset($customer_guest_detail) && $customer_guest_detail.phone} value="{$customer_guest_detail.phone}"{/if}/>
-																				</div>
-																			</div>
-																		</div>
-																	</form>
-																{/if}
-																<div id="checkout-guest-info-block"  {if $id_customer_guest_detail}style="display: none;"{/if}>
+																<div class="row margin-btm-10">
+																	<div class="col-sm-3 col-xs-5 info-head">{l s='Name'}</div>
+																	<div class="col-sm-9 col-xs-7 info-value">{$guestInformations['firstname']} {$guestInformations['lastname']}</div>
+																</div>
+																<div class="row margin-btm-10">
+																	<div class="col-sm-3 col-xs-5 info-head">{l s='Email'}</div>
+																	<div class="col-sm-9 col-xs-7 info-value">{$guestInformations['email']}</div>
+																</div>
+																{if (isset($delivery->phone_mobile) && $delivery->phone_mobile) || (isset($delivery->phone) && $delivery->phone)}
 																	<div class="row margin-btm-10">
-																		<div class="col-sm-3 col-xs-5 info-head">{l s='Name'}</div>
-																		<div class="col-sm-9 col-xs-7 info-value">
-																			{if $isGuest}
-																				{$guestInformations['customer_firstname']} {$guestInformations['customer_lastname']}
+																		<div class="col-sm-3 col-xs-5 info-head">
+																			{if isset($delivery->phone_mobile) && $delivery->phone_mobile}
+																				{l s='Mobile Number'}
 																			{else}
-																				{$guestInformations['firstname']} {$guestInformations['lastname']}
+																				{l s='Phone Number'}
+																			{/if}
+																		</div>
+																		<div class="col-sm-9 col-xs-7 info-value">
+																			{if isset($delivery->phone_mobile) && $delivery->phone_mobile}
+																				{$delivery->phone_mobile|escape:'html':'UTF-8'}
+																			{else}
+																				{$delivery->phone|escape:'html':'UTF-8'}
 																			{/if}
 																		</div>
 																	</div>
-																	<div class="row margin-btm-10">
-																		<div class="col-sm-3 col-xs-5 info-head">{l s='Email'}</div>
-																		<div class="col-sm-9 col-xs-7 info-value">{$guestInformations['email']}</div>
-																	</div>
-																	{if (isset($delivery->phone_mobile) && $delivery->phone_mobile) || (isset($delivery->phone) && $delivery->phone)}
-																		<div class="row margin-btm-10">
-																			<div class="col-sm-3 col-xs-5 info-head">
-																				{if isset($delivery->phone_mobile) && $delivery->phone_mobile}
-																					{l s='Mobile Number'}
-																				{else}
-																					{l s='Phone Number'}
-																				{/if}
-																			</div>
-																			<div class="col-sm-9 col-xs-7 info-value">
-																				{if isset($delivery->phone_mobile) && $delivery->phone_mobile}
-																					{$delivery->phone_mobile|escape:'html':'UTF-8'}
-																				{else}
-																					{$delivery->phone|escape:'html':'UTF-8'}
-																				{/if}
-																			</div>
-																		</div>
-																	{/if}
-																</div>
+																{/if}
 
 																{* proceed only if no order restrict errors are there *}
 																{if !$orderRestrictErr}
@@ -165,13 +115,6 @@
 																					{l s='Proceed'}
 																				</span>
 																			</a>
-																			{if $isGuest}
-																				<a class="btn btn-default btn-edit-guest-info pull-right" href="#" rel="nofollow">
-																					<span>
-																						{l s='Edit'}
-																					</span>
-																				</a>
-																			{/if}
 																		</div>
 																	</div>
 																{/if}
@@ -179,9 +122,6 @@
 																<!-- Create account / Guest account / Login block -->
 																{include file="$tpl_dir./order-opc-new-account.tpl"}
 															{/if}
-														</div>
-														<div class="card-body hidden" id="order-opc-edit-guest-info">
-															{include file="./order-opc-edit-guest-info.tpl"}
 														</div>
 													</div>
 												{/if}
@@ -217,45 +157,55 @@
 						<div class="col-md-4">
 							{* Total cart details, tax details, advance payment details and voucher details *}
 							<div class="col-sm-12 card cart_total_detail_block">
-								{* {if $total_rooms}
+								<p>
+									<span>{l s='Total rooms cost'}{if $display_tax_label}{l s=' (tax excl.)'}{/if}</span>
+									<span class="cart_total_values">{displayPrice price=$total_products}</span>
+								</p>
+								{if isset($totalFacilityCostTE) && $totalFacilityCostTE}
 									<p>
-										<span>{l s='Total rooms cost'}{if $display_tax_label}{l s=' (tax excl.)'}{/if}</span>
-										<span class="cart_total_values">{displayPrice price=$total_rooms}</span>
+										<span>{l s='Total additional facilities'}{if $display_tax_label}{l s=' (tax excl.)'}{/if}</span>
+										<span class="cart_total_values">{displayPrice price=$totalFacilityCostTE}</span>
 									</p>
 								{/if}
-								{if (isset($total_extra_demands) && $total_extra_demands) || (isset($total_additional_services) && $total_additional_services)}
-									<p>
-										<span>{l s='Total extra services'}{if $display_tax_label}{l s=' (tax excl.)'}{/if}</span>
-										<span class="cart_total_values">{displayPrice price=($total_extra_demands + $total_additional_services)}</span>
+								{if $use_taxes && $show_taxes && $total_tax != 0 }
+									{if $priceDisplay != 0}
+										<p class="cart_total_price">
+											<span>{if $display_tax_label}{l s='Total (tax excl.)'}{else}{l s='Total'}{/if}</span>
+											<span class="cart_total_values">{displayPrice price=$total_price_without_tax}</span>
+										</p>
+									{/if}
+									<p class="cart_total_tax">
+										<span>{l s='Tax on rooms'}</span>
+										<span class="cart_total_values">{displayPrice price=($total_tax-$additional_facilities_tax)}</span>
 									</p>
-								{/if} *}
-								{* {if $total_service_products}
-									<p>
-										<span>{l s='Total service products cost'}{if $display_tax_label}{l s=' (tax excl.)'}{/if}</span>
-										<span class="cart_total_values">{displayPrice price=$total_service_products}</span>
+								{/if}
+								{if $use_taxes && $show_taxes && $additional_facilities_tax != 0 }
+									<p class="cart_total_tax">
+										<span>{l s='Tax on facilities'}</span>
+										<span class="cart_total_values">{displayPrice price=$additional_facilities_tax}</span>
 									</p>
-								{/if} *}
-								<p>
+								{/if}
+								<p {if $total_wrapping == 0} class="unvisible"{/if}>
 									<span>
-										{l s='Total rooms cost'}
-										{if $display_tax_label}
-											{if $use_taxes && $priceDisplay == 0}
-												{l s='(tax incl)'}
-											{else}
-												{l s='(tax excl)'}
-											{/if}
+										{if $use_taxes}
+											{if $display_tax_label}{l s='Total gift wrapping (tax incl.)'}{else}{l s='Total gift-wrapping cost'}{/if}
+										{else}
+											{l s='Total gift-wrapping cost'}
 										{/if}
 									</span>
 									<span class="cart_total_values">
-										{if $use_taxes && $priceDisplay == 0}
-											{assign var='total_rooms_cost' value=($total_rooms_wt + $total_extra_demands_wt + $total_additional_services_wt + $total_additional_services_auto_add_wt)}
+										{if $use_taxes}
+											{if $priceDisplay}
+												{displayPrice price=$total_wrapping_tax_exc}
+											{else}
+												{displayPrice price=$total_wrapping}
+											{/if}
 										{else}
-											{assign var='total_rooms_cost' value=($total_rooms + $total_extra_demands + $total_additional_services + $total_additional_services_auto_add)}
+											{displayPrice price=$total_wrapping_tax_exc}
 										{/if}
-										{displayPrice price=$total_rooms_cost}
 									</span>
 								</p>
-								<p class="total_discount_block {if $total_discounts == 0}unvisible{/if}">
+								<p class="total_discount_block {if $total_discounts == 0} unvisible{/if}">
 									<span>
 										{if $display_tax_label}
 											{if $use_taxes && $priceDisplay == 0}
@@ -276,85 +226,6 @@
 										{displayPrice price=$total_discounts_negative}
 									</span>
 								</p>
-								{* {if $priceDisplay != 0} *}
-									<p class="cart_total_price {if $total_discounts == 0}unvisible{/if}" >
-										<span>
-											{l s='Total'}
-											{if $display_tax_label}
-												{if $use_taxes && $priceDisplay == 0}
-													{l s='(tax incl)'}
-												{else}
-													{l s='(tax excl)'}
-												{/if}
-											{/if}
-										</span>
-										<span class="cart_total_values">
-										{if $use_taxes && $priceDisplay == 0}
-												{displayPrice price=$total_price - $convenience_fee_wt}
-											{else}
-												{displayPrice price=$total_price_without_tax - $convenience_fee}
-											{/if}
-										</span>
-									</p>
-								{* {/if} *}
-								{* {if $total_rooms_wt != 0}
-									<p class="cart_total_tax">
-										<span>{l s='Tax on rooms'}</span>
-										<span class="cart_total_values">{displayPrice price=($total_rooms_wt - $total_rooms)}</span>
-									</p>
-								{/if} *}
-								{if $convenience_fee_wt}
-									<p>
-										<span>{l s='Convenience Fees'}</span>
-										<span class="cart_total_values">
-										{if $use_taxes && $priceDisplay == 0}
-											{displayPrice price=$convenience_fee_wt}
-										{else}
-											{displayPrice price=$convenience_fee}
-										{/if}
-										</span>
-									</p>
-								{/if}
-								{hook h="displayCartTotalPriceLabel" type='before_tax'}
-
-								<p class="cart_total_tax">
-									<span>{l s='Total tax'}</span>
-									<span class="cart_total_values">{displayPrice price=($total_tax)}</span>
-								</p>
-								{* {if $use_taxes && $show_taxes && ($total_extra_demands_wt + $total_additional_services_wt)!= 0 }
-									<p class="cart_total_tax">
-										<span>{l s='Tax on services'}</span>
-										<span class="cart_total_values">{displayPrice price=(($total_extra_demands_wt - $total_extra_demands) + ($total_additional_services_wt - $total_additional_services))}</span>
-									</p>
-								{/if} *}
-								{* {if $use_taxes && $show_taxes && $total_service_products_wt != 0 }
-									<p class="cart_total_tax">
-										<span>{l s='Tax on service products'}</span>
-										<span class="cart_total_values">{displayPrice price=($total_service_products_wt - $total_service_products)}</span>
-									</p>
-								{/if} *}
-
-								<p {if $total_wrapping == 0}class="unvisible"{/if}>
-									<span>
-										{if $use_taxes}
-											{if $display_tax_label}{l s='Total gift wrapping (tax incl.)'}{else}{l s='Total gift-wrapping cost'}{/if}
-										{else}
-											{l s='Total gift-wrapping cost'}
-										{/if}
-									</span>
-									<span class="cart_total_values">
-										{if $use_taxes}
-											{if $priceDisplay}
-												{displayPrice price=$total_wrapping_tax_exc}
-											{else}
-												{displayPrice price=$total_wrapping}
-											{/if}
-										{else}
-											{displayPrice price=$total_wrapping_tax_exc}
-										{/if}
-									</span>
-								</p>
-
 								{if isset($is_advance_payment) && $is_advance_payment}
 									<p>
 										<span>{l s='Advance Payment Amount'}</span>
@@ -410,7 +281,7 @@
 														{/if}
 													</span>
 													<span class="voucher_apply_state pull-right">
-														<img src="{$img_dir}/icon/form-ok-circle.svg" /> {l s='Applied'}
+														<img src="{$THEME_DIR}img/icon/form-ok-circle.svg" /> {l s='Applied'}
 													</span>
 												</div>
 											{/foreach}
@@ -441,6 +312,7 @@
 													<p class="avail_voucher_name">
 														<span class="voucher_name" data-code="{$voucher.code|escape:'html':'UTF-8'}">{$voucher.code|escape:'html':'UTF-8'} - </span>{$voucher.name}
 													</p>
+													<p class="avail_voucher_des">{$voucher['description']}</p>
 													{if not $smarty.foreach.availVoucher.last}
 														<hr class="seperator">
 													{/if}
@@ -457,12 +329,13 @@
 						<h2 class="page-heading">{l s='Your booking cart'}</h2>
 						{include file="$tpl_dir./errors.tpl"}
 
-						<p class="alert alert-warning">{l s='You have not added any room to your cart yet.'}</p>
+						<p class="alert alert-warning">{l s='Till now you did not added any room in your cart.'}</p>
 					{/if}
 					{strip}
 						{addJsDef imgDir=$img_dir}
 						{addJsDef authenticationUrl=$link->getPageLink("authentication", true)|escape:'quotes':'UTF-8'}
 						{addJsDef orderOpcUrl=$link->getPageLink("order-opc", true)|escape:'quotes':'UTF-8'}
+						{addJsDef historyUrl=$link->getPageLink("history", true)|escape:'quotes':'UTF-8'}
 						{addJsDef guestTrackingUrl=$link->getPageLink("guest-tracking", true)|escape:'quotes':'UTF-8'}
 						{addJsDef addressUrl=$link->getPageLink("address", true, NULL, "back={$back_order_page}")|escape:'quotes':'UTF-8'}
 						{addJsDef orderProcess='order-opc'}
@@ -470,6 +343,7 @@
 						{addJsDef displayPrice=$priceDisplay}
 						{addJsDef taxEnabled=$use_taxes}
 						{addJsDef conditionEnabled=$conditions|intval}
+						{addJsDef vat_management=$vat_management|intval}
 						{addJsDef errorCarrier=$errorCarrier|@addcslashes:'\''}
 						{addJsDef errorTOS=$errorTOS|@addcslashes:'\''}
 						{addJsDef checkedCarrier=$checked|intval}
@@ -508,7 +382,6 @@
 						{capture}<a class="button button-small btn btn-default" href="{$smarty.capture.addressUrlAdd}" title="{l s='Update' js=1}"><span>{l s='Update' js=1}<i class="icon-chevron-right right"></i></span></a>{/capture}
 						{addJsDefL name=liUpdate}{$smarty.capture.default|@addcslashes:'\''}{/addJsDefL}
 						{addJsDefL name=txtExtraDemandSucc}{l s='Updated Successfully' js=1}{/addJsDefL}
-						{addJsDefL name=txtMaxQuantityAdded}{l s='Maximum quantity of service added' js=1}{/addJsDefL}
 						{addJsDefL name=txtExtraDemandErr}{l s='Some error occurred while updating demands' js=1}{/addJsDefL}
 					{/strip}
 				{/if}

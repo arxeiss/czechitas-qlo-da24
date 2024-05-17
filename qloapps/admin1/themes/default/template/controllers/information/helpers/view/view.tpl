@@ -84,7 +84,7 @@
 					<i class="icon-info"></i>
 					{l s='Server information'}
 				</h3>
-				{if Tools::strlen($uname) > 0}
+				{if count($uname)}
 				<p>
 					<strong>{l s='Server information:'}</strong> {$uname|escape:'html':'UTF-8'}
 				</p>
@@ -138,13 +138,13 @@
 			<div class="panel">
 				<h3>
 					<i class="icon-info"></i>
-					{l s='Website information'}
+					{l s='Store information'}
 				</h3>
 				<p>
-					<strong>{l s='QloApps version:'}</strong> {$shop.qloappsV|escape:'html':'UTF-8'}
+					<strong>{l s='Qloapps version:'}</strong> {$shop.qloappsV|escape:'html':'UTF-8'}
 				</p>
 				<p>
-					<strong>{l s='Website URL:'}</strong> {$shop.url|escape:'html':'UTF-8'}
+					<strong>{l s='Shop URL:'}</strong> {$shop.url|escape:'html':'UTF-8'}
 				</p>
 				<p>
 					<strong>{l s='Current theme in use:'}</strong> {$shop.theme|escape:'html':'UTF-8'}

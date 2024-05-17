@@ -33,33 +33,22 @@ $smarty->force_compile = (Configuration::get('PS_SMARTY_FORCE_COMPILE') == _PS_S
 // But force compile_check since the performance impact is small and it is better for debugging
 $smarty->compile_check = true;
 
-function smartyTranslate($params, $smarty)
+function smartyTranslate($params, &$smarty)
 {
     $htmlentities = !isset($params['js']);
     $pdf = isset($params['pdf']);
     $addslashes = (isset($params['slashes']) || isset($params['js']));
     $sprintf = isset($params['sprintf']) ? $params['sprintf'] : null;
 
-    if (!isset($params['lang'])) {
-        $params['lang'] = null;
-    } else {
-        if (!is_object($params['lang'])) {
-            $params['lang'] = new Language((int)$params['lang']);
-        }
-        if (!Validate::isLoadedObject($params['lang'])) {
-            $params['lang'] = null;
-        }
-    }
-
     if ($pdf) {
-        return Translate::smartyPostProcessTranslation(Translate::getPdfTranslation($params['s'], $sprintf, $params['lang']), $params);
+        return Translate::smartyPostProcessTranslation(Translate::getPdfTranslation($params['s'], $sprintf), $params);
     }
 
     $filename = ((!isset($smarty->compiler_object) || !is_object($smarty->compiler_object->template)) ? $smarty->template_resource : $smarty->compiler_object->template->getTemplateFilepath());
 
     // If the template is part of a module
     if (!empty($params['mod'])) {
-        return Translate::smartyPostProcessTranslation(Translate::getModuleTranslation($params['mod'], $params['s'], basename($filename, '.tpl'), $sprintf, isset($params['js']), $params['lang']), $params);
+        return Translate::smartyPostProcessTranslation(Translate::getModuleTranslation($params['mod'], $params['s'], basename($filename, '.tpl'), $sprintf, isset($params['js'])), $params);
     }
 
     // If the tpl is at the root of the template folder
@@ -68,8 +57,7 @@ function smartyTranslate($params, $smarty)
     }
 
     // If the tpl is used by a Helper
-    $className = isset(Context::getContext()->controller->controller_name) ? Tools::toUnderscoreCase(substr(Context::getContext()->controller->controller_name, 5)) : '';
-    if (strpos($filename, 'helpers') === 0 && $className && strpos($smarty->source->name, '/template/controllers/'.$className.'/') === false) {
+    if (strpos($filename, 'helpers') === 0) {
         $class = 'Helper';
     }
     // If the tpl is used by a Controller

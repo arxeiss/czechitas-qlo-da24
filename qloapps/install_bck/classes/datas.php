@@ -44,7 +44,7 @@ class Datas
             'default' => '0',
             'validate' => 'isInt',
             'alias' => 'l',
-            'help' => 'Install all available languages',
+            'help' => 'install all available languages',
         ),
         'timezone' => array(
             'default' => 'Europe/Paris',
@@ -62,14 +62,14 @@ class Datas
         ),
         'database_server' => array(
             'name' => 'db_server',
-            'default' => 'mysql',
+            'default' => 'localhost',
             'validate' => 'isGenericName',
             'alias' => 'h',
         ),
         'database_login' => array(
             'name' => 'db_user',
             'alias' => 'u',
-            'default' => 'qloapps_user',
+            'default' => 'root',
             'validate' => 'isGenericName',
         ),
         'database_password' => array(
@@ -80,7 +80,7 @@ class Datas
         'database_name' => array(
             'name' => 'db_name',
             'alias' => 'd',
-            'default' => 'qloapps',
+            'default' => 'prestashop',
             'validate' => 'isGenericName',
         ),
         'database_clear' => array(
@@ -97,7 +97,7 @@ class Datas
         ),
         'database_prefix' => array(
             'name' => 'prefix',
-            'default' => 'qlo_',
+            'default' => 'ps_',
             'validate' => 'isGenericName',
         ),
         'database_engine' => array(
@@ -109,7 +109,7 @@ class Datas
         'shop_name' => array(
             'name' => 'name',
             'validate' => 'isGenericName',
-            'default' => 'QloApps',
+            'default' => 'PrestaShop',
         ),
         'shop_activity'    => array(
             'name' => 'activity',
@@ -144,17 +144,17 @@ class Datas
         'show_license' => array(
             'name' => 'license',
             'default' => 0,
-            'help' => 'Show QloApps license'
+            'help' => 'show PrestaShop license'
         ),
         'newsletter' => array(
             'name' => 'newsletter',
             'default' => 1,
-            'help' => 'Get news from QloApps',
+            'help' => 'get news from PrestaShop',
         ),
         'send_email' => array(
             'name' => 'send_email',
             'default' => 1,
-            'help' => 'Send an email to the administrator after installation',
+            'help' => 'send an email to the administrator after installation',
         ),
     );
 

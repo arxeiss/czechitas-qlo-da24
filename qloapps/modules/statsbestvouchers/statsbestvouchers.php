@@ -42,7 +42,7 @@ class StatsBestVouchers extends ModuleGrid
     {
         $this->name = 'statsbestvouchers';
         $this->tab = 'analytics_stats';
-        $this->version = '1.5.2';
+        $this->version = '1.5.1';
         $this->author = 'PrestaShop';
         $this->need_instance = 0;
 
@@ -58,19 +58,19 @@ class StatsBestVouchers extends ModuleGrid
                 'id' => 'code',
                 'header' => $this->l('Code'),
                 'dataIndex' => 'code',
-                'align' => 'center'
+                'align' => 'left'
             ),
             array(
                 'id' => 'name',
                 'header' => $this->l('Name'),
                 'dataIndex' => 'name',
-                'align' => 'center'
+                'align' => 'left'
             ),
             array(
                 'id' => 'ca',
                 'header' => $this->l('Sales'),
                 'dataIndex' => 'ca',
-                'align' => 'center'
+                'align' => 'right'
             ),
             array(
                 'id' => 'total',
@@ -112,7 +112,7 @@ class StatsBestVouchers extends ModuleGrid
 			</div>
 			'.$this->engine($engine_params).'
 			<a class="btn btn-default export-csv" href="'.Tools::safeOutput($_SERVER['REQUEST_URI'].'&export=1').'">
-				<i class="icon-cloud-download"></i> '.$this->l('CSV Export').'
+				<i class="icon-cloud-upload"></i> '.$this->l('CSV Export').'
 			</a>';
 
         return $this->html;
@@ -121,14 +121,11 @@ class StatsBestVouchers extends ModuleGrid
     public function getData()
     {
         $currency = new Currency(Configuration::get('PS_CURRENCY_DEFAULT'));
-        $this->query = 'SELECT SQL_CALC_FOUND_ROWS ocr.id_cart_rule, cr.code, ocr.name, COUNT(ocr.id_cart_rule) as total, ROUND(SUM(o.total_paid_real) / o.conversion_rate,2) as ca
+        $this->query = 'SELECT SQL_CALC_FOUND_ROWS cr.code, ocr.name, COUNT(ocr.id_cart_rule) as total, ROUND(SUM(o.total_paid_real) / o.conversion_rate,2) as ca
 				FROM '._DB_PREFIX_.'order_cart_rule ocr
 				LEFT JOIN '._DB_PREFIX_.'orders o ON o.id_order = ocr.id_order
 				LEFT JOIN '._DB_PREFIX_.'cart_rule cr ON cr.id_cart_rule = ocr.id_cart_rule
 				WHERE o.valid = 1
-                AND o.`id_order` IN (
-                    SELECT id_order FROM `'._DB_PREFIX_.'htl_booking_detail` hbd
-                    WHERE 1 '.HotelBranchInformation::addHotelRestriction(false, 'hbd').')
 					'.Shop::addSqlRestriction(Shop::SHARE_ORDER, 'o').'
 					AND o.invoice_date BETWEEN '.$this->getDate().'
 				GROUP BY ocr.id_cart_rule';
@@ -145,15 +142,11 @@ class StatsBestVouchers extends ModuleGrid
         }
 
         $values = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($this->query);
-        $this->_totalCount = Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue('SELECT FOUND_ROWS()');
         foreach ($values as &$value) {
-            if (Tools::getValue('export') == false) {
-                $value['code'] = '<a href="'.$this->context->link->getAdminLink('AdminCartRules').'&id_cart_rule='.$value['id_cart_rule'].'&updatecart_rule" target="_blank">'.$value['code'].'</a>';
-                $value['name'] = '<a href="'.$this->context->link->getAdminLink('AdminCartRules').'&id_cart_rule='.$value['id_cart_rule'].'&updatecart_rule" target="_blank">'.$value['name'].'</a>';
-            }
             $value['ca'] = Tools::displayPrice($value['ca'], $currency);
         }
 
         $this->_values = $values;
+        $this->_totalCount = Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue('SELECT FOUND_ROWS()');
     }
 }

@@ -116,7 +116,7 @@ $(document).ready(function () {
 	<div class="form-group">
 		<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="wholesale_price" type="default"}</span></div>
 		<label class="control-label col-lg-2" for="wholesale_price">
-			<span class="label-tooltip" data-toggle="tooltip" title="{l s='The operating cost is the expense related to the operation of the room type. Do not include the tax.'}">{if !$country_display_tax_label || $tax_exclude_taxe_option}{l s='Operating cost'}{else}{l s='Pre-tax operating cost'}{/if}</span>
+			<span class="label-tooltip" data-toggle="tooltip" title="{l s='The wholesale price is the price you paid for the room type. Do not include the tax.'}">{if !$country_display_tax_label || $tax_exclude_taxe_option}{l s='Wholesale price'}{else}{l s='Pre-tax wholesale price'}{/if}</span>
 		</label>
 		<div class="col-lg-2">
 			<div class="input-group">
@@ -129,7 +129,7 @@ $(document).ready(function () {
 	<div class="form-group">
 		<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="price" type="price"}</span></div>
 		<label class="control-label col-lg-2" for="priceTE">
-			<span class="label-tooltip" data-toggle="tooltip" title="{l s='The pre-tax retail price is the price for which you intend sell this room type to your customers. It should be higher than the pre-tax operating cost: the difference between the two will be your margin.'}">{if !$country_display_tax_label || $tax_exclude_taxe_option}{l s='Retail price'}{else}{l s='Pre-tax retail price'}{/if}</span>
+			<span class="label-tooltip" data-toggle="tooltip" title="{l s='The pre-tax retail price is the price for which you intend sell this room type to your customers. It should be higher than the pre-tax wholesale price: the difference between the two will be your margin.'}">{if !$country_display_tax_label || $tax_exclude_taxe_option}{l s='Retail price'}{else}{l s='Pre-tax retail price'}{/if}</span>
 		</label>
 		<div class="col-lg-2">
 			<div class="input-group">
@@ -284,96 +284,95 @@ $(document).ready(function () {
 				</span>
 			</div>
 		</div>
-		<div class="adv_payment_field">
-			<div class="form-group">
-				<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="price" type="price"}</span></div>
-				<label class="control-label col-sm-2">
-					<span class="label-tooltip" data-toggle="tooltip" title="{l s='If disabled, Advance Payment for the room type will be calculated By Global Advance payment settings.'}">
-						{l s='Apply Room Type Advance Payment Setting.'}
-					</span>
-				</label>
-				<div class="col-lg-9">
-					<span class="switch prestashop-switch fixed-width-lg">
-						<input type="radio" value="1" id="cal_from_on" name="cal_from" {if (isset($adv_pay_dtl) && $adv_pay_dtl['calculate_from'])}checked="checked"{/if}>
-						<label for="cal_from_on">{l s='Yes'}</label>
-						<input type="radio" value="0" id="cal_from_off" name="cal_from" {if ((isset($adv_pay_dtl) && !$adv_pay_dtl['calculate_from']) || !isset($adv_pay_dtl))}checked="checked"{/if}>
-						<label for="cal_from_off">{l s='No'}</label>
-						<a class="slide-button btn"></a>
-					</span>
-				</div>
+
+		<div class="form-group adv_payment_field">
+			<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="price" type="price"}</span></div>
+			<label class="control-label col-sm-2">
+				<span class="label-tooltip" data-toggle="tooltip" title="{l s='If disabled, Advance Payment for the room type will be calculated By Global Advance payment settings.'}">
+					{l s='Apply Room Type Advance Payment Setting.'}
+				</span>
+			</label>
+			<div class="col-lg-9">
+				<span class="switch prestashop-switch fixed-width-lg">
+					<input type="radio" value="1" id="cal_from_on" name="cal_from" {if (isset($adv_pay_dtl) && $adv_pay_dtl['calculate_from'])}checked="checked"{/if}>
+					<label for="cal_from_on">{l s='Yes'}</label>
+					<input type="radio" value="0" id="cal_from_off" name="cal_from" {if ((isset($adv_pay_dtl) && !$adv_pay_dtl['calculate_from']) || !isset($adv_pay_dtl))}checked="checked"{/if}>
+					<label for="cal_from_off">{l s='No'}</label>
+					<a class="slide-button btn"></a>
+				</span>
 			</div>
-			<div class="room_type_adv_payment_field">
-				<div class="form-group">
-					<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="price" type="price"}</span></div>
-					<label class="control-label col-sm-2">{l s='Payment type'}</label>
-					<div class="col-lg-9">
-						<div class="radio">
-							<label for="percent_type">
-								<input type="radio" name="payment_type" class="payment_type" value="1" {if ((isset($adv_pay_dtl) && ($adv_pay_dtl['payment_type'] == 1)) || !isset($adv_pay_dtl) || !$adv_pay_dtl['payment_type'])}checked="checked"{/if}>
-								{l s='Percent (%) '}
-							</label>
-						</div>
-						<div class="radio">
-							<label for="fixed_type">
-								<input type="radio" name="payment_type" class="payment_type" value="2" {if isset($adv_pay_dtl) && ($adv_pay_dtl['payment_type'] == 2)}checked="checked"{/if}>
-								{l s='Amount'}
-							</label>
-						</div>
-					</div>
-				</div>
-				<div class="form-group">
-					<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="price" type="price"}</span></div>
-					<div class="col-lg-11">
+		</div>
 
-						<div class="row" id="type_percent">
-							<label class="control-label col-sm-2">{l s='Value'}</label>
-							<div class="col-sm-4 col-lg-3">
-								<div class="input-group">
-									<span class="input-group-addon">%</span>
-									<input type="text" value="{if isset($adv_pay_dtl) && ($adv_pay_dtl['payment_type'] == 1)}{$adv_pay_dtl['value']}{/if}" name="adv_pay_percent" />
-								</div>
-							</div>
-						</div>
-
-						<div class="row" id="type_amount">
-							<label class="control-label col-sm-2">{l s='Amount'}</label>
-							<div class="col-sm-9">
-								<div class="row">
-									<div class="col-sm-4 col-lg-3">
-										<div class="input-group">
-											<span class="input-group-addon">{$currency->prefix}{$currency->suffix}</span>
-											<input name="adv_pay_amount" type="text" value="{if isset($adv_pay_dtl) && ($adv_pay_dtl['payment_type'] == 2)}{{toolsConvertPrice price=$adv_pay_dtl['value']}|string_format:'%.6f'}{/if}"/>
-										</div>
-									</div>
-								</div>
-								<div class="help-block">
-									{l s='If final price of the room type is less than advance payment amount for the customer then customer will pay the final(lesser) price of the room type.'}
-								</div>
-							</div>
-						</div>
-
-					</div>
+		<div class="form-group adv_payment_field">
+			<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="price" type="price"}</span></div>
+			<label class="control-label col-sm-2">{l s='Payment type'}</label>
+			<div class="col-lg-9">
+				<div class="radio">
+					<label for="percent_type">
+						<input type="radio" name="payment_type" class="payment_type" value="1" {if ((isset($adv_pay_dtl) && ($adv_pay_dtl['payment_type'] == 1)) || !isset($adv_pay_dtl) || !$adv_pay_dtl['payment_type'])}checked="checked"{/if}>
+						{l s='Percent (%) '}
+					</label>
 				</div>
-				<div class="form-group">
-				<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="price" type="price"}</span></div>
-				<label class="control-label col-sm-2">
-					<span class="label-tooltip" data-toggle="tooltip" title="{l s='If Enable, customer will pay : (Advanced payment price + tax) and if Disabled, customer will only pay advanced payment price'}">
-						{l s='Include tax'}
-					</span>
-				</label>
-				<div class="col-lg-9">
-					<span class="switch prestashop-switch fixed-width-lg">
-						<input type="radio" value="1" id="adv_tax_include_on" name="adv_tax_include" {if (isset($adv_pay_dtl) && $adv_pay_dtl['tax_include']) || !isset($adv_pay_dtl)}checked="checked"{/if}>
-						<label for="adv_tax_include_on">{l s='Yes'}</label>
-						<input type="radio" value="0" id="adv_tax_include_off" name="adv_tax_include" {if isset($adv_pay_dtl) && !$adv_pay_dtl['tax_include']}checked="checked"{/if}>
-						<label for="adv_tax_include_off">{l s='No'}</label>
-						<a class="slide-button btn"></a>
-					</span>
-				</div>
+				<div class="radio">
+					<label for="fixed_type">
+						<input type="radio" name="payment_type" class="payment_type" value="2" {if isset($adv_pay_dtl) && ($adv_pay_dtl['payment_type'] == 2)}checked="checked"{/if}>
+						{l s='Amount'}
+					</label>
 				</div>
 			</div>
 		</div>
 
+		<div class="form-group adv_payment_field">
+			<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="price" type="price"}</span></div>
+			<div class="col-lg-11">
+
+				<div class="row" id="type_percent">
+					<label class="control-label col-sm-2">{l s='Value'}</label>
+					<div class="col-sm-4 col-lg-3">
+						<div class="input-group">
+							<span class="input-group-addon">%</span>
+							<input type="text" value="{if isset($adv_pay_dtl) && ($adv_pay_dtl['payment_type'] == 1)}{$adv_pay_dtl['value']}{/if}" name="adv_pay_percent" />
+						</div>
+					</div>
+				</div>
+
+				<div class="row" id="type_amount">
+					<label class="control-label col-sm-2">{l s='Amount'}</label>
+					<div class="col-sm-9">
+						<div class="row">
+							<div class="col-sm-4 col-lg-3">
+								<div class="input-group">
+									<span class="input-group-addon">{$currency->prefix}{$currency->suffix}</span>
+									<input name="adv_pay_amount" type="text" value="{if isset($adv_pay_dtl) && ($adv_pay_dtl['payment_type'] == 2)}{{toolsConvertPrice price=$adv_pay_dtl['value']}|string_format:'%.6f'}{/if}"/>
+								</div>
+							</div>
+						</div>
+						<div class="help-block">
+							{l s='If final price of the room type is less than advance payment amount for the customer then customer will pay the final(lesser) price of the room type.'}
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+
+		<div class="form-group adv_payment_field">
+			<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="price" type="price"}</span></div>
+			<label class="control-label col-sm-2">
+				<span class="label-tooltip" data-toggle="tooltip" title="{l s='If Enable, customer will pay : (Advanced payment price + tax) and if Disabled, customer will only pay advanced payment price'}">
+					{l s='Include tax'}
+				</span>
+			</label>
+			<div class="col-lg-9">
+				<span class="switch prestashop-switch fixed-width-lg">
+					<input type="radio" value="1" id="adv_tax_include_on" name="adv_tax_include" {if (isset($adv_pay_dtl) && $adv_pay_dtl['tax_include']) || !isset($adv_pay_dtl)}checked="checked"{/if}>
+					<label for="adv_tax_include_on">{l s='Yes'}</label>
+					<input type="radio" value="0" id="adv_tax_include_off" name="adv_tax_include" {if isset($adv_pay_dtl) && !$adv_pay_dtl['tax_include']}checked="checked"{/if}>
+					<label for="adv_tax_include_off">{l s='No'}</label>
+					<a class="slide-button btn"></a>
+				</span>
+			</div>
+		</div>
 	{/if}
 
 	<div class="panel-footer">
@@ -384,17 +383,17 @@ $(document).ready(function () {
 </div>
 
 <div class="panel">
-	<h3>{l s='Advanced Price Rules'}</h3>
+	<h3>{l s='Feature Price Plans'}</h3>
 	<div class="alert alert-info">
-		{l s='You can set advanced price rules by visiting '}
-		<a target="_blank" href="{$link->getAdminLink('AdminHotelFeaturePricesSettings')}">{l s='create advanced price rules.'}</a>
+		{l s='You can set feature price plans by visiting '}
+		<a target="_blank" href="{$link->getAdminLink('AdminHotelFeaturePricesSettings')}">{l s='create feature price plans'}</a>
 	</div>
 	<div class="table-responsive">
 		<table class="table table-bordered">
 			<thead>
 				<tr>
 					<th>#{l s='Id'}</th>
-					<th>{l s='Rule Name'}</th>
+					<th>{l s='Plan Name'}</th>
 					<th>{l s='Impact way'}</th>
 					<th>{l s='Impact Type'}</th>
 					<th>{l s='Impact Value'}</th>
@@ -414,21 +413,21 @@ $(document).ready(function () {
 								{$featurePlan['feature_price_name']}
 							</td>
 							<td>
-								{if $featurePlan['impact_type'] == HotelRoomTypeFeaturePricing::IMPACT_TYPE_PERCENTAGE}
+								{if $featurePlan['impact_type'] == 1}
 									{l s='Percentage'}
 								{else}
 									{l s='Fixed Amount'}
 								{/if}
 							</td>
 							<td>
-								{if $featurePlan['impact_way'] == HotelRoomTypeFeaturePricing::IMPACT_WAY_DECREASE}
+								{if $featurePlan['impact_way'] == 1}
 									{l s='Decrease'}
 								{else}
 									{l s='Increase'}
 								{/if}
 							</td>
 							<td>
-								{if $featurePlan['impact_type'] == HotelRoomTypeFeaturePricing::IMPACT_TYPE_PERCENTAGE}
+								{if $featurePlan['impact_type'] == 1}
 									{$featurePlan['impact_value']|round:2}%
 								{else}
 									{displayPrice price=$featurePlan['impact_value']}
@@ -438,7 +437,7 @@ $(document).ready(function () {
 								{dateFormat date=$featurePlan['date_from'] full=0}
 							</td>
 							<td>
-								{if $featurePlan['date_selection_type'] == HotelRoomTypeFeaturePricing::DATE_SELECTION_TYPE_RANGE}
+								{if $featurePlan['date_selection_type'] == 1}
 									{dateFormat date=$featurePlan['date_to'] full=0}
 								{else}
 									<span class="badge badge-success">{l s='Specific date'}</span>
@@ -456,7 +455,7 @@ $(document).ready(function () {
 				{else}
 					<tr>
 						<td class="text-center" colspan="6">
-							<i class="icon-warning-sign"></i> {l s='No advanced price rules.'}
+							<i class="icon-warning-sign"></i> {l s='No feature price plans.'}
 						</td>
 					</tr>
 				{/if}
@@ -494,7 +493,7 @@ $(document).ready(function () {
 				<div class="col-lg-9">
 					<div class="row">
 					{if !$multi_shop}
-						<input type="hidden" name="sp_id_shop" value="1" />
+						<input type="hidden" name="sp_id_shop" value="0" />
 					{else}
 						<div class="col-lg-3">
 							<select name="sp_id_shop" id="sp_id_shop">
@@ -582,6 +581,15 @@ $(document).ready(function () {
 				</div>
 			</div>
 			<div class="form-group">
+				<label class="control-label col-lg-2" for="sp_from_quantity">{l s='Starting at'}</label>
+				<div class="col-lg-4">
+					<div class="input-group">
+						<span class="input-group-addon">{l s='unit'}</span>
+						<input type="text" name="sp_from_quantity" id="sp_from_quantity" value="1" />
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
 				<label class="control-label col-lg-2" for="sp_price">{l s='Room type price'}
 					{if $country_display_tax_label}
 						{l s='(tax excl.)'}
@@ -635,25 +643,15 @@ $(document).ready(function () {
 			else
 				$(".adv_payment_field").hide();
 
-			$(".adv_payment_active").on('change',function(){
+			$(".adv_payment_active").on('change',function()
+			{
 				var adv_payment = $(".adv_payment_active:checked").val();
 				if (adv_payment == 1)
 					$(".adv_payment_field").show();
 				else if (adv_payment == 0)
 					$(".adv_payment_field").hide();
 			});
-			var cal_from = $('[name="cal_from"]:checked').val();
-			if (cal_from == 1)
-				$(".room_type_adv_payment_field").show();
-			else
-				$(".room_type_adv_payment_field").hide();
-			$('[name="cal_from"]').on('change',function(){
-				var cal_from = $('[name="cal_from"]:checked').val();
-				if (cal_from == 1)
-					$(".room_type_adv_payment_field").show();
-				else if (cal_from == 0)
-					$(".room_type_adv_payment_field").hide();
-			});
+
 			var payment_type = $(".payment_type:checked").val();
 			if (payment_type == 1)
 			{
@@ -734,6 +732,7 @@ $(document).ready(function () {
 				{/if}
 				<th>{l s='Impact'}</th>
 				<th>{l s='Period'}</th>
+				<th>{l s='From (quantity)'}</th>
 				<th>{l s='Action'}</th>
 			</tr>
 		</thead>

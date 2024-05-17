@@ -36,7 +36,7 @@ class StatsOrigin extends ModuleGraph
     {
         $this->name = 'statsorigin';
         $this->tab = 'analytics_stats';
-        $this->version = '1.4.2';
+        $this->version = '1.4.1';
         $this->author = 'PrestaShop';
         $this->need_instance = 0;
 
@@ -90,15 +90,15 @@ class StatsOrigin extends ModuleGraph
         if (count($websites)) {
             $this->_html .= '
 			<div class="alert alert-info">
-				'.$this->l('This page lists the 10 most popular referral websites that bring customers to your website.').'
+				'.$this->l('In the tab, we break down the 10 most popular referral websites that bring customers to your online store.').'
 			</div>
 			<h4>'.$this->l('Guide').'</h4>
 			<div class="alert alert-warning">
 				<h4>'.$this->l('What is a referral website?').'</h4>
 				<p>
-					'.$this->l('A referer is the URL of the previous webpage from which a link was followed by a visitor.').'<br />
-					'.$this->l('A referer also enables you to know which keywords visitors use in search engines when searching for your website.').'<br /><br />
-					'.$this->l('A referer can be:').'
+					'.$this->l('The referrer is the URL of the previous webpage from which a link was followed by the visitor.').'<br />
+					'.$this->l('A referrer also enables you to know which keywords visitors use in search engines when browsing for your online store.').'<br /><br />
+					'.$this->l('A referrer can be:').'
 				</p>
 				<ul>
 					<li>'.$this->l('Someone who posts a link to your website.').'</li>
@@ -112,7 +112,7 @@ class StatsOrigin extends ModuleGraph
 					</div>
 					<div class="col-lg-4">
 						<a href="'.Tools::safeOutput($_SERVER['REQUEST_URI'].'&export=1&exportType=top').'" class="btn btn-default">
-							<i class="icon-cloud-download"></i> '.$this->l('CSV Export').'
+							<i class="icon-cloud-upload"></i> '.$this->l('CSV Export').'
 						</a>
 					</div>
 				</div>
@@ -142,10 +142,7 @@ class StatsOrigin extends ModuleGraph
 
     protected function getData($layers)
     {
-        $this->_titles['main'][] = $this->l('Top ten referral websites');
-        if (Tools::getValue('export')) {
-            $this->_titles['main'][] = $this->l('Referal percentage');
-        }
+        $this->_titles['main'] = $this->l('Top ten referral websites');
         $websites = $this->getOrigins($this->getDate());
         $total = 0;
         $total2 = 0;

@@ -18,7 +18,7 @@
 *  @license   https://store.webkul.com/license.html
 */
 
-class CheckoutPaymentStepCore extends AbstractCheckoutStepCore
+class CheckoutPaymentStep extends AbstractCheckoutStep
 {
     public function __construct() {
         parent::__construct();

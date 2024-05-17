@@ -41,11 +41,6 @@ class AddressCore extends ObjectModel
      */
     public $id_warehouse = null;
 
-    /**
-     * @var int Hotel id which address belongs to
-     */
-    public $id_hotel = null;
-
     /** @var int Country id */
     public $id_country;
 
@@ -120,13 +115,12 @@ class AddressCore extends ObjectModel
             'id_manufacturer' =>    array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false),
             'id_supplier' =>        array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false),
             'id_warehouse' =>        array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false),
-            'id_hotel' =>        array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false),
             'id_country' =>        array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
             'id_state' =>            array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId'),
             'alias' =>                array('type' => self::TYPE_STRING, 'validate' => 'isGenericName', 'required' => true, 'size' => 32),
             'company' =>            array('type' => self::TYPE_STRING, 'validate' => 'isGenericName', 'size' => 255),
-            'lastname' =>            array('type' => self::TYPE_STRING, 'validate' => 'isGenericName', 'required' => true, 'size' => 32),
-            'firstname' =>            array('type' => self::TYPE_STRING, 'validate' => 'isGenericName', 'required' => true, 'size' => 32),
+            'lastname' =>            array('type' => self::TYPE_STRING, 'validate' => 'isName', 'required' => true, 'size' => 32),
+            'firstname' =>            array('type' => self::TYPE_STRING, 'validate' => 'isName', 'required' => true, 'size' => 32),
             'vat_number' =>            array('type' => self::TYPE_STRING, 'validate' => 'isGenericName'),
             'address1' =>            array('type' => self::TYPE_STRING, 'validate' => 'isAddress', 'required' => true, 'size' => 128),
             'address2' =>            array('type' => self::TYPE_STRING, 'validate' => 'isAddress', 'size' => 128),
@@ -178,12 +172,6 @@ class AddressCore extends ObjectModel
      */
     public function add($autodate = true, $null_values = false)
     {
-        // for customer address we need to check of customer address already exists.
-        if ($this->id_customer) {
-            if ($id_address = Customer::getCustomerIdAddress($this->id_customer, false)) {
-                return false;
-            }
-        }
         if (!parent::add($autodate, $null_values)) {
             return false;
         }
@@ -249,18 +237,13 @@ class AddressCore extends ObjectModel
     public function validateController($htmlentities = true)
     {
         $errors = parent::validateController($htmlentities);
-
-        // for customer address we need to check of customer address already exists.
-        // if we are editing an address we do not need to validate already created address.
-        if (!Validate::isLoadedObject($this)) {
-            if ($idCustomer = Tools::getValue('id_customer')) {
-                if ($id_address = Customer::getCustomerIdAddress($idCustomer)) {
-
-                    $errors[] =  sprintf(Tools::displayError('Customer address already exists. Id address: #%d'), $id_address);
-                }
-            }
+        if (!Configuration::get('VATNUMBER_MANAGEMENT') || !Configuration::get('VATNUMBER_CHECKING')) {
+            return $errors;
         }
-
+        include_once(_PS_MODULE_DIR_.'vatnumber/vatnumber.php');
+        if (class_exists('VatNumber', false)) {
+            return array_merge($errors, VatNumber::WebServiceCheck($this->vat_number));
+        }
         return $errors;
     }
     /**
@@ -482,32 +465,4 @@ class AddressCore extends ObjectModel
         }
         return array();
     }
-
-    public function searchByName($query, $idLang = false)
-    {
-        if (!$idLang) {
-            $idLang = Context::getContext()->language->id;
-        }
-
-        return Db::getInstance()->executeS(
-            'SELECT  a.`id_address`, a.`firstname`, a.`lastname`, a.`address1`, a.`postcode`, a.`city`,
-            cl.`name` AS `country_name`, s.`name` AS `state_name`
-            FROM `'._DB_PREFIX_.'address` a
-            LEFT JOIN `'._DB_PREFIX_.'country_lang` cl
-            ON cl.`id_country` = a.`id_country`
-            LEFT JOIN `'._DB_PREFIX_.'state` s
-            ON s.`id_country` = cl.`id_country`
-            WHERE id_customer > 0 AND
-                (a.`address1` LIKE \'%'.$query.'%\' OR
-                    a.`postcode` LIKE \'%'.$query.'%\' OR
-                    a.`city` LIKE \'%'.$query.'%\' OR
-                    a.`phone` LIKE \'%'.$query.'%\' OR
-                    a.`company` LIKE \'%'.$query.'%\' OR
-                    a.`alias` LIKE \'%'.$query.'%\' OR
-                    s.`name` LIKE \'%'.$query.'%\' OR
-                    cl.`name` LIKE \'%'.$query.'%\'
-                )
-        ');
-    }
-
 }

@@ -394,18 +394,6 @@ abstract class InstallControllerHttp
         return $this->language->getInformation('services');
     }
 
-    // Get link to QloApps tutorials for this language
-    public function getTutorialsLink()
-    {
-        return $this->language->getInformation('tutorials');
-    }
-
-    // Get link to QloApps must-have modules for this language
-    public function getInstallationGuideLink()
-    {
-        return $this->language->getInformation('installation_guide');
-    }
-
     /**
      * Get link to blog for this language
      *
@@ -442,7 +430,7 @@ abstract class InstallControllerHttp
         if (!$success && empty($message)) {
             $message = print_r(@error_get_last(), true);
         }
-        die(json_encode(array(
+        die(Tools::jsonEncode(array(
             'success' => (bool)$success,
             'message' => $message,
             // 'memory' => round(memory_get_peak_usage()/1024/1024, 2).' Mo',

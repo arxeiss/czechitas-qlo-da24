@@ -43,8 +43,7 @@ class Adapter_ProductPriceCalculator
         $with_ecotax = true,
         $use_group_reduction = true,
         Context $context = null,
-        $use_customer_price = true,
-        $id_roomtype = false
+        $use_customer_price = true
     ) {
         return Product::getPriceStatic(
             $id_product,
@@ -63,8 +62,7 @@ class Adapter_ProductPriceCalculator
             $with_ecotax,
             $use_group_reduction,
             $context,
-            $use_customer_price,
-            $id_roomtype
+            $use_customer_price
         );
     }
 }

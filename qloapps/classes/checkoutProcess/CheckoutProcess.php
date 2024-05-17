@@ -18,7 +18,7 @@
 *  @license   https://store.webkul.com/license.html
 */
 
-class CheckoutProcessCore
+class CheckoutProcess
 {
     public $steps = array();
 

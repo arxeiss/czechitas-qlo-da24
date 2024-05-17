@@ -9,9 +9,7 @@ return array(
         'tutorial' => 'https://www.youtube.com/watch?v=BWoifR8INCE',
         'tailored_help' => 'https://webkul.uvdesk.com/',
         'contact' => 'https://qloapps.com/contact/',
-        'services' => 'https://qloapps.com/contact/',
-        'tutorials' => 'https://qloapps.com/qlo-reservation-system/',
-        'installation_guide' => 'https://qloapps.com/qloapps-installation-process/',
+        'services' => 'https://qloapps.com/services/?support',
         'install_help' => 'https://qloapps.com/install-qloapps/',
     ),
     'translations' => array(

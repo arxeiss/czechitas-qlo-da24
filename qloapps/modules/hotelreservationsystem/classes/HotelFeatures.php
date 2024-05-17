@@ -32,13 +32,13 @@ class HotelFeatures extends ObjectModel
         'primary' => 'id',
         'multilang' => true,
         'fields' => array(
-            'parent_feature_id' => array('type' => self::TYPE_INT, 'required' => true),
+            'parent_feature_id' => array('type' => self::TYPE_INT),
             'position' => array('type' => self::TYPE_INT),
-            'active' => array('type' => self::TYPE_INT, 'required' => true),
+            'active' => array('type' => self::TYPE_INT),
             'date_add' => array('type' => self::TYPE_DATE, 'validate' => 'isDate', 'copy_post' => false),
             'date_upd' => array('type' => self::TYPE_DATE, 'validate' => 'isDate', 'copy_post' => false),
             //lang fields
-            'name' => array('type' => self::TYPE_STRING, 'lang' => true, 'required' => true),
+            'name' => array('type' => self::TYPE_STRING, 'lang' => true),
         )
     );
 
@@ -206,20 +206,5 @@ class HotelFeatures extends ObjectModel
     public function updateHotelFeatureInfoByParentFeatureId($parent_feature_id, $update_params)
     {
         return Db::getInstance()->update('htl_features', $update_params, 'id='.(int) $parent_feature_id);
-    }
-
-    public function searchByName($query, $idLang = false)
-    {
-        if (!$idLang) {
-            $idLang = Context::getContext()->language->id;
-        }
-
-        return Db::getInstance()->executeS(
-            'SELECT hf.*, hfl.* FROM `'._DB_PREFIX_.'htl_features` hf
-            LEFT JOIN `'._DB_PREFIX_.'htl_features_lang` hfl
-            ON hfl.`id` = hf.`id`
-            WHERE hfl.`name` LIKE \'%'.pSQL($query).'%\'
-            AND hfl.`id_lang`='.(int) $idLang
-        );
     }
 }

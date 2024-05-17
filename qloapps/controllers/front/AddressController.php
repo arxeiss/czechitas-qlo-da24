@@ -59,8 +59,41 @@ class AddressControllerCore extends FrontController
     {
         parent::init();
 
-        if ($this->context->customer->id) {
-            $this->_address = new Address(Customer::getCustomerIdAddress($this->context->customer->id));
+        // Get address ID
+        $id_address = 0;
+        if ($this->ajax && Tools::isSubmit('type')) {
+            if (Tools::getValue('type') == 'delivery' && isset($this->context->cart->id_address_delivery)) {
+                $id_address = (int)$this->context->cart->id_address_delivery;
+            } elseif (Tools::getValue('type') == 'invoice' && isset($this->context->cart->id_address_invoice)
+                        && $this->context->cart->id_address_invoice != $this->context->cart->id_address_delivery) {
+                $id_address = (int)$this->context->cart->id_address_invoice;
+            }
+        } else {
+            $id_address = (int)Tools::getValue('id_address', 0);
+        }
+
+        // Initialize address
+        if ($id_address) {
+            $this->_address = new Address($id_address);
+            if (Validate::isLoadedObject($this->_address) && Customer::customerHasAddress($this->context->customer->id, $id_address)) {
+                if (Tools::isSubmit('delete')) {
+                    if ($this->_address->delete()) {
+                        if ($this->context->cart->id_address_invoice == $this->_address->id) {
+                            unset($this->context->cart->id_address_invoice);
+                        }
+                        if ($this->context->cart->id_address_delivery == $this->_address->id) {
+                            unset($this->context->cart->id_address_delivery);
+                            $this->context->cart->updateAddressId($this->_address->id, (int)Address::getFirstCustomerAddressId(Context::getContext()->customer->id));
+                        }
+                        Tools::redirect('index.php?controller=addresses');
+                    }
+                    $this->errors[] = Tools::displayError('This address cannot be deleted.');
+                }
+            } elseif ($this->ajax) {
+                exit;
+            } else {
+                Tools::redirect('index.php?controller=addresses');
+            }
         }
     }
 
@@ -171,7 +204,7 @@ class AddressControllerCore extends FrontController
                     'hasError' => (bool)$this->errors,
                     'errors' => $this->errors
                 );
-                $this->ajaxDie(json_encode($return));
+                $this->ajaxDie(Tools::jsonEncode($return));
             }
         }
 
@@ -198,7 +231,7 @@ class AddressControllerCore extends FrontController
                     'id_address_delivery' => (int)$this->context->cart->id_address_delivery,
                     'id_address_invoice' => (int)$this->context->cart->id_address_invoice
                 );
-                $this->ajaxDie(json_encode($return));
+                $this->ajaxDie(Tools::jsonEncode($return));
             }
 
             // Redirect to old page or current page
@@ -209,7 +242,7 @@ class AddressControllerCore extends FrontController
                 $mod = Tools::getValue('mod');
                 Tools::redirect('index.php?controller='.$back.($mod ? '&back='.$mod : ''));
             } else {
-                Tools::redirect('index.php?controller=address&updated=1');
+                Tools::redirect('index.php?controller=addresses');
             }
         }
         $this->errors[] = Tools::displayError('An error occurred while updating your address.');
@@ -221,11 +254,10 @@ class AddressControllerCore extends FrontController
      */
     public function initContent()
     {
-        $this->show_breadcrump = true;
-
         parent::initContent();
 
         $this->assignCountries();
+        $this->assignVatNumber();
         $this->assignAddressFormat();
 
         // Assign common vars
@@ -299,6 +331,32 @@ class AddressControllerCore extends FrontController
         ));
     }
 
+    /**
+     * Assign template vars related to vat number
+     * @todo move this in vatnumber module !
+     */
+    protected function assignVatNumber()
+    {
+        $vat_number_exists = file_exists(_PS_MODULE_DIR_.'vatnumber/vatnumber.php');
+        $vat_number_management = Configuration::get('VATNUMBER_MANAGEMENT');
+        if ($vat_number_management && $vat_number_exists) {
+            include_once(_PS_MODULE_DIR_.'vatnumber/vatnumber.php');
+        }
+
+        if ($vat_number_management && $vat_number_exists && VatNumber::isApplicable((int)Tools::getCountry())) {
+            $vat_display = 2;
+        } elseif ($vat_number_management) {
+            $vat_display = 1;
+        } else {
+            $vat_display = 0;
+        }
+
+        $this->context->smarty->assign(array(
+            'vatnumber_ajax_call' => file_exists(_PS_MODULE_DIR_.'vatnumber/ajax.php'),
+            'vat_display' => $vat_display,
+        ));
+    }
+
     public function displayAjax()
     {
         if (count($this->errors)) {
@@ -306,7 +364,7 @@ class AddressControllerCore extends FrontController
                 'hasError' => !empty($this->errors),
                 'errors' => $this->errors
             );
-            $this->ajaxDie(json_encode($return));
+            $this->ajaxDie(Tools::jsonEncode($return));
         }
     }
 }

@@ -20,8 +20,7 @@
   <tab id="Administration" name="Administracija"/>
   <tab id="Stats" name="Statistika"/>
   <tab id="Stock" name="Zaloga"/>
-  <tab id="Products" name="Manage Service Products"/>
-  <tab id="Room_Types" name="Manage Room Types"/>
+  <tab id="Products" name="Izdelki"/>
   <tab id="Categories" name="Oddelki"/>
   <tab id="Monitoring" name="Spremljanje"/>
   <tab id="Attributes_and_Values" name="Lastnosti izdelkov"/>
@@ -60,7 +59,6 @@
   <tab id="Tax_Rules" name="Davčna pravila"/>
   <tab id="Translations" name="Prevodi"/>
   <tab id="Modules_1" name="Moduli in storitve"/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id="Modules_Themes_Catalog" name="Katalog modulov in tem"/>
   <tab id="Positions" name="Pozicije"/>
   <tab id="Payment" name="Plačilo"/>

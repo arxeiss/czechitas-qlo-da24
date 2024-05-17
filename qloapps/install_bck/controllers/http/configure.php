@@ -43,7 +43,6 @@ class InstallControllerHttpConfigure extends InstallControllerHttp
             $this->session->install_type = Tools::getValue('db_mode');
             $this->session->shop_country = Tools::getValue('shop_country');
             $this->session->shop_timezone = Tools::getValue('shop_timezone');
-            $this->session->enable_ssl = Tools::getValue('enable_ssl');
 
             // Save admin configuration
             $this->session->admin_firstname = trim(Tools::getValue('admin_firstname'));
@@ -277,12 +276,11 @@ class InstallControllerHttpConfigure extends InstallControllerHttp
         $this->list_countries = array();
         $countries = $this->language->getCountries();
         $top_countries = array(
-            'in', 'fr', 'es',
-            'us', 'gb', 'it',
-            'de', 'nl', 'pl',
-            'id', 'be', 'br',
-            'se', 'ca', 'ru',
-            'cn',
+            'fr', 'es', 'us',
+            'gb', 'it', 'de',
+            'nl', 'pl', 'id',
+            'be', 'br', 'se',
+            'ca', 'ru', 'cn',
         );
 
         foreach ($top_countries as $iso) {
@@ -307,16 +305,6 @@ class InstallControllerHttpConfigure extends InstallControllerHttp
 
         // Install type
         $this->install_type = ($this->session->install_type) ? $this->session->install_type : 'full';
-
-        if (!isset($this->session->allow_ssl) || $this->session->allow_ssl === false) {
-            if (Tools::usingSecureMode()) {
-                $this->session->enable_ssl = '1';
-                $this->session->allow_ssl = true;
-            } else {
-                $this->session->enable_ssl = '0';
-                $this->session->allow_ssl = false;
-            }
-        }
 
         $this->displayTemplate('configure');
     }

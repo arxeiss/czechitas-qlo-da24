@@ -92,6 +92,12 @@ class AdminPaymentControllerCore extends AdminController
         $this->toolbar_title = array_unique($this->breadcrumbs);
     }
 
+    public function initPageHeaderToolbar()
+    {
+        parent::initPageHeaderToolbar();
+        $this->page_header_toolbar_btn = array();
+    }
+
     public function postProcess()
     {
         if (Tools::getValue('action') == 'GetModuleQuickView' && Tools::getValue('ajax') == '1') {
@@ -205,13 +211,13 @@ class AdminPaymentControllerCore extends AdminController
                           'identifier' => 'id_group',
                           'icon' => 'icon-group',
                     ),
-                    // array('items' =>Country::getCountries($this->context->language->id),
-                    //       'title' => $this->l('Country restrictions'),
-                    //       'desc' => $this->l('Please mark each checkbox for the country, or countries, in which you want the payment module(s) to be available.'),
-                    //       'name_id' => 'country',
-                    //       'identifier' => 'id_country',
-                    //       'icon' => 'icon-globe',
-                    // )
+                    array('items' =>Country::getCountries($this->context->language->id),
+                          'title' => $this->l('Country restrictions'),
+                          'desc' => $this->l('Please mark each checkbox for the country, or countries, in which you want the payment module(s) to be available.'),
+                          'name_id' => 'country',
+                          'identifier' => 'id_country',
+                          'icon' => 'icon-globe',
+                    )
                 );
 
         foreach ($lists as $key_list => $list) {
@@ -243,13 +249,13 @@ class AdminPaymentControllerCore extends AdminController
                     }
 
                     // If is a country list and the country is limited, remove it from list
-                    // if ($name_id == 'country'
-                    //     && isset($module->limited_countries)
-                    //     && !empty($module->limited_countries)
-                    //     && is_array($module->limited_countries)
-                    //     && !(in_array(strtoupper($item['iso_code']), array_map('strtoupper', $module->limited_countries)))) {
-                    //     $list['items'][$key_item]['check_list'][$key_module] = null;
-                    // }
+                    if ($name_id == 'country'
+                        && isset($module->limited_countries)
+                        && !empty($module->limited_countries)
+                        && is_array($module->limited_countries)
+                        && !(in_array(strtoupper($item['iso_code']), array_map('strtoupper', $module->limited_countries)))) {
+                        $list['items'][$key_item]['check_list'][$key_module] = null;
+                    }
                 }
             }
             // update list
@@ -267,5 +273,41 @@ class AdminPaymentControllerCore extends AdminController
         );
 
         return parent::renderView();
+    }
+
+    public function renderModulesList()
+    {
+        if ($this->getModulesList($this->filter_modules_list)) {
+            $active_list = array();
+            foreach ($this->modules_list as $key => $module) {
+                if (in_array($module->name, $this->list_partners_modules)) {
+                    $this->modules_list[$key]->type = 'addonsPartner';
+                }
+                if (isset($module->description_full) && trim($module->description_full) != '') {
+                    $module->show_quick_view = true;
+                }
+
+                if ($module->active) {
+                    $active_list[] = $module;
+                } else {
+                    $unactive_list[] = $module;
+                }
+            }
+
+            $helper = new Helper();
+            $fetch = '';
+
+            if (isset($active_list)) {
+                $this->context->smarty->assign('panel_title', $this->l('Active payment'));
+                $fetch = $helper->renderModulesList($active_list);
+            }
+
+            $this->context->smarty->assign(array(
+                'panel_title' => $this->l('Recommended payment gateways'),
+                'view_all' => true
+            ));
+            $fetch .= $helper->renderModulesList($unactive_list);
+            return $fetch;
+        }
     }
 }

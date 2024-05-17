@@ -42,6 +42,14 @@ class AdminFeaturesModuleSettingController extends ModuleAdminController
                 'title' =>    $this->l('Hotel Amenity Setting'),
                 'icon' =>   'icon-cogs',
                 'fields' =>    array(
+                    'HOTEL_AMENITIES_BLOCK_NAV_LINK' => array(
+                        'title' => $this->l('Show link at navigation'),
+                        'hint' => $this->l('Enable, if you want to display a link at navigation menu for the amenities block at home page.'),
+                        'validation' => 'isBool',
+                        'cast' => 'intval',
+                        'type' => 'bool',
+                        'required' => true
+                    ),
                     'HOTEL_AMENITIES_HEADING' => array(
                         'title' => $this->l('Amenity Block Title'),
                         'type' => 'textLang',
@@ -224,17 +232,7 @@ class AdminFeaturesModuleSettingController extends ModuleAdminController
             ),
             'submit' => array(
                 'title' => $this->l('Save')
-            ),
-            'buttons' => array(
-                'save-and-stay' => array(
-                    'title' => $this->l('Save and stay'),
-                    'name' => 'submitAdd'.$this->table.'AndStay',
-                    'type' => 'submit',
-                    'class' => 'btn btn-default pull-right',
-                    'icon' => 'process-icon-save',
-                ),
-            ),
-        );
+            ));
 
         return parent::renderForm();
     }
@@ -319,27 +317,13 @@ class AdminFeaturesModuleSettingController extends ModuleAdminController
                 if (file_exists($imgPath)) {
                     unlink($imgPath);
                 }
-                $imageSize = ImageType::getByName(ImageType::getFormatedName('large'));
-                ImageManager::resize(
-                    $file['tmp_name'],
-                    $imgPath,
-                    $imageSize['width'],
-                    $imageSize['height']
-                );
+                ImageManager::resize($file['tmp_name'], $imgPath);
             }
 
-            if (Tools::isSubmit('submitAdd'.$this->table.'AndStay')) {
-                if ($hotelAmenityId) {
-                    Tools::redirectAdmin(self::$currentIndex.'&id_features_block='.(int) $hotelAmenityId.'&update'.$this->table.'&conf=4&token='.$this->token);
-                } else {
-                    Tools::redirectAdmin(self::$currentIndex.'&id_features_block='.(int) $objFeatureData->id.'&update'.$this->table.'&conf=3&token='.$this->token);
-                }
+            if ($hotelAmenityId) {
+                Tools::redirectAdmin(self::$currentIndex.'&conf=4&token='.$this->token);
             } else {
-                if ($hotelAmenityId) {
-                    Tools::redirectAdmin(self::$currentIndex.'&conf=4&token='.$this->token);
-                } else {
-                    Tools::redirectAdmin(self::$currentIndex.'&conf=3&token='.$this->token);
-                }
+                Tools::redirectAdmin(self::$currentIndex.'&conf=3&token='.$this->token);
             }
         } else {
             if ($hotelAmenityId) {
@@ -438,7 +422,7 @@ class AdminFeaturesModuleSettingController extends ModuleAdminController
         parent::setMedia();
         Media::addJsDef(
             array(
-                'filesizeError' => $this->l('File exceeds maximum size.', null, true),
+                'filesizeError' => $this->l('File exceeds maximum size.'),
                 'maxSizeAllowed' => Tools::getMaxUploadSize(),
             )
         );

@@ -184,22 +184,20 @@ function validate_field(that)
 			var selector = '#id_country';
 			if ($(that).attr('name') == 'postcode_invoice')
 				selector += '_invoice';
+
 			var id_country = $(selector + ' option:selected').val();
+
 			if (typeof(countriesNeedZipCode[id_country]) != 'undefined' && typeof(countries[id_country]) != 'undefined')
 				var result = window['validate_'+$(that).attr('data-validate')]($(that).val(), countriesNeedZipCode[id_country], countries[id_country]['iso_code']);
 		}
 		else if($(that).attr('data-validate'))
 			var result = window['validate_' + $(that).attr('data-validate')]($(that).val());
-		if (result) {
-			$(that).parent().removeClass('form-error').addClass('form-ok');
-			return true;
-		} else {
-			$(that).parent().addClass('form-error').removeClass('form-ok');
-			return false;
-		}
 
+		if (result)
+			$(that).parent().removeClass('form-error').addClass('form-ok');
+		else
+			$(that).parent().addClass('form-error').removeClass('form-ok');
 	}
-	return true;
 }
 
 $(document).on('focusout', 'input.validate, textarea.validate', function() {

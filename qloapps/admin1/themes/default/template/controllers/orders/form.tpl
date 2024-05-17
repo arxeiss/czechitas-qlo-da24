@@ -38,6 +38,7 @@
 	var id_lang = '';
 	//var txt_show_carts = '{l s='Show carts and orders for this customer.' js=1}';
 	//var txt_hide_carts = '{l s='Hide carts and orders for this customer.' js=1}';
+	var defaults_order_state = new Array();
 	var customization_errors = false;
 	var pic_dir = '{$pic_dir}';
 	var currency_format = 5;
@@ -45,6 +46,9 @@
 	var currency_blank = false;
 	var priceDisplayPrecision = {$smarty.const._PS_PRICE_DISPLAY_PRECISION_|intval};
 
+	{foreach from=$defaults_order_state key='module' item='id_order_state'}
+		defaults_order_state['{$module}'] = '{$id_order_state}';
+	{/foreach}
 	$(document).ready(function() {
 
 		$('#customer').typeWatch({
@@ -58,6 +62,12 @@
 			highlight: true,
 			wait: 750,
 			callback: function(){ searchProducts(); }
+		});
+		$('#payment_module_name').change(function() {
+			var id_order_state = defaults_order_state[this.value];
+			if (typeof(id_order_state) == 'undefined')
+				id_order_state = defaults_order_state['other'];
+			$('#id_order_state').val(id_order_state);
 		});
 		$("#id_address_delivery").change(function() {
 			updateAddresses();
@@ -88,7 +98,6 @@
 					selectFirst: false,
 					scroll: false,
 					dataType: "json",
-					cacheLength: 0,
 					formatItem: function(data, i, max, value, term) {
 						return value;
 					},
@@ -106,8 +115,7 @@
 						ajax: "1",
 						token: "{getAdminToken tab='AdminCartRules'}",
 						tab: "AdminCartRules",
-						action: "searchCartRuleVouchers",
-						id_customer: function () { return window.id_customer },
+						action: "searchCartRuleVouchers"
 					}
 				}
 			)
@@ -162,42 +170,6 @@
 								location.reload();
 							else
 								window.location.href = "{$link->getAdminLink('AdminHotelRoomsBooking',true)}";
-						}
-						else
-						{
-							alert("l s='Some error occured.please try again.'}");
-						}
-					}
-				});
-				$(this).closest("tr").remove();
-			}
-		});
-
-		$('body').on('click', '.delete_service_product', function(){
-			if (confirm("{l s='Are you sure?'}"))
-        	{
-
-				$.ajax({
-					type:"POST",
-					url: "{$link->getAdminLink('AdminOrders')|addslashes}",
-					data : {
-						ajax: true,
-						action: "deleteProductProcess",
-						id_product: $(this).data('id_product'),
-						id_cart: $(this).data('id_cart'),
-						id_hotel: $(this).data('id_hotel'),
-					},
-					dataType:"json",
-					success : function(data)
-					{
-						if (data.status == 'deleted')
-						{
-							showSuccessMessage("{l s='Remove successful'}");
-							location.reload();
-							{* if (data.cart_rooms)
-								location.reload();
-							else
-								window.location.href = "{$link->getAdminLink('AdminHotelRoomsBooking',true)}"; *}
 						}
 						else
 						{
@@ -265,20 +237,11 @@
 			$(this).change();
 			return true;
 		});
-		$(document).on('change', '.room_unit_price', function(e) {
+		$('.product_unit_price').live('change', function(e) {
 			e.preventDefault();
-			var cart_row = $(this).closest('tr');
-			var params = {
-				id_booking_data: parseInt($(cart_row).attr('data-id-booking-data')),
-				id_product: parseInt($(cart_row).attr('data-id-product')),
-				id_room: parseInt($(cart_row).attr('data-id-room')),
-				date_from: $(cart_row).attr('data-date-from'),
-				date_to: $(cart_row).attr('data-date-to'),
-				price: new Number($(this).val().replace(",",".")).toFixed(4).toString(),
-				id_cart: id_cart
-			};
-			updateProductPrice(params, cart_row);
-		})
+			var product = $(this).attr('rel').split('_');
+			updateProductPrice(product[0], product[1], $(this).val());
+		});
 		$('#order_message').live('change', function(e) {
 			e.preventDefault();
 			$.ajax({
@@ -301,7 +264,6 @@
 				}
 			});
 		});
-
 		resetBind();
 
 		$('#customer').focus();
@@ -351,7 +313,7 @@
 					if (data.result)
 					{
 						$('#cart_detail_form').show();//line added by webkul
-						$('#payment_method_options').replaceWith(data.view)
+						$('#payment_module_name').replaceWith(data.view)
 					}
 				}
 			});
@@ -362,240 +324,6 @@
 			$('#search-customer-form-group').show();
 			$(this).blur();
 		});
-
-		{literal}
-			$(document).on('click', '.booking_occupancy_wrapper .remove-room-link', function(e) {
-				e.preventDefault();
-
-				booking_occupancy_inner = $(this).closest('.booking_occupancy_inner');
-				$(this).closest('.occupancy_info_block').remove();
-				$(booking_occupancy_inner).find('.room_num_wrapper').each(function(key, val) {
-					$(this).text(room_txt + ' - '+ (key+1) );
-				});
-				setRoomTypeGuestOccupancy($(booking_occupancy_inner).closest('.booking_occupancy_wrapper'));
-			});
-
-			$(document).on('change', '.num_occupancy', function(e) {
-        		let elementVal = parseInt($(this).val());
-				let current_room_occupancy = 0;
-				$(this).closest('.occupancy_info_block').find('.num_occupancy').each(function(){
-					current_room_occupancy += parseInt($(this).val());
-				});
-				let max_guests_in_room = $(this).closest(".booking_occupancy_wrapper").find('.max_guests').val();
-				let max_allowed_for_current = (max_guests_in_room - current_room_occupancy) + parseInt($(this).val());
-        		let haserror = false
-				if ($(this).hasClass('num_children')) {
-					max_child_in_room = $(this).closest(".booking_occupancy_wrapper").find('.max_children').val();
-					console.log(no_children_allowed_txt);
-					if (elementVal > max_child_in_room) {
-						$(this).val(max_child_in_room);
-						if (elementVal == 1) {
-							showOccupancyError(no_children_allowed_txt, $(this).closest(".occupancy_info_block"));
-							haserror = true;
-						} else {
-							showOccupancyError(max_children_txt, $(this).closest(".occupancy_info_block"));
-							haserror = true;
-						}
-					} else if (elementVal > max_allowed_for_current)  {
-						$(this).val(max_allowed_for_current);
-						showOccupancyError(max_occupancy_reached_txt, $(this).closest(".occupancy_info_block"));
-						haserror = true;
-					}
-				} else {
-					max_adults_in_room = $(this).closest(".booking_occupancy_wrapper").find('.max_adults').val();
-					if (elementVal >= max_adults_in_room) {
-						$(this).val(max_adults_in_room);
-						showOccupancyError(max_adults_txt, $(this).closest(".occupancy_info_block"));
-						haserror = true;
-					} else if (elementVal > max_allowed_for_current)  {
-						$(this).val(max_allowed_for_current);
-						showOccupancyError(max_occupancy_reached_txt, $(this).closest(".occupancy_info_block"));
-						haserror = true;
-					}
-				}
-
-				if (!haserror) {
-					if ($(this).hasClass('num_children')) {
-						let totalChilds = $(this).closest('.occupancy_info_block').find('.guest_child_age').length;
-						if (totalChilds < $(this).val()) {
-							$(this).closest('.occupancy_info_block').find('.children_age_info_block').show();
-							while ($(this).closest('.occupancy_info_block').find('.guest_child_age').length < $(this).val()) {
-								var roomBlockIndex = parseInt($(this).closest('.occupancy_info_block').attr('occ_block_index'));
-								var childAgeSelect = '<p class="col-xs-12 col-sm-12 col-md-6 col-lg-6">';
-									childAgeSelect += '<select class="guest_child_age room_occupancies" name="occupancy[' +roomBlockIndex+ '][child_ages][]">';
-										childAgeSelect += '<option value="-1">' + select_age_txt + '</option>';
-										childAgeSelect += '<option value="0">' + under_1_age + '</option>';
-										for (let age = 1; age < max_child_age; age++) {
-											childAgeSelect += '<option value="'+age+'">'+age+'</option>';
-										}
-									childAgeSelect += '</select>';
-								childAgeSelect += '</p>';
-								$(this).closest('.occupancy_info_block').find('.children_ages').append(childAgeSelect);
-							}
-						} else {
-							let child = $(this).val();
-							$(this).closest('.occupancy_info_block').find('.guest_child_age').each(function(ind, element) {
-								if (child <= ind) {
-									$(element).parent().remove();
-								}
-							});
-							if (child == 0) {
-								$(this).closest('.occupancy_info_block').find('.children_age_info_block').hide();
-							}
-
-						}
-					}
-				}
-				setRoomTypeGuestOccupancy($(this).closest('.booking_occupancy_wrapper'));
-			});
-
-			var errorMsgTime;
-			$('.occupancy-input-errors').parent().hide();
-			function showOccupancyError(msg, occupancy_info_block)
-			{
-				var errorMsgBlock = $(occupancy_info_block).find('.occupancy-input-errors')
-				$(errorMsgBlock).html(msg).parent().show('fast');
-				clearTimeout(errorMsgTime);
-				errorMsgTime = setTimeout(function() {
-					$(errorMsgBlock).parent().hide('fast');
-				}, 1000);
-
-			}
-
-
-			$(document).on('click', '.booking_guest_occupancy', function(e) {
-				$(this).parent().toggleClass('open');
-			});
-
-			$(document).on('click', function(e) {
-				if ($('.booking_occupancy_wrapper:visible').length) {
-					var occupancy_wrapper = $('.booking_occupancy_wrapper:visible');
-					$(occupancy_wrapper).find(".occupancy_info_block").addClass('selected');
-					if (!($(e.target).closest(".booking_occupancy_wrapper").length || $(e.target).closest(".booking_guest_occupancy").length || $(e.target).closest(".ajax_add_to_cart_button").length || $(e.target).closest(".exclusive.book_now_submit").length)) {
-						let hasErrors = 0;
-
-						let adults = $(occupancy_wrapper).find(".num_adults").map(function(){return $(this).val();}).get();
-						let children = $(occupancy_wrapper).find(".num_children").map(function(){return $(this).val();}).get();
-						let child_ages = $(occupancy_wrapper).find(".guest_child_age").map(function(){return $(this).val();}).get();
-
-						// start validating above values
-						if (!adults.length || (adults.length != children.length)) {
-							hasErrors = 1;
-							showErrorMessage(invalid_occupancy_txt);
-						} else {
-							$(occupancy_wrapper).find('.occupancy_count').removeClass('error_border');
-
-							// validate values of adults and children
-							adults.forEach(function (item, index) {
-								if (isNaN(item) || parseInt(item) < 1) {
-									hasErrors = 1;
-									$(occupancy_wrapper).find(".num_adults").eq(index).closest('.occupancy_count_block').find('.occupancy_count').addClass('error_border');
-								}
-								if (isNaN(children[index])) {
-									hasErrors = 1;
-									$(occupancy_wrapper).find(".num_children").eq(index).closest('.occupancy_count_block').find('.occupancy_count').addClass('error_border');
-								}
-							});
-
-							// validate values of selected child ages
-							$(occupancy_wrapper).find('.guest_child_age').parent().removeClass('has-error');
-							child_ages.forEach(function (age, index) {
-								age = parseInt(age);
-								if (isNaN(age) || (age < 0) || (age >= parseInt(max_child_age))) {
-									hasErrors = 1;
-									$(occupancy_wrapper).find(".guest_child_age").eq(index).parent().addClass('has-error');
-								}
-							});
-						}
-						if (hasErrors == 0) {
-							$(occupancy_wrapper).parent().removeClass('open');
-							$(document).trigger( "QloApps:updateRoomOccupancy", [occupancy_wrapper]);
-						}
-					}
-				}
-			});
-
-			$(document).on('QloApps:updateRoomOccupancy', function (e, occupancy_wrapper) {
-				e.preventDefault();
-				let cart_row = $(occupancy_wrapper).closest('tr');
-				let occupancy = getBookingOccupancyDetails(cart_row);
-				let params = {
-					id_cart: id_cart,
-					id_booking_data: parseInt($(cart_row).attr('data-id-booking-data')),
-					occupancy : occupancy.shift(),
-				};
-				updateRoomOccupancy(params, cart_row);
-			});
-
-		function getBookingOccupancyDetails(bookingform)
-		{
-			let occupancy = [];
-			let selected_occupancy = $(bookingform).find(".occupancy_info_block.selected")
-			if (selected_occupancy.length) {
-				$(selected_occupancy).each(function(ind, element) {
-					if (parseInt($(element).find('.num_adults').val())) {
-						let child_ages = [];
-						$(element).find('.guest_child_age').each(function(index) {
-							if ($(this).val() > -1) {
-								child_ages.push($(this).val());
-							}
-						});
-						if ($(element).find('.num_children').val()) {
-							if (child_ages.length != $(element).find('.num_children').val()) {
-								$(bookingform).find('.booking_occupancy_wrapper').parent().addClass('open');
-							}
-						}
-						occupancy.push({
-							'adults': $(element).find('.num_adults').val(),
-							'children': $(element).find('.num_children').val(),
-							'child_ages': child_ages
-						});
-					} else {
-						$(bookingform).find('.booking_occupancy_wrapper').parent().addClass('open');
-					}
-				});
-			} else {
-				$(bookingform).find('.booking_occupancy_wrapper').parent().addClass('open');
-			}
-
-			return occupancy;
-		}
-
-		function setRoomTypeGuestOccupancy(booking_occupancy_wrapper)
-		{
-			var adults = 0;
-			var children = 0;
-			var rooms = $(booking_occupancy_wrapper).find('.occupancy_info_block').length;
-
-			$(booking_occupancy_wrapper).find(".num_adults" ).each(function(key, val) {
-				adults += parseInt($(this).val());
-			});
-			$(booking_occupancy_wrapper).find(".num_children" ).each(function(key, val) {
-				children += parseInt($(this).val());
-			});
-
-			var guestButtonVal = parseInt(adults) + ' ';
-			if (parseInt(adults) > 1) {
-				guestButtonVal += adults_txt;
-			} else {
-				guestButtonVal += adult_txt;
-			}
-			if (parseInt(children) > 0) {
-				if (parseInt(children) > 1) {
-					guestButtonVal += ', ' + parseInt(children) + ' ' + children_txt;
-				} else {
-					guestButtonVal += ', ' + parseInt(children) + ' ' + child_txt;
-				}
-			}
-			// if (parseInt(rooms) > 1) {
-			// 	guestButtonVal += ', ' + parseInt(rooms) + ' ' + rooms_txt;
-			// } else {
-			// 	guestButtonVal += ', ' + parseInt(rooms) + ' ' + room_txt;
-			// }
-			// console.log($(booking_occupancy_wrapper).siblings('.booking_guest_occupancy > span'));
-			$(booking_occupancy_wrapper).siblings('.booking_guest_occupancy').find('span').text(guestButtonVal);
-		}
-		{/literal}
 	});
 
 	function resetBind()
@@ -653,77 +381,29 @@
 		});
 	}
 
-	function updateProductPrice(params, cart_row)
+	function updateProductPrice(id_product, id_product_attribute, new_price)
 	{
 		$.ajax({
 			type:"POST",
 			url: "{$link->getAdminLink('AdminCarts')|addslashes}",
 			async: true,
-			dataType: "JSON",
-			data: {
+			dataType: "json",
+			data : {
 				ajax: "1",
 				token: "{getAdminToken tab='AdminCarts'}",
 				tab: "AdminCarts",
 				action: "updateProductPrice",
-				params: params,
-			},
-			success : function(response) {
-				updateCartLine(response.curr_booking_info, cart_row);
-				updateCartSummaryData(response.cart_info);
+				id_cart: id_cart,
+				id_product: id_product,
+				id_product_attribute: id_product_attribute,
+				id_customer: id_customer,
+				price: new Number(new_price.replace(",",".")).toFixed(4).toString()
+				},
+			success : function(res)
+			{
+				displaySummary(res);
 			}
 		});
-	}
-
-	function updateRoomOccupancy(params, cart_row)
-	{
-		$.ajax({
-			type:"POST",
-			url: "{$link->getAdminLink('AdminCarts')|addslashes}",
-			async: true,
-			dataType: "JSON",
-			data: {
-				ajax: "1",
-				token: "{getAdminToken tab='AdminCarts'}",
-				tab: "AdminCarts",
-				action: "updateRoomOccupancy",
-				params: params,
-			},
-			success : function(response) {
-				updateCartLine(response.curr_booking_info, cart_row);
-				updateCartSummaryData(response.cart_info);
-			}
-		});
-	}
-
-
-	function updateCartLine(data, cart_row) {
-		$(cart_row).find('.cart_line_total_rooms_price').html(data.amt_with_qty);
-		$(cart_row).find('.cart_line_total_price').html(data.total_price);
-	}
-
-	function updateCartSummaryData(jsonSummary) {
-		$('#total_rooms').html(formatCurrency(parseFloat(jsonSummary.summary.total_rooms + jsonSummary.summary.total_extra_demands + jsonSummary.summary.total_additional_services + jsonSummary.summary.total_additional_services_auto_add), currency_format, currency_sign, currency_blank));
-		$('#total_vouchers').html(formatCurrency(parseFloat(jsonSummary.summary.total_discounts_tax_exc), currency_format, currency_sign, currency_blank));
-		$('#total_convenience_fees').html(formatCurrency(parseFloat(jsonSummary.summary.convenience_fee), currency_format, currency_sign, currency_blank));
-		$('#total_without_taxes').html(formatCurrency(parseFloat(jsonSummary.summary.total_price_without_tax - jsonSummary.summary.convenience_fee), currency_format, currency_sign, currency_blank));
-		// $('#total_service_products').html(formatCurrency(parseFloat(jsonSummary.summary.total_service_products), currency_format, currency_sign, currency_blank));
-		$('#total_taxes').html(formatCurrency(parseFloat(jsonSummary.summary.total_tax), currency_format, currency_sign, currency_blank));
-		$('#total_with_taxes').html(formatCurrency(parseFloat(jsonSummary.summary.total_price), currency_format, currency_sign, currency_blank));
-
-		$('#payment_amount').val(jsonSummary.summary.total_price);
-		if (jsonSummary.summary.is_advance_payment_active) {
-			$('#advance_payment_amount').html(formatCurrency(parseFloat(jsonSummary.summary.advance_payment_amount_with_tax), currency_format, currency_sign, currency_blank));
-			$('#advance_payment_amount_block').show();
-		} else {
-			$('#advance_payment_amount_block').hide();
-		}
-
-		// toggle payment fields
-		if (jsonSummary.summary.total_price == 0) { // if free order
-			$('#send_email_to_customer, [name="is_full_payment"], #payment_amount, #payment_type, #payment_module_name, #payment_transaction_id').closest('.form-group').hide(200);
-		} else {
-			$('#send_email_to_customer, [name="is_full_payment"], #payment_amount, #payment_type, #payment_module_name, #payment_transaction_id').closest('.form-group').show(200);
-		}
 	}
 
 	function displayQtyInStock(id)
@@ -850,9 +530,7 @@
 				ajax: "1",
 				tab: "AdminCustomers",
 				action: "searchCustomers",
-				customer_search: $('#customer').val(),
-				skip_deleted: "1",
-			},
+				customer_search: $('#customer').val()},
 			success : function(res)
 			{
 				if(res.found)
@@ -880,6 +558,7 @@
 			}
 		});
 	}
+
 
 	function setupCustomer(idCustomer)
 	{
@@ -966,6 +645,24 @@
 		{
 			$('#carrier_form').hide();
 			$('#carriers_err').show().html('{l s='No carrier can be applied to this order'}');
+		}
+	}
+
+	// commented by webkul to enable button in case of ordering virtual product
+	function checkVirtualProduct(products, delivery_option_list) {
+		if (delivery_option_list.length == 0 && products.length > 0) {
+			var find = 1;
+			$.each(products, function () {
+				if (find == 1) {
+					this.is_virtual == 1 ? find = 1 : find = 0;
+				}
+			});
+			if (find == 1) {
+				$("button[name=\"submitAddOrder\"]").removeAttr("disabled");
+			}
+			else {
+				$("button[name=\"submitAddOrder\"]").attr("disabled", "disabled");
+			}
 		}
 	}
 
@@ -1166,7 +863,8 @@
 		return price;
 	}
 
-	function displaySummary(jsonSummary) {
+	function displaySummary(jsonSummary)
+	{
 		currency_format = jsonSummary.currency.format;
 		currency_sign = jsonSummary.currency.sign;
 		currency_blank = jsonSummary.currency.blank;
@@ -1176,46 +874,46 @@
 		updateCartVouchers(jsonSummary.summary.discounts);
 		updateAddressesList(jsonSummary.addresses, jsonSummary.cart.id_address_delivery, jsonSummary.cart.id_address_invoice);
 
-		if (!jsonSummary.summary.products.length || !jsonSummary.addresses.length || !jsonSummary.delivery_option_list) {
+		if (!jsonSummary.summary.products.length || !jsonSummary.addresses.length || !jsonSummary.delivery_option_list)
 			$('#carriers_part').hide();
-		} else {
+		else
 			$('#carriers_part').hide();
-		}
+
+		//original
+		/*if (!jsonSummary.summary.products.length || !jsonSummary.addresses.length || !jsonSummary.delivery_option_list)
+			$('#carriers_part,#summary_part').hide();
+		else
+			$('#carriers_part,#summary_part').hide();
+		*/
 
 		updateDeliveryOptionList(jsonSummary.delivery_option_list);
+		checkVirtualProduct(jsonSummary.summary.products,jsonSummary.delivery_option_list);
 
-		if (jsonSummary.cart.gift == 1) {
+		if (jsonSummary.cart.gift == 1)
 			$('#order_gift').attr('checked', true);
-		} else {
+		else
 			$('#carrier_gift').removeAttr('checked');
-		}
-		if (jsonSummary.cart.recyclable == 1) {
+		if (jsonSummary.cart.recyclable == 1)
 			$('#carrier_recycled_package').attr('checked', true);
-		} else {
+		else
 			$('#carrier_recycled_package').removeAttr('checked');
-		}
-		if (jsonSummary.free_shipping == 1) {
+		if (jsonSummary.free_shipping == 1)
 			$('#free_shipping').attr('checked', true);
-		} else {
+		else
 			$('#free_shipping_off').attr('checked', true);
-		}
 
 		$('#gift_message').html(jsonSummary.cart.gift_message);
-
-		if (!changed_shipping_price) {
+		if (!changed_shipping_price)
 			$('#shipping_price').html('<b>' + formatCurrency(parseFloat(jsonSummary.summary.total_shipping), currency_format, currency_sign, currency_blank) + '</b>');
-		}
-
 		shipping_price_selected_carrier = jsonSummary.summary.total_shipping;
 
 		$('#total_vouchers').html(formatCurrency(parseFloat(jsonSummary.summary.total_discounts_tax_exc), currency_format, currency_sign, currency_blank));
+		$('#total_shipping').html(formatCurrency(parseFloat(jsonSummary.summary.total_shipping_tax_exc), currency_format, currency_sign, currency_blank));
 		$('#total_taxes').html(formatCurrency(parseFloat(jsonSummary.summary.total_tax), currency_format, currency_sign, currency_blank));
-		$('#total_without_taxes').html(formatCurrency(parseFloat(jsonSummary.summary.total_price_without_tax - jsonSummary.summary.convenience_fee), currency_format, currency_sign, currency_blank));
+		$('#total_without_taxes').html(formatCurrency(parseFloat(jsonSummary.summary.total_price_without_tax), currency_format, currency_sign, currency_blank));
 		$('#total_with_taxes').html(formatCurrency(parseFloat(jsonSummary.summary.total_price), currency_format, currency_sign, currency_blank));
-		$('#total_rooms').html(formatCurrency(parseFloat(jsonSummary.summary.total_rooms + jsonSummary.summary.total_extra_demands + jsonSummary.summary.total_additional_services + jsonSummary.summary.total_additional_services_auto_add), currency_format, currency_sign, currency_blank));
-		$('#total_convenience_fees').html(formatCurrency(parseFloat(jsonSummary.summary.convenience_fee), currency_format, currency_sign, currency_blank));
-		// $('#total_service_products').html(formatCurrency(parseFloat(jsonSummary.summary.total_service_products), currency_format, currency_sign, currency_blank));
-
+		$('#total_extra_demands').html(formatCurrency(parseFloat(jsonSummary.summary.total_extra_demands_tax_exc), currency_format, currency_sign, currency_blank));
+		$('#total_products').html(formatCurrency(parseFloat(jsonSummary.summary.total_products), currency_format, currency_sign, currency_blank));
 		id_currency = jsonSummary.cart.id_currency;
 		$('#id_currency option').removeAttr('selected');
 		$('#id_currency option[value="'+id_currency+'"]').attr('selected', true);
@@ -1223,29 +921,8 @@
 		$('#id_lang option').removeAttr('selected');
 		$('#id_lang option[value="'+id_lang+'"]').attr('selected', true);
 		$('#send_email_to_customer').attr('rel', jsonSummary.link_order);
-		if (!jsonSummary.is_backdate_order) {
-			$('#go_order_process').show();
-			$('#go_order_process').attr('href', jsonSummary.link_order);
-		} else {
-			$('#go_order_process').hide();
-		}
+		$('#go_order_process').attr('href', jsonSummary.link_order);
 		$('#order_message').val(jsonSummary.order_message);
-		$('#payment_amount').siblings('.input-group-addon').html(currency_sign);
-		$('#payment_amount').val(jsonSummary.summary.total_price);
-		if (jsonSummary.summary.is_advance_payment_active) {
-			$('#advance_payment_amount').html(formatCurrency(parseFloat(jsonSummary.summary.advance_payment_amount_with_tax), currency_format, currency_sign, currency_blank));
-			$('#advance_payment_amount_block').show();
-		} else {
-			$('#advance_payment_amount_block').hide();
-		}
-
-		// toggle payment fields
-		if (jsonSummary.summary.total_price == 0) { // if free order
-			$('#send_email_to_customer, [name="is_full_payment"], #payment_amount, #payment_type, #payment_module_name, #payment_transaction_id').closest('.form-group').hide(200);
-		} else {
-			$('#send_email_to_customer, [name="is_full_payment"], #payment_amount, #payment_type, #payment_module_name, #payment_transaction_id').closest('.form-group').show(200);
-		}
-
 		resetBind();
 	}
 
@@ -1446,19 +1123,24 @@
 		});
 		if (addresses.length == 0)
 		{
+			$('#addresses_err').show().html('{l s='You must add at least one address to process the order.'}');
 			$('#address_delivery, #address_invoice').hide();
-			$("#new_address").show();
+
+			//by webkul (if there is no address then order can not be created)
+			$("button[name=\"submitAddOrder\"]").attr("disabled", "disabled");
 		}
 		else
 		{
 			$('#addresses_err').hide();
-			$("#new_address").hide();
 			$('#address_delivery, #address_invoice').show();
+
+			//by webkul
+			$("button[name=\"submitAddOrder\"]").removeAttr("disabled");
 		}
 
 		/*Changed by webkul to make delivery and invoice addresses same*/
-		$('#id_address_delivery').html(addresses_delivery_options).hide();
-		$('#id_address_invoice').html(addresses_delivery_options).hide();
+		$('#id_address_delivery').html(addresses_delivery_options);
+		$('#id_address_invoice').html(addresses_delivery_options);
 		$('#address_delivery_detail').html(address_delivery_detail);
 		$('#address_invoice_detail').html(address_delivery_detail);
 		$('#edit_delivery_address').attr('href', delivery_address_edit_link);
@@ -1497,236 +1179,6 @@
 			}
 		});
 	}
-
-	{* JS for handling extra demands changes *}
-	$(document).ready(function() {
-		// modalbox for extra demands
-		$('body').on('click', '.open_rooms_extra_demands', function() {
-			var idProduct = $(this).attr('id_product');
-			var idCart = $(this).attr('id_cart');
-			var idRoom = $(this).attr('id_room');
-			var dateFrom = $(this).attr('date_from');
-			var dateTo = $(this).attr('date_to');
-			$.ajax({
-				type: 'POST',
-				dataType: 'JSON',
-				headers: {
-					"cache-control": "no-cache"
-				},
-				url: "{$link->getAdminLink('AdminCarts')|addslashes}",
-				cache: false,
-				data: {
-					date_from: dateFrom,
-					date_to: dateTo,
-					id_room: idRoom,
-					id_cart: idCart,
-					id_product: idProduct,
-					action: 'getRoomTypeCartDemands',
-					ajax: true
-				},
-				success: function(response) {
-					if (response.status) {
-						$('#customer_cart_details').after(response.html_exta_demands);
-						// $('#rooms_type_extra_demands').find('#room_type_demands_desc').html('');
-						// $('#rooms_type_extra_demands').find('#room_type_demands_desc').append(response.html_exta_demands);
-						$('#rooms_type_extra_demands').modal('show');
-					}
-				},
-			});
-		});
-		$(document).on('hidden.bs.modal', '#rooms_type_extra_demands', function (e) {
-			// reload to make changes reflect everywhere
-			location.reload();
-		});
-
-		// select/unselect extra demand
-		$(document).on('click', '.id_room_type_demand', function() {
-			var roomDemands = [];
-			// get the selected extra demands by customer
-			$(this).closest('.room_demand_detail').find('input:checkbox.id_room_type_demand:checked').each(function () {
-				roomDemands.push({
-					'id_global_demand':$(this).val(),
-					'id_option': $(this).closest('.room_demand_block').find('.id_option').val()
-				});
-			});
-			var idBookingCart = $(this).attr('id_cart_booking');
-			$.ajax({
-				type: 'POST',
-				dataType: 'JSON',
-				headers: {
-					"cache-control": "no-cache"
-				},
-				url: "{$link->getAdminLink('AdminCarts')|addslashes}",
-				dataType: 'JSON',
-				cache: false,
-				data: {
-					id_cart_booking: idBookingCart,
-					room_demands: JSON.stringify(roomDemands),
-					action: 'changeRoomDemands',
-					ajax: true
-				},
-				success: function(response) {
-					if (response.status) {
-						showSuccessMessage(txtExtraDemandSucc);
-					} else {
-						showErrorMessage(txtExtraDemandErr);
-					}
-				}
-			});
-		});
-
-		// change advanced option of extra demand
-		$(document).on('change', '.demand_adv_option_block .id_option', function(e) {
-			var option_selected = $(this).find('option:selected');
-			var extra_demand_price = option_selected.attr("optionPrice")
-			extra_demand_price = parseFloat(extra_demand_price);
-			extra_demand_price = formatCurrency(extra_demand_price, currency_format, currency_sign, currency_blank);
-			$(this).closest('.room_demand_block').find('.extra_demand_option_price').text(extra_demand_price);
-			var roomDemands = [];
-			if ($(this).closest('.room_demand_block').find('input:checkbox.id_room_type_demand').is(':checked')) {
-				// get the selected extra demands by customer
-				$(this).closest('.room_demand_detail').find('input:checkbox.id_room_type_demand:checked').each(function () {
-					roomDemands.push({
-						'id_global_demand':$(this).val(),
-						'id_option': $(this).closest('.room_demand_block').find('.id_option').val()
-					});
-				});
-				var idBookingCart = $(this).closest('.room_demand_block').find('.id_room_type_demand').attr('id_cart_booking');
-				$.ajax({
-					type: 'POST',
-					dataType: 'JSON',
-					headers: {
-						"cache-control": "no-cache"
-					},
-					url: "{$link->getAdminLink('AdminCarts')|addslashes}",
-					dataType: 'JSON',
-					cache: false,
-					data: {
-						id_cart_booking: idBookingCart,
-						room_demands: JSON.stringify(roomDemands),
-						action: 'changeRoomDemands',
-						ajax: true
-					},
-					success: function(response) {
-						if (response.status) {
-							showSuccessMessage(txtExtraDemandSucc);
-						} else {
-							showErrorMessage(txtExtraDemandErr);
-						}
-					}
-				});
-			}
-		});
-
-		$(document).on('click', '.change_room_type_service_product', function() {
-			updateServiceProducts(this);
-		});
-
-		$(document).on('focusout', '#rooms_type_extra_demands .qty', function(e) {
-			var qty_wntd = $(this).val();
-			if (qty_wntd == '' || !$.isNumeric(qty_wntd)) {
-				$(this).val(1);
-			}
-			if ($(this).closest('.room_demand_block').find('.change_room_type_service_product').is(':checked')) {
-				updateServiceProducts($(this).closest('.room_demand_block').find('.change_room_type_service_product'));
-			}
-		});
-
-		$(document).on('keyup', '#payment_module_name', function() {
-			let paymentMethod = $('#payment_module_name').val().trim().toLowerCase();
-
-			let selectedMethod;
-			$('#payment_module_name_list option').each(function (index, element) {
-				if ($(element).attr('data-name').toLowerCase() == paymentMethod
-					|| $(element).val().toLowerCase() == paymentMethod
-				) {
-					selectedMethod = element;
-				}
-			});
-
-			if ($(selectedMethod).length) {
-				// set Payment source
-				let paymentType = $(selectedMethod).attr('data-payment-type');
-				if ($('select#payment_type option[value="' + paymentType + '"]').length) {
-					$('#payment_type').val(paymentType);
-				}
-			}
-		});
-
-		$(document).on('change', 'input[name="is_full_payment"]', function() {
-			if (parseInt($('input[name="is_full_payment"]:checked').val())) {
-				$('#payment_amount').attr('disabled', true);
-
-				$('#payment_type, #payment_transaction_id').closest('.form-group').show(200);
-			} else {
-				$('#payment_amount').attr('disabled', false);
-
-				managePaymentOptions();
-			}
-		});
-
-		$(document).on('keyup', '#payment_amount', function() {
-			managePaymentOptions();
-		});
-
-		function managePaymentOptions() {
-			let paymentAmount = parseFloat($('#payment_amount').val().trim());
-
-			if (paymentAmount != 0) {
-				$('#payment_type, #payment_transaction_id').closest('.form-group').show(200);
-			} else {
-				$('#payment_type, #payment_transaction_id').closest('.form-group').hide(200);
-			}
-		}
-
-		$(document).on('change', '.room_type_service_product_qty', function(e) {
-			let quantityInputField = this;
-			let maximumQuantity = parseInt($(quantityInputField).attr('data-max-quantity'));
-			let currentQuantity = parseInt($(quantityInputField).val());
-			if (currentQuantity > maximumQuantity) {
-				$(quantityInputField).siblings('p').show();
-			} else {
-				$(quantityInputField).siblings('p').hide();
-			}
-		});
-
-		function updateServiceProducts(element)
-		{
-			var operator = $(element).is(':checked') ? 'up' : 'down';
-			var id_product = $(element).val();
-			var id_cart_booking = $(element).data('id_cart_booking');
-			var qty = $(element).closest('.room_demand_block').find('input.qty').val();
-			if (typeof(qty) == 'undefined') {
-				qty = 1;
-			}
-			$.ajax({
-				type: 'POST',
-				headers: {
-					"cache-control": "no-cache"
-				},
-				url: "{$link->getAdminLink('AdminOrders')|addslashes}",
-				dataType: 'JSON',
-				cache: false,
-				data: {
-					operator: operator,
-					id_product: id_product,
-					id_cart_booking: id_cart_booking,
-					qty: qty,
-					action: 'updateServiceProduct',
-					ajax: true
-				},
-				success: function(jsonData) {
-					if (!jsonData.hasError) {
-						showSuccessMessage(txtExtraDemandSucc);
-					} else {
-						showErrorMessage(jsonData.errors);
-
-					}
-				}
-			});
-
-		}
-	});
 </script>
 
 <div class="leadin">{block name="leadin"}{/block}</div>
@@ -1820,7 +1272,7 @@
 		</div> -->*}<!-- by webkul to hide unnessesary content -->
 	</div>
 
-<form class="form-horizontal" action="{$link->getAdminLink('AdminOrders')|escape:'html':'UTF-8'}&amp;submitAdd{$table|escape:'html':'UTF-8'}=1" method="post" style="display:none" id="cart_detail_form">
+<form class="form-horizontal" action="{$link->getAdminLink('AdminOrders')|escape:'html':'UTF-8'}&amp;submitAdd{$table|escape:'html':'UTF-8'}=1" method="post" autocomplete="off" style="display:none" id="cart_detail_form">
 	<div class="panel" id="products_part" style="display:none;">
 		<div class="panel-heading">
 			<i class="icon-shopping-cart"></i>
@@ -2121,21 +1573,15 @@
 				<div class="col-lg-2">
 					<div class="data-focus">
 						<span>{l s='Total rooms (Tax excl.)'}</span><br/>
-						<span id="total_rooms" class="size_l text-success"></span>
+						<span id="total_products" class="size_l text-success"></span>
 					</div>
 				</div>
-				{* <div class="col-lg-2">
+				<div class="col-lg-2">
 					<div class="data-focus">
-						<span>{l s='Total extra services (Tax excl.)'}</span><br/>
-						<span id="total_extra_services" class="size_l text-success"></span>
+						<span>{l s='Total additinal facilties (Tax excl.)'}</span><br/>
+						<span id="total_extra_demands" class="size_l text-success"></span>
 					</div>
-				</div> *}
-				{* <div class="col-lg-2">
-					<div class="data-focus">
-						<span>{l s='Total Total service products (Tax excl.)'}</span><br/>
-						<span id="total_service_products" class="size_l text-success"></span>
-					</div>
-				</div> *}
+				</div>
 				<div class="col-lg-2">
 					<div class="data-focus">
 						<span>{l s='Total vouchers (Tax excl.)'}</span><br/>
@@ -2146,12 +1592,6 @@
 					<div class="data-focus">
 						<span>{l s='Total (Tax excl.)'}</span><br/>
 						<span id="total_without_taxes" class="size_l"></span>
-					</div>
-				</div>
-				<div class="col-lg-2">
-					<div class="data-focus">
-						<span>{l s='Convenience fees (Tax excl.)'}</span><br/>
-						<span id="total_convenience_fees" class="size_l"></span>
 					</div>
 				</div>
 				<div class="col-lg-2">
@@ -2177,7 +1617,7 @@
 						<textarea name="order_message" id="order_message" rows="3" cols="45"></textarea>
 					</div>
 				</div>
-				<div class="form-group" {if $order_total <= 0}style="display: none;"{/if}>
+				<div class="form-group">
 					{if !$PS_CATALOG_MODE}
 					<div class="col-lg-9 col-lg-offset-3">
 						<a href="javascript:void(0);" id="send_email_to_customer" class="btn btn-default">
@@ -2191,65 +1631,28 @@
 					</div>
 					{/if}
 				</div>
-				{if isset($smarty.post.is_full_payment)}
-					{assign var=is_full_payment value=((bool) $smarty.post.is_full_payment)}
-				{else}
-					{assign var=is_full_payment value=true}
-				{/if}
-				<div class="form-group" {if $order_total <= 0}style="display: none;"{/if}>
-					<label class="control-label col-lg-3">{l s="Full payment"}</label>
+				<div class="form-group">
+					<label class="control-label col-lg-3">{l s='Payment'}</label>
 					<div class="col-lg-9">
-						<span class="switch prestashop-switch fixed-width-lg">
-							<input type="radio" name="is_full_payment" id="is_full_payment_on" value="1" {if $is_full_payment}checked="checked"{/if}>
-							<label for="is_full_payment_on">{l s="Yes"}</label>
-							<input type="radio" name="is_full_payment" id="is_full_payment_off" value="0" {if !$is_full_payment}checked="checked"{/if}>
-							<label for="is_full_payment_off">{l s="No"}</label>
-							<a class="slide-button btn"></a>
-						</span>
-						<p class="help-block">{l s='Keep this option enabled for full payment and disable it to take partial payment of the booking.'}</p>
-					</div>
-				</div>
-				<div class="form-group" {if $order_total <= 0}style="display: none;"{/if}>
-					<label class="control-label required col-lg-3">{l s='Payment amount'}</label>
-					<div class="col-lg-9">
-						<div class="input-group fixed-width-xxl">
-							<span class="input-group-addon">{$currency->sign}</span>
-							<input type="text" name="payment_amount" id="payment_amount" value="{if isset($smarty.post.payment_amount)}{$smarty.post.payment_amount|escape:'html':'UTF-8'}{elseif $is_full_payment}{$order_total}{/if}" {if $is_full_payment}disabled{/if} />
-						</div>
-						<p class="help-block" id="advance_payment_amount_block" {if isset($is_advance_payment_active) && $is_advance_payment_active}style="display: block;"{else}style="display: none;"{/if}>
-							<span>{l s='Advance payment amount: '}</span>
-							<span id="advance_payment_amount">{displayPrice price=$advance_payment_amount_with_tax currency=$currency->id}</span>
-						</p>
-					</div>
-				</div>
-				<div class="form-group" {if $order_total <= 0}style="display: none;"{/if}>
-					<label class="control-label col-lg-3">{l s='Payment source'}</label>
-					<div class="col-lg-9">
-						<select class="fixed-width-xxl" name="payment_type" id="payment_type">
-							{foreach from=$payment_types item=payment_type}
-								<option value="{$payment_type.value}" {if isset($smarty.post.payment_type) && $payment_type.value == $smarty.post.payment_type}selected="selected"{/if}>
-									{$payment_type.name}
-								</option>
+						<select name="payment_module_name" id="payment_module_name">
+							{if !$PS_CATALOG_MODE}
+							{foreach from=$payment_modules item='module'}
+								<option value="{$module->name}" {if isset($smarty.post.payment_module_name) && $module->name == $smarty.post.payment_module_name}selected="selected"{/if}>{$module->displayName}</option>
 							{/foreach}
+							{else}
+								<option value="boorder">{l s='Back office order'}</option>
+							{/if}
 						</select>
 					</div>
 				</div>
-				<div class="form-group" {if $order_total <= 0}style="display: none;"{/if}>
-					<label class="control-label col-lg-3 required">{l s='Payment method'}</label>
+				<div class="form-group">
+					<label class="control-label col-lg-3">{l s='Order status'}</label>
 					<div class="col-lg-9">
-						<input name="payment_module_name" id="payment_module_name" list="payment_module_name_list" class="form-control fixed-width-xxl" {if isset($smarty.post.payment_module_name) && $smarty.post.payment_module_name}value="{$smarty.post.payment_module_name|escape:'html':'UTF-8'}"{/if}>
-						<datalist id="payment_module_name_list">
-							{foreach from=$payment_modules item=payment_module}
-								<option value="{$payment_module->displayName}" data-name="{$payment_module->name}" data-payment-type="{$payment_module->payment_type}">
+						<select name="id_order_state" id="id_order_state">
+							{foreach from=$order_states item='order_state'}
+								<option value="{$order_state.id_order_state}" {if isset($smarty.post.id_order_state) && $order_state.id_order_state == $smarty.post.id_order_state}selected="selected"{/if}>{$order_state.name}</option>
 							{/foreach}
-						</datalist>
-						<p class="help-block">{l s='Select or type the payment method using which payment for booking will be made.'}</p>
-					</div>
-				</div>
-				<div class="form-group" {if $order_total <= 0}style="display: none;"{/if}>
-					<label class="control-label col-lg-3">{l s='Transaction ID'}</label>
-					<div class="col-lg-9">
-						<input type="text" class="fixed-width-xxl" name="payment_transaction_id" id="payment_transaction_id" value="{if isset($smarty.post.payment_transaction_id)}{$smarty.post.payment_transaction_id}{/if}" />
+						</select>
 					</div>
 				</div>
 				<div class="form-group">
@@ -2264,29 +1667,6 @@
 		</div>
 	</div>
 </form>
-{strip}
-	{addJsDef max_child_age=$max_child_age}
-	{addJsDef max_child_in_room=$max_child_in_room}
-	{addJsDefL name='select_age_txt'}{l s='Select age' js=1}{/addJsDefL}
-	{addJsDefL name='under_1_age'}{l s='Under 1' js=1}{/addJsDefL}
-	{addJsDefL name='room_txt'}{l s='Room' js=1}{/addJsDefL}
-	{addJsDefL name='rooms_txt'}{l s='Rooms' js=1}{/addJsDefL}
-	{addJsDefL name='remove_txt'}{l s='Remove' js=1}{/addJsDefL}
-	{addJsDefL name='adult_txt'}{l s='Adult' js=1}{/addJsDefL}
-	{addJsDefL name='adults_txt'}{l s='Adults' js=1}{/addJsDefL}
-	{addJsDefL name='child_txt'}{l s='Child' js=1}{/addJsDefL}
-	{addJsDefL name='children_txt'}{l s='Children' js=1}{/addJsDefL}
-	{addJsDefL name='below_txt'}{l s='Below' js=1}{/addJsDefL}
-	{addJsDefL name='years_txt'}{l s='years' js=1}{/addJsDefL}
-	{addJsDefL name='all_children_txt'}{l s='All Children' js=1}{/addJsDefL}
-	{addJsDefL name='max_occupancy_reached_txt'}{l s='Maximum room occupancy reached' js=1}{/addJsDefL}
-	{addJsDefL name='max_adults_txt'}{l s='Maximum adult occupancy reached' js=1}{/addJsDefL}
-	{addJsDefL name='max_children_txt'}{l s='Maximum children occupancy reached' js=1}{/addJsDefL}
-	{addJsDefL name='no_children_allowed_txt'}{l s='Only adults can be accommodated' js=1}{/addJsDefL}
-	{addJsDefL name='invalid_occupancy_txt'}{l s='Invalid occupancy(adults/children) found.' js=1}{/addJsDefL}
-
-
-{/strip}
 
 <div id="loader_container">
 	<div id="loader"></div>

@@ -97,7 +97,7 @@ class OrderHistoryCore extends ObjectModel
         $old_os = $order->getCurrentOrderState();
 
         // executes hook
-        if (in_array($new_os->id, array(Configuration::get('PS_OS_PAYMENT_ACCEPTED'), Configuration::get('PS_OS_WS_PAYMENT')))) {
+        if (in_array($new_os->id, array(Configuration::get('PS_OS_PAYMENT'), Configuration::get('PS_OS_WS_PAYMENT')))) {
             Hook::exec('actionPaymentConfirmation', array('id_order' => (int)$order->id), null, false, true, false, $order->id_shop);
         }
 
@@ -313,53 +313,39 @@ class OrderHistoryCore extends ObjectModel
 
         // set orders as paid
         if ($new_os->paid == 1) {
+            $invoices = $order->getInvoicesCollection();
             if ($order->total_paid != 0) {
-                // if order is created by API then create a direct object instead of creating an object from module
-                if ($order->module == 'wsorder') {
-                    $payment_method = new WebserviceOrder();
-                } else {
-                    $payment_method = Module::getInstanceByName($order->module);
-                }
+                $payment_method = Module::getInstanceByName($order->module);
             }
 
-            // if order has invoices then create payment entry for all the invoices
-            if ($invoices = $order->getInvoicesCollection()->getResults()) {
-                foreach ($invoices as $invoice) {
-                    /** @var OrderInvoice $invoice */
-                    $rest_paid = $invoice->getRestPaid();
-                    if ($rest_paid > 0) {
-                        if ($order->total_paid != 0) {
-                            $payment_method = $payment_method->displayName;
-                        } else {
-                            $payment_method = null;
-                        }
-                        $order->addOrderPayment(
-                            $rest_paid,
-                            $payment_method,
-                            null,
-                            null,
-                            null,
-                            $invoice
-                        );
-                    }
-                }
-            } else {
-                $rest_paid = $order->total_paid_tax_incl - $order->total_paid_real;
+            foreach ($invoices as $invoice) {
+                /** @var OrderInvoice $invoice */
+                $rest_paid = $invoice->getRestPaid();
                 if ($rest_paid > 0) {
+                    $payment = new OrderPayment();
+                    $payment->order_reference = Tools::substr($order->reference, 0, 9);
+                    $payment->id_currency = $order->id_currency;
+                    $payment->amount = $rest_paid;
+
                     if ($order->total_paid != 0) {
-                        $payment_method = $payment_method->displayName;
+                        $payment->payment_method = $payment_method->displayName;
                     } else {
-                        $payment_method = null;
+                        $payment->payment_method = null;
                     }
 
-                    $order->addOrderPayment(
-                        $rest_paid,
-                        $payment_method,
-                        null,
-                        null,
-                        null,
-                        null
-                    );
+                    // Update total_paid_real value for backward compatibility reasons
+                    if ($payment->id_currency == $order->id_currency) {
+                        $order->total_paid_real += $payment->amount;
+                    } else {
+                        $order->total_paid_real += Tools::ps_round(Tools::convertPrice($payment->amount, $payment->id_currency, false), 2);
+                    }
+                    $order->save();
+
+                    $payment->conversion_rate = ($order ? $order->conversion_rate : 1);
+                    $payment->save();
+                    Db::getInstance()->execute('
+					INSERT INTO `'._DB_PREFIX_.'order_invoice_payment` (`id_order_invoice`, `id_order_payment`, `id_order`)
+					VALUES('.(int)$invoice->id.', '.(int)$payment->id.', '.(int)$order->id.')');
                 }
             }
         }
@@ -424,7 +410,7 @@ class OrderHistoryCore extends ObjectModel
     public function sendEmail($order, $template_vars = false)
     {
         $result = Db::getInstance()->getRow('
-			SELECT osl.`template`, c.`lastname`, c.`firstname`, osl.`name` AS osname, c.`email`, o.`module` as `module_name`, os.`id_order_state`, os.`pdf_invoice`, os.`pdf_delivery`
+			SELECT osl.`template`, c.`lastname`, c.`firstname`, osl.`name` AS osname, c.`email`, os.`module_name`, os.`id_order_state`, os.`pdf_invoice`, os.`pdf_delivery`
 			FROM `'._DB_PREFIX_.'order_history` oh
 				LEFT JOIN `'._DB_PREFIX_.'orders` o ON oh.`id_order` = o.`id_order`
 				LEFT JOIN `'._DB_PREFIX_.'customer` c ON o.`id_customer` = c.`id_customer`
@@ -439,44 +425,13 @@ class OrderHistoryCore extends ObjectModel
                 '{lastname}' => $result['lastname'],
                 '{firstname}' => $result['firstname'],
                 '{id_order}' => (int)$this->id_order,
-                '{order_name}' => $order->getUniqReference(),
-                '{total_paid_real}' => Tools::displayPrice($order->total_paid_real, (int)$order->id_currency),
-                '{is_advance_payment}' => $order->is_advance_payment,
-                '{advance_paid_amount}' => Tools::displayPrice($order->advance_paid_amount, (int)$order->id_currency),
-                '{extra_mail_content_html}' => '',
-                '{extra_mail_content_txt}' => '',
-                '{payment_method}' => '',
+                '{order_name}' => $order->getUniqReference()
             );
 
-            if ($idHotel = HotelBookingDetail::getIdHotelByIdOrder($order->id)) {
-                $objHotelBranchInformation = new HotelBranchInformation($idHotel);
-                $fields = array_merge(
-                    $objHotelBranchInformation->getFields(),
-                    $objHotelBranchInformation->getFieldsLang()[$order->id_lang],
-                    $objHotelBranchInformation->getAddress($idHotel, $order->id_lang)
-                );
-                foreach ($fields as $key => $value) {
-                    $data['{hotel_'.$key.'}'] = $value;
-                }
-                $objHotelBookingDetail = new HotelBookingDetail();
-                $hotelBookingDetail = $objHotelBookingDetail->getBookingDataByOrderId($order->id);
-                $data['{num_rooms}'] = count($hotelBookingDetail);
-            }
-
             if ($result['module_name']) {
-                if (Validate::isLoadedObject($module = Module::getInstanceByName($result['module_name']))) {
-                    $data['{payment_method}'] = $module->displayName;
-                    // if any modle need to send extra content in mail, that module need to implement this function
-                    // this function should return an array with content for both html and txt mail template
-                    // return  array('{extra_mail_content_html}' => '', '{extra_mail_content_txt}' => '')
-                    if (method_exists($module, 'getExtraMailContent')) {
-                        if (is_array($extra_mail_content = $module->getExtraMailContent(
-                            $result['id_order_state'],
-                            $order
-                        ))) {
-                            $data = array_merge($data, $extra_mail_content);
-                        }
-                    }
+                $module = Module::getInstanceByName($result['module_name']);
+                if (Validate::isLoadedObject($module) && isset($module->extra_mail_vars) && is_array($module->extra_mail_vars)) {
+                    $data = array_merge($data, $module->extra_mail_vars);
                 }
             }
 

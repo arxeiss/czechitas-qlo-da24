@@ -13,7 +13,7 @@
 	font-size: 1.3em !important
 	position: relative
 	height: 36px
-	background: url('#{$img-path}/qloapps-back-office-header.png') no-repeat top left
+	background: url('#{$img-path}/prestashop-avatar-header_shopname.png') no-repeat top left
 	background-size: auto 36px
 	padding-left: 140px !important
 	@include margin(0, 5px, 0, 0)
@@ -117,6 +117,19 @@
 			padding: 9px 0
 			color: $brand-warning
 #employee_infos
+	.employee_name
+		position: relative
+		@include ltr
+			padding-right: 40px !important
+		@include rtl
+			padding-left: 40px !important
+	.employee_avatar_small
+		.img-thumbnail
+			@include border-radius(0)
+		@include avatar(36px, 0px)
+		position: absolute
+		top: 0px
+		@include right(0)
 	img
 		border: none
 		padding: 0

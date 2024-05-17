@@ -38,12 +38,11 @@ class AdminAddHotelController extends ModuleAdminController
 
         $this->_join .= 'LEFT JOIN `'._DB_PREFIX_.'htl_branch_info_lang` hbl
         ON (a.id = hbl.id AND hbl.`id_lang` = '.(int) $this->context->language->id.')';
-        $this->_join .= 'LEFT JOIN `'._DB_PREFIX_.'address` aa ON (aa.`id_hotel` = a.`id`)';
-        $this->_join .= 'LEFT JOIN `'._DB_PREFIX_.'state` s ON (s.`id_state` = aa.`id_state`)';
+        $this->_join .= 'LEFT JOIN `'._DB_PREFIX_.'state` s ON (s.`id_state` = a.`state_id`)';
         $this->_join .= 'LEFT JOIN `'._DB_PREFIX_.'country_lang` cl
-        ON (cl.`id_country` = aa.`id_country` AND cl.`id_lang` = '.(int) $this->context->language->id.')';
+        ON (cl.`id_country` = a.`country_id` AND cl.`id_lang` = '.(int) $this->context->language->id.')';
 
-        $this->_select = ' hbl.`hotel_name`, aa.`city`, s.`name` as `state_name`, cl.`name` as country_name';
+        $this->_select = ' hbl.`hotel_name`, s.`name` as `state_name`, cl.`name` as country_name';
 
         $this->fields_list = array(
             'id' => array(
@@ -112,7 +111,7 @@ class AdminAddHotelController extends ModuleAdminController
         $smartyVars['lang'] = true;
         $smartyVars['iso'] = $this->context->language->iso_code;
         //lang vars
-        $currentLangId = $this->default_form_language ? $this->default_form_language : Configuration::get('PS_LANG_DEFAULT');
+        $currentLangId = Configuration::get('PS_LANG_DEFAULT');
         $smartyVars['languages'] = Language::getLanguages(false);
         $smartyVars['currentLang'] = Language::getLanguage((int) $currentLangId);
 
@@ -124,25 +123,27 @@ class AdminAddHotelController extends ModuleAdminController
         $country = $this->context->country;
         $smartyVars['defaultCountry'] = $country->name[Configuration::get('PS_LANG_DEFAULT')];
 
-        $idCountry = null;
         if ($this->display == 'edit') {
             $idHotel = Tools::getValue('id');
-            $hotelBranchInfo = new HotelBranchInformation($idHotel);
-            $objCategory = new Category($hotelBranchInfo->id_category);
+            $hotelBranchInfo = (array) (new HotelBranchInformation($idHotel));
 
-            $addressInfo = HotelBranchInformation::getAddress($idHotel);
-            $idCountry = Tools::getValue('hotel_country', $addressInfo['id_country']);
+            $statesbycountry = State::getStatesByIdCountry($hotelBranchInfo['country_id']);
 
+            $states = array();
+            if ($statesbycountry) {
+                foreach ($statesbycountry as $key => $value) {
+                    $states[$key]['id'] = $value['id_state'];
+                    $states[$key]['name'] = $value['name'];
+                }
+            }
             $smartyVars['edit'] =  1;
-            $smartyVars['address_info'] = $addressInfo;
-            $smartyVars['hotel_info'] = (array) $hotelBranchInfo;
-            $smartyVars['link_rewrite_info'] = $objCategory->link_rewrite;
+            $smartyVars['state_var'] =  $states;
+            $smartyVars['hotel_info'] =  $hotelBranchInfo;
             //Hotel Images
             $objHotelImage = new HotelImage();
-            if ($hotelAllImages = $objHotelImage->getImagesByHotelId($idHotel)) {
+            if ($hotelAllImages = $objHotelImage->getAllImagesByHotelId($idHotel)) {
                 foreach ($hotelAllImages as &$image) {
-                    $image['image_link'] = $this->context->link->getMediaLink($objHotelImage->getImageLink($image['id'],ImageType::getFormatedName('large')));
-                    $image['image_link_small'] = $this->context->link->getMediaLink($objHotelImage->getImageLink($image['id'], ImageType::getFormatedName('small')));
+                    $image['image_link'] = $this->context->link->getMediaLink(_MODULE_DIR_.$this->module->name.'/views/img/hotel_img/'.$image['hotel_image_id'].'.jpg');
                 }
                 $smartyVars['hotelImages'] =  $hotelAllImages;
             }
@@ -158,30 +159,9 @@ class AdminAddHotelController extends ModuleAdminController
                     $smartyVars['hotelRefundRules'] =  array_column($hotelRefundRules, 'id_refund_rule');
                 }
             }
-
-            $restrictDateInfo = HotelOrderRestrictDate::getDataByHotelId($idHotel);
-            if ($restrictDateInfo) {
-                if ($restrictDateInfo['max_order_date'] == '0000-00-00') {
-                    $restrictDateInfo['max_order_date'] = date('d-m-Y', strtotime('1 year'));
-                } else {
-                    $restrictDateInfo['max_order_date'] = date('d-m-Y', strtotime($restrictDateInfo['max_order_date']));
-                }
-            }
-            $smartyVars['order_restrict_date_info'] = $restrictDateInfo;
         }
 
-        // manage state option
-        if ($this->display == 'add') {
-            $idCountry = Tools::getValue('hotel_country');
-        }
-
-        $stateOptions = null;
-        if ($idCountry) {
-            $stateOptions = State::getStatesByIdCountry($idCountry);
-        }
-
-        $smartyVars['state_var'] = $stateOptions;
-        $smartyVars['enabledDisplayMap'] = Configuration::get('PS_API_KEY') && Configuration::get('WK_GOOGLE_ACTIVE_MAP');
+        $smartyVars['enabledDisplayMap'] =  Configuration::get('WK_GOOGLE_ACTIVE_MAP');
         $smartyVars['ps_img_dir'] = _PS_IMG_.'l/';
 
         $this->context->smarty->assign($smartyVars);
@@ -189,7 +169,6 @@ class AdminAddHotelController extends ModuleAdminController
         Media::addJsDef(
             array(
                 'img_dir_l' => _PS_IMG_.'l/',
-                'PS_ALLOW_ACCENTED_CHARS_URL' => (int) Configuration::get('PS_ALLOW_ACCENTED_CHARS_URL'),
             )
         );
         $this->fields_form = array(
@@ -215,15 +194,10 @@ class AdminAddHotelController extends ModuleAdminController
         $address = Tools::getValue('address');
         $active = Tools::getValue('ENABLE_HOTEL');
         $activeRefund = Tools::getValue('active_refund');
-        $enableUseGlobalMaxOrderDate = Tools::getValue('enable_use_global_max_order_date');
-        $maximumBookingDate = Tools::getValue('maximum_booking_date');
-        $enableUseGlobalPreparationTime = Tools::getValue('enable_use_global_preparation_time');
-        $preparationTime = Tools::getValue('preparation_time');
         $latitude = Tools::getValue('loclatitude');
         $longitude = Tools::getValue('loclongitude');
         $map_formated_address = Tools::getValue('locformatedAddr');
         $map_input_text = Tools::getValue('googleInputField');
-
         // check if field is atleast in default language. Not available in default prestashop
         $defaultLangId = Configuration::get('PS_LANG_DEFAULT');
         $objDefaultLanguage = Language::getLanguage((int) $defaultLangId);
@@ -256,21 +230,6 @@ class AdminAddHotelController extends ModuleAdminController
                 }
             }
         }
-
-        // validate Friendly URL values
-        if (!trim(Tools::getValue('link_rewrite_'.$defaultLangId))) {
-            $this->errors[] = $this->l('Friendly URL is required at least in ').
-            $objDefaultLanguage['name'];
-        } else {
-            foreach ($languages as $lang) {
-                if (trim(Tools::getValue('link_rewrite_'.$lang['id_lang']))) {
-                    if (!Validate::isLinkRewrite(Tools::getValue('link_rewrite_'.$lang['id_lang']))) {
-                        $this->errors[] = $this->l('Invalid Friendly URL in ').$lang['name'];
-                    }
-                }
-            }
-        }
-
         if (!$phone) {
             $this->errors[] = $this->l('Phone number is required field.');
         } elseif (!Validate::isPhoneNumber($phone)) {
@@ -286,11 +245,9 @@ class AdminAddHotelController extends ModuleAdminController
         if ($check_in == '') {
             $this->errors[] = $this->l('Check In time is required field.');
         }
+
         if ($check_out == '') {
             $this->errors[] = $this->l('Check Out Time is required field.');
-        }
-        if ($check_in && $check_out && strtotime($check_out) > strtotime($check_in)) {
-            $this->errors[] = $this->l('Check Out time must be before Check In time.');
         }
 
         if (!$rating) {
@@ -329,27 +286,6 @@ class AdminAddHotelController extends ModuleAdminController
             $this->errors[] = $this->l('Enter a Valid City Name.');
         }
 
-        if ($idHotel) {
-            if (!$enableUseGlobalMaxOrderDate) {
-                $maximumBookingDateFormatted = date('Y-m-d', strtotime($maximumBookingDate));
-                if ($maximumBookingDate == '') {
-                    $this->errors[] = $this->l('Maximum Check-out Date to book a room is a required field.');
-                } elseif (!Validate::isDate($maximumBookingDateFormatted)) {
-                    $this->errors[] = $this->l('Maximum Check-out Date to book a room is invalid.');
-                } elseif (strtotime($maximumBookingDateFormatted) < strtotime(date('Y-m-d'))) {
-                    $this->errors[] = $this->l('Maximum Check-out Date to book a room can not be a past date. Please use a future date.');
-                }
-            }
-
-            if (!$enableUseGlobalPreparationTime) {
-                if ($preparationTime === '') {
-                    $this->errors[] = $this->l('Preparation time is a required field.');
-                } elseif ($preparationTime !== '0' && !Validate::isUnsignedInt($preparationTime)) {
-                    $this->errors[] = $this->l('Preparation time is invalid.');
-                }
-            }
-        }
-
         if (!count($this->errors)) {
             if ($idHotel) {
                 $objHotelBranch = new HotelBranchInformation($idHotel);
@@ -375,7 +311,6 @@ class AdminAddHotelController extends ModuleAdminController
 
             // lang fields
             $hotelCatName = array();
-            $linkRewriteArray = array();
             foreach ($languages as $lang) {
                 if (!trim(Tools::getValue('hotel_name_'.$lang['id_lang']))) {
                     $objHotelBranch->hotel_name[$lang['id_lang']] = Tools::getValue(
@@ -384,16 +319,6 @@ class AdminAddHotelController extends ModuleAdminController
                 } else {
                     $objHotelBranch->hotel_name[$lang['id_lang']] = Tools::getValue(
                         'hotel_name_'.$lang['id_lang']
-                    );
-                }
-
-                if (!trim(Tools::getValue('link_rewrite_'.$lang['id_lang']))) {
-                    $linkRewriteArray[$lang['id_lang']] = Tools::getValue(
-                        'link_rewrite_'.$defaultLangId
-                    );
-                } else {
-                    $linkRewriteArray[$lang['id_lang']] = Tools::getValue(
-                        'link_rewrite_'.$lang['id_lang']
                     );
                 }
 
@@ -440,10 +365,16 @@ class AdminAddHotelController extends ModuleAdminController
                     );
                 }
             }
+            $objHotelBranch->phone = $phone;
             $objHotelBranch->email = $email;
             $objHotelBranch->check_in = $check_in;
             $objHotelBranch->check_out = $check_out;
             $objHotelBranch->rating = $rating;
+            $objHotelBranch->city = $city;
+            $objHotelBranch->state_id = $state;
+            $objHotelBranch->country_id = $country;
+            $objHotelBranch->zipcode = $zipcode;
+            $objHotelBranch->address = $address;
             $objHotelBranch->latitude = $latitude;
             $objHotelBranch->longitude = $longitude;
             $objHotelBranch->map_formated_address = $map_formated_address;
@@ -454,40 +385,6 @@ class AdminAddHotelController extends ModuleAdminController
             $categsBeforeUpd = $objHotelBranch->getAllHotelCategories();
 
             if ($newIdHotel = $objHotelBranch->id) {
-
-                if ($primaryHotelId = Configuration::get('WK_PRIMARY_HOTEL')) {
-                    if ($primaryHotelId == $objHotelBranch->id && !$objHotelBranch->active) {
-                        $hotels = $objHotelBranch->hotelBranchesInfo(false, 1);
-                        if (!empty($hotel = array_shift($hotels))) {
-                            Configuration::updateValue('WK_PRIMARY_HOTEL', $objHotelBranch['id']);
-                        } else {
-                            $newPrimaryHotelId = Configuration::updateValue('WK_PRIMARY_HOTEL', 0);
-                        }
-                    }
-                } else if ($objHotelBranch->active) {
-                    Configuration::updateValue('WK_PRIMARY_HOTEL', $objHotelBranch->id);
-                }
-                // getHotel address
-                if ($idHotelAddress = $objHotelBranch->getHotelIdAddress()) {
-                $objAddress = new Address($idHotelAddress);
-                } else {
-                    $objAddress = new Address();
-                }
-                $objAddress->id_hotel = $newIdHotel;
-                $objAddress->id_country = $country;
-                $objAddress->id_state = $state;
-                $objAddress->city = $city;
-                $objAddress->postcode = $zipcode;
-                $hotelName = $objHotelBranch->hotel_name[$defaultLangId];
-                $objAddress->alias = $hotelName;
-                $hotelName = preg_replace('/[0-9!<>,;?=+()@#"°{}_$%:]*$/u', '', $hotelName);
-                $objAddress->lastname = $hotelName;
-                $objAddress->firstname = $hotelName;
-                $objAddress->address1 = $address;
-                $objAddress->phone = $phone;
-
-                $objAddress->save();
-
                 // Save refund rules of the hotels
                 if ($hotelRefundRules = Tools::getValue('htl_refund_rules')) {
                     foreach ($hotelRefundRules as $key => $idRefundRule) {
@@ -530,21 +427,12 @@ class AdminAddHotelController extends ModuleAdminController
                     if ($catState) {
                         if ($catCity = $objHotelBranch->addCategory($city, $catState, $groupIds)) {
                             $hotelCatName = $objHotelBranch->hotel_name;
-                            // add/update hotel category
-                            if ($objHotelBranch->id_category) {
-                                $objCategory = new Category($objHotelBranch->id_category);
-                                $objCategory->name = $objHotelBranch->hotel_name;
-                                $objCategory->id_parent = $catCity;
-                                $objCategory->save();
-                                Category::regenerateEntireNtree();
-                            } else {
-                                if ($catHotel = $objHotelBranch->addCategory(
-                                    $hotelCatName, $catCity, $groupIds, 1, $newIdHotel, $linkRewriteArray
-                                )) {
-                                    $objHotelBranch = new HotelBranchInformation($newIdHotel);
-                                    $objHotelBranch->id_category = $catHotel;
-                                    $objHotelBranch->save();
-                                }
+                            if ($catHotel = $objHotelBranch->addCategory(
+                                $hotelCatName, $catCity, $groupIds, 1, $newIdHotel
+                            )) {
+                                $objHotelBranch = new HotelBranchInformation($newIdHotel);
+                                $objHotelBranch->id_category = $catHotel;
+                                $objHotelBranch->save();
                             }
                         }
                     }
@@ -559,38 +447,12 @@ class AdminAddHotelController extends ModuleAdminController
                     foreach ($unusedCategs as $idCategory) {
                         if (!in_array($idCategory, $hotelCategories)
                             && $idCategory != Configuration::get('PS_HOME_CATEGORY')
-                            && $idCategory != Configuration::get('PS_LOCATIONS_CATEGORY')
                         ) {
                             $objCategory = new Category($idCategory);
                             $objCategory->delete();
                         }
                     }
                 }
-            }
-
-            // update room types association after category update
-            $objHotelBranch->updateRoomTypeCategories();
-
-            if ($idHotel) {
-                // save maximum booking date and preparation time
-                $objHotelOrderRestrictDate = new HotelOrderRestrictDate();
-                $restrictDateInfo = HotelOrderRestrictDate::getDataByHotelId($newIdHotel);
-                if ($restrictDateInfo) {
-                    $objHotelOrderRestrictDate = new HotelOrderRestrictDate($restrictDateInfo['id']);
-                } else {
-                    $objHotelOrderRestrictDate = new HotelOrderRestrictDate();
-                }
-
-                $objHotelOrderRestrictDate->id_hotel = $newIdHotel;
-                $objHotelOrderRestrictDate->use_global_max_order_date = $enableUseGlobalMaxOrderDate;
-                if (!$enableUseGlobalMaxOrderDate) {
-                    $objHotelOrderRestrictDate->max_order_date = $maximumBookingDateFormatted;
-                }
-                $objHotelOrderRestrictDate->use_global_preparation_time = $enableUseGlobalPreparationTime;
-                if (!$enableUseGlobalPreparationTime) {
-                    $objHotelOrderRestrictDate->preparation_time = $preparationTime;
-                }
-                $objHotelOrderRestrictDate->save();
             }
 
             if (Tools::isSubmit('submitAdd'.$this->table.'AndStay')) {
@@ -619,46 +481,23 @@ class AdminAddHotelController extends ModuleAdminController
             $this->display = 'add';
         }
     }
-    public function processStatus()
-    {
-        parent::processStatus();
-        if (empty($this->errors)) {
-            if (Validate::isLoadedObject($objHotelBranch = new HotelBranchInformation(Tools::getValue('id')))) {
-                if ($primaryHotelId = Configuration::get('WK_PRIMARY_HOTEL')) {
-                    if ($primaryHotelId == $objHotelBranch->id && !$objHotelBranch->active) {
-                        $hotels = $objHotelBranch->hotelBranchesInfo(false, 1);
-                        if (!empty($hotel = array_shift($hotels))) {
-                            Configuration::updateValue('WK_PRIMARY_HOTEL', $hotel['id']);
-                        } else {
-                            $newPrimaryHotelId = Configuration::updateValue('WK_PRIMARY_HOTEL', 0);
-                        }
-                    }
-                } else {
-                    $hotels = $objHotelBranch->hotelBranchesInfo(false, 1);
-                    if (!empty($hotel = array_shift($hotels))) {
-                        Configuration::updateValue('WK_PRIMARY_HOTEL', $hotel['id']);
-                    }
-                }
-            }
-        }
-    }
 
     public function ajaxProcessStateByCountryId()
     {
-        $response = array('status' => false, 'states' => array());
+        $states = array();
         if ($idCountry = Tools::getValue('id_country')) {
-            if ($states = State::getStatesByIdCountry($idCountry)) {
-                $response['status'] = true;
-                $response['states'] = $states;
+            if ($statesbycountry = State::getStatesByIdCountry($idCountry)) {
+                foreach ($statesbycountry as $key => $value) {
+                    $states[$key]['id'] = $value['id_state'];
+                    $states[$key]['name'] = $value['name'];
+                }
             }
         }
-
-        $this->ajaxDie(json_encode($response));
+        die(Tools::jsonEncode($states));
     }
 
     public function ajaxProcessUploadHotelImages()
     {
-        $response = array('success' => false);
         $idHotel = Tools::getValue('id_hotel');
         if ($idHotel) {
             $invalidImg = ImageManager::validateUpload(
@@ -667,32 +506,28 @@ class AdminAddHotelController extends ModuleAdminController
             );
             if (!$invalidImg) {
                 // Add Hotel images
+                $kwargs = [
+                    'id_hotel' => $idHotel,
+                    'hotel_image' => $_FILES['hotel_image'],
+                ];
                 $objHotelImage = new HotelImage();
-                $imageDetail = $objHotelImage->uploadHotelImages($_FILES['hotel_image'], $idHotel);
+                $hotelImgPath = _PS_MODULE_DIR_.'hotelreservationsystem/views/img/hotel_img/';
+                $imageDetail = $objHotelImage->uploadHotelImages($_FILES['hotel_image'], $idHotel, $hotelImgPath);
                 if ($imageDetail) {
-                    $response['success'] = true;
-                    $imageDetail['image_link'] = $this->context->link->getMediaLink($objHotelImage->getImageLink($imageDetail['id'],ImageType::getFormatedName('large')));
-                    $imageDetail['image_link_small'] = $this->context->link->getMediaLink($objHotelImage->getImageLink($imageDetail['id'], ImageType::getFormatedName('small')));
-                    $response['data']['image_info'] = $imageDetail;
-                    // get image row
-                    $this->context->smarty->assign(array(
-                        'image' => $imageDetail,
-                        'hotel_info' => array('id' => $idHotel)
-                    ));
-                    $response['data']['image_row'] = $this->context->smarty->fetch(
-                        _PS_MODULE_DIR_.$this->module->name.
-                        '/views/templates/admin/add_hotel/_partials/htl-images-list-row.tpl'
-                    );
+                    die(Tools::jsonEncode($imageDetail));
                 } else {
-                    $response['errors'][] = $this->l('Unable to uploade image. Please try again');
+                    die(Tools::jsonEncode(array('hasError' => true)));
                 }
             } else {
-                $response['errors'][] = $_FILES['hotel_image']['name'].': '.$invalidImg;
+                die(
+                    Tools::jsonEncode(
+                        array('hasError' => true, 'message' => $_FILES['hotel_image']['name'].': '.$invalidImg)
+                    )
+                );
             }
         } else {
-            $response['errors'][] = $this->l('Hotel info not found. Please try reloading the page');
+            die(Tools::jsonEncode(array('hasError' => true)));
         }
-        $this->ajaxDie(json_encode($response));
     }
 
     public function ajaxProcessChangeCoverImage()
@@ -725,7 +560,7 @@ class AdminAddHotelController extends ModuleAdminController
                 if (Validate::isLoadedObject($objHtlImage = new HotelImage((int) $idImage))) {
                     if ($objHtlImage->delete()) {
                         if (!HotelImage::getCover($idHotel)) {
-                            $images = $objHtlImage->getImagesByHotelId($idHotel);
+                            $images = $objHtlImage->getAllImagesByHotelId($idHotel);
                             if ($images) {
                                 $objHtlImage = new HotelImage($images[0]['id']);
                                 $objHtlImage->cover = 1;
@@ -766,27 +601,31 @@ class AdminAddHotelController extends ModuleAdminController
         parent::setMedia();
 
         HotelHelper::assignDataTableVariables();
-        $this->context->controller->addJS(_PS_JS_DIR_.'/datatable/jquery.dataTables.min.js');
-        $this->context->controller->addJS(_PS_JS_DIR_.'/datatable/dataTables.bootstrap.js');
+        $this->context->controller->addJS(
+            _MODULE_DIR_.$this->module->name.'/libs/datatable/jquery.dataTables.min.js'
+        );
+        $this->context->controller->addJS(
+            _MODULE_DIR_.$this->module->name.'/libs/datatable/dataTables.bootstrap.js'
+        );
+        $this->context->controller->addCSS(
+            _MODULE_DIR_.$this->module->name.'/views/css/libs/datatable/datatable_bootstrap.css'
+        );
 
         Media::addJsDef(
             array(
-                'filesizeError' => $this->l('File exceeds maximum size.', null, true),
+                'filesizeError' => $this->l('File exceeds maximum size.'),
                 'maxSizeAllowed' => Tools::getMaxUploadSize(),
                 'sortRowsUrl' => $this->context->link->getAdminLink('AdminAddHotel'),
-                'primaryHotelId' => Configuration::get('WK_PRIMARY_HOTEL'),
-                'disableHotelMsg' => $this->l('Primary hotel for website will be updated to first available active hotel.', null, true),
             )
         );
         // GOOGLE MAP
         $language = $this->context->language;
         $country = $this->context->country;
-        if ($PS_API_KEY = Configuration::get('PS_API_KEY')) {
-            $this->addJS(
-                'https://maps.googleapis.com/maps/api/js?key='.$PS_API_KEY.'&libraries=places&language='.
-                $language->iso_code.'&region='.$country->iso_code
-            );
-        }
+        $PS_API_KEY = Configuration::get('PS_API_KEY');
+        $this->addJs(
+            'https://maps.googleapis.com/maps/api/js?key='.$PS_API_KEY.'&libraries=places&language='.
+            $language->iso_code.'&region='.$country->iso_code
+        );
         //tinymce
         $this->addJS(_PS_JS_DIR_.'tiny_mce/tiny_mce.js');
         if (version_compare(_PS_VERSION_, '1.6.0.11', '>')) {

@@ -34,26 +34,11 @@ class OrderCore extends ObjectModel
     const ORDER_PAYMENT_TYPE_FULL = 1;
     const ORDER_PAYMENT_TYPE_ADVANCE = 2;
 
-    // actions when overbooking will be created
-    const OVERBOOKING_ORDER_CANCEL_ACTION = 1;
-    const OVERBOOKING_ORDER_NO_ACTION = 2;
-
-    //Consts for: In the order list in which currency prices should be displayed
-    const ORDER_LIST_PRICE_DISPLAY_IN_PAYMENT_CURRENCY = 1;
-    const ORDER_LIST_PRICE_DISPLAY_IN_DEFAULT_CURRENCY = 2;
-
-    const ORDER_COMPLETE_REFUND_FLAG = 1;
-    const ORDER_COMPLETE_CANCELLATION_FLAG = 2;
-    const ORDER_COMPLETE_CANCELLATION_OR_REFUND_REQUEST_FLAG = 3;
-
     /** @var int Delivery address id */
     public $id_address_delivery;
 
     /** @var int Invoice address id */
     public $id_address_invoice;
-
-    /** @var int Hotel address id */
-    public $id_address_tax;
 
     public $id_shop_group;
 
@@ -82,9 +67,6 @@ class OrderCore extends ObjectModel
 
     /** @var string Payment method */
     public $payment;
-
-    /** @var string Payment type */
-    public $payment_type;
 
     /** @var string Payment module */
     public $module;
@@ -206,11 +188,6 @@ class OrderCore extends ObjectModel
     public $advance_paid_amount;
 
     /**
-    * @var int is occupancy provided in this order
-    */
-    public $with_occupancy;
-
-    /**
      * @see ObjectModel::$definition
      */
     public static $definition = array(
@@ -219,7 +196,6 @@ class OrderCore extends ObjectModel
         'fields' => array(
             'id_address_delivery' =>        array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
             'id_address_invoice' =>        array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
-            'id_address_tax' =>        array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
             'id_cart' =>                    array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
             'id_currency' =>                array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
             'id_shop_group' =>                array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
@@ -230,7 +206,6 @@ class OrderCore extends ObjectModel
             'current_state' =>                array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
             'secure_key' =>                array('type' => self::TYPE_STRING, 'validate' => 'isMd5'),
             'payment' =>                    array('type' => self::TYPE_STRING, 'validate' => 'isGenericName', 'required' => true),
-            'payment_type' =>                array('type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'),
             'module' =>                    array('type' => self::TYPE_STRING, 'validate' => 'isModuleName', 'required' => true),
             'recyclable' =>                array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
             'gift' =>                        array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
@@ -263,16 +238,13 @@ class OrderCore extends ObjectModel
             'source' =>                        array('type' => self::TYPE_STRING),
             'valid' =>                        array('type' => self::TYPE_BOOL),
             'reference' =>                    array('type' => self::TYPE_STRING),
-            'is_advance_payment' =>         array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'default' => 0),
-            'advance_paid_amount' =>        array('type' => self::TYPE_FLOAT, 'validate' => 'isPrice'),
-            'with_occupancy' =>      array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'default' => 0),
+            'is_advance_payment' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'default' => 0),
+            'advance_paid_amount' => array('type' => self::TYPE_FLOAT, 'validate' => 'isPrice'),
             'date_add' =>                    array('type' => self::TYPE_DATE, 'validate' => 'isDate'),
             'date_upd' =>                    array('type' => self::TYPE_DATE, 'validate' => 'isDate'),
         ),
     );
 
-    // This variable is created to hold the transaction id received from api order
-    public $transaction_id;
     protected $webserviceParameters = array(
         'objectMethods' => array('add' => 'addWs'),
         'objectNodeName' => 'order',
@@ -280,48 +252,43 @@ class OrderCore extends ObjectModel
         'fields' => array(
             'id_address_delivery' => array('xlink_resource'=> 'addresses'),
             'id_address_invoice' => array('xlink_resource'=> 'addresses'),
-            'id_address_tax' => array('xlink_resource'=> 'addresses', 'required' => false),
             'id_cart' => array('xlink_resource'=> 'carts'),
             'id_currency' => array('xlink_resource'=> 'currencies'),
             'id_lang' => array('xlink_resource'=> 'languages'),
             'id_customer' => array('xlink_resource'=> 'customers'),
+            'id_carrier' => array('xlink_resource'=> 'carriers'),
             'current_state' => array(
                 'xlink_resource'=> 'order_states',
                 'setter' => 'setWsCurrentState'
             ),
-            'module' => array('required' => false),
+            'module' => array('required' => true),
             'invoice_number' => array(),
             'invoice_date' => array(),
+            // 'delivery_number' => array(),
+            // 'delivery_date' => array(),
             'valid' => array(),
             'date_add' => array(),
             'date_upd' => array(),
-            'transaction_id' => array(
-                'getter' => false,
-                'setter' => 'setWsTransactionId'
-            ),
-        ),
-        'hidden_fields' => array (
-            'total_shipping',
-            'total_shipping_tax_incl',
-            'total_shipping_tax_excl',
-            'carrier_tax_rate',
-            'id_carrier',
-            'total_wrapping',
-            'total_wrapping_tax_incl',
-            'total_wrapping_tax_excl',
-            'delivery_date',
-            'delivery_number',
-            'shipping_number',
-            'id_shop',
-            'id_shop_group',
-            'recyclable',
-            'gift',
-            'gift_message',
-            'mobile_theme',
-            'round_mode',
-            'round_type',
+            // 'shipping_number' => array(
+            //     'getter' => 'getWsShippingNumber',
+            //     'setter' => 'setWsShippingNumber'
+            // ),
         ),
         'associations' => array(
+            // 'order_rows' => array('resource' => 'order_row', 'setter' => false, 'virtual_entity' => true,
+            //     'fields' => array(
+            //         'id' =>  array(),
+            //         'product_id' => array('required' => true),
+            //         'product_attribute_id' => array('required' => true),
+            //         'product_quantity' => array('required' => true),
+            //         'product_name' => array('setter' => false),
+            //         'product_reference' => array('setter' => false),
+            //         'product_ean13' => array('setter' => false),
+            //         'product_upc' => array('setter' => false),
+            //         'product_price' => array('setter' => false),
+            //         'unit_price_tax_incl' => array('setter' => false),
+            //         'unit_price_tax_excl' => array('setter' => false),
+            //     )),
             'bookings' => array(
                 'resource' => 'booking',
                 'setter' => false,
@@ -598,30 +565,14 @@ class OrderCore extends ObjectModel
         return self::$_historyCache[$this->id.'_'.$id_order_state.'_'.$filters];
     }
 
-    public function getProductsDetail(
-        $is_booking = null,
-        $product_service_type = null,
-        $product_auto_add = null,
-        $product_price_addition_type = null
-    ) {
-        $sql = 'SELECT *
-            FROM `'._DB_PREFIX_.'order_detail` od
-            LEFT JOIN `'._DB_PREFIX_.'product` p ON (p.id_product = od.product_id)
-            LEFT JOIN `'._DB_PREFIX_.'product_shop` ps ON (ps.id_product = p.id_product AND ps.id_shop = od.id_shop)
-            WHERE od.`id_order` = '.(int)$this->id;
-        if ($is_booking !== null) {
-            $sql .= ' AND od.`is_booking_product` = '. (int)$is_booking;
-            if (!$is_booking && $product_service_type !== null) {
-                $sql .= ' AND od.`product_service_type` = '. (int)$product_service_type;
-            }
-            if (!$is_booking && $product_service_type == Product::SERVICE_PRODUCT_WITH_ROOMTYPE && $product_auto_add !== null) {
-                $sql .= ' AND od.`product_auto_add` = '. (int)$product_auto_add;
-            }
-            if (!$is_booking && $product_service_type == Product::SERVICE_PRODUCT_WITH_ROOMTYPE && $product_auto_add == 1 && $product_price_addition_type !== null) {
-                $sql .= ' AND od.`product_price_addition_type` = '. (int)$product_price_addition_type;
-            }
-        }
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+    public function getProductsDetail()
+    {
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS('
+		SELECT *
+		FROM `'._DB_PREFIX_.'order_detail` od
+		LEFT JOIN `'._DB_PREFIX_.'product` p ON (p.id_product = od.product_id)
+		LEFT JOIN `'._DB_PREFIX_.'product_shop` ps ON (ps.id_product = p.id_product AND ps.id_shop = od.id_shop)
+		WHERE od.`id_order` = '.(int)$this->id);
     }
 
     public function getFirstMessage()
@@ -680,11 +631,9 @@ class OrderCore extends ObjectModel
             // Change qty if selected
             if ($selected_qty) {
                 $row['product_quantity'] = 0;
-                if (is_array($selected_products)) {
-                    foreach ($selected_products as $key => $id_product) {
-                        if ($row['id_order_detail'] == $id_product) {
-                            $row['product_quantity'] = (int)$selected_qty[$key];
-                        }
+                foreach ($selected_products as $key => $id_product) {
+                    if ($row['id_order_detail'] == $id_product) {
+                        $row['product_quantity'] = (int)$selected_qty[$key];
                     }
                 }
                 if (!$row['product_quantity']) {
@@ -797,7 +746,6 @@ class OrderCore extends ObjectModel
 
     public function getTaxesAverageUsed()
     {
-        // @todo should use order table to get tax average
         return Cart::getTaxesAverageUsed((int)$this->id_cart);
     }
 
@@ -931,7 +879,7 @@ class OrderCore extends ObjectModel
 
     public function isInPreparation()
     {
-        return count($this->getHistory((int)$this->id_lang, Configuration::get('PS_OS_PROCESSING')));
+        return count($this->getHistory((int)$this->id_lang, Configuration::get('PS_OS_PREPARATION')));
     }
 
     /**
@@ -1085,24 +1033,9 @@ class OrderCore extends ObjectModel
      *
      * @return Product total without taxes
      */
-    public function getTotalProductsWithoutTaxes(
-        $products = false,
-        $bookingProducts = null,
-        $product_service_type = null,
-        $product_auto_add = null,
-        $product_price_addition_type = null
-    ) {
-        // update
-        if (!$products) {
-            $products = $this->getProductsDetail($bookingProducts, $product_service_type, $product_auto_add, $product_price_addition_type);
-        }
-
-        $return = 0;
-        foreach ($products as $row) {
-            $return += $row['total_price_tax_excl'];
-        }
-
-        return $return;
+    public function getTotalProductsWithoutTaxes($products = false)
+    {
+        return $this->total_products;
     }
 
     /**
@@ -1110,16 +1043,15 @@ class OrderCore extends ObjectModel
      *
      * @return Product total with taxes
      */
-    public function getTotalProductsWithTaxes(
-        $products = false,
-        $bookingProducts = null,
-        $product_service_type = null,
-        $product_auto_add = null,
-        $product_price_addition_type = null
-    ) {
+    public function getTotalProductsWithTaxes($products = false)
+    {
+        if ($this->total_products_wt != '0.00' && !$products) {
+            return $this->total_products_wt;
+        }
         /* Retro-compatibility (now set directly on the validateOrder() method) */
+
         if (!$products) {
-            $products = $this->getProductsDetail($bookingProducts, $product_service_type, $product_auto_add, $product_price_addition_type);
+            $products = $this->getProductsDetail();
         }
 
         $return = 0;
@@ -1127,6 +1059,10 @@ class OrderCore extends ObjectModel
             $return += $row['total_price_tax_incl'];
         }
 
+        if (!$products) {
+            $this->total_products_wt = $return;
+            $this->update();
+        }
         return $return;
     }
 
@@ -1330,6 +1266,8 @@ class OrderCore extends ObjectModel
                 $this->setLastInvoiceNumber($order_invoice->id, $this->id_shop);
             }
 
+
+
             // Update order_carrier
             $id_order_carrier = Db::getInstance()->getValue('
 				SELECT `id_order_carrier`
@@ -1353,13 +1291,11 @@ class OrderCore extends ObjectModel
             // Update order payment
             if ($use_existing_payment) {
                 $id_order_payments = Db::getInstance()->executeS('
-					SELECT DISTINCT op.id_order_payment, opd.id_order_payment_detail
+					SELECT DISTINCT op.id_order_payment
 					FROM `'._DB_PREFIX_.'order_payment` op
 					INNER JOIN `'._DB_PREFIX_.'orders` o ON (o.reference = op.order_reference)
-					LEFT JOIN `'._DB_PREFIX_.'order_payment_detail` opd ON (op.id_order_payment = opd.id_order_payment)
 					LEFT JOIN `'._DB_PREFIX_.'order_invoice_payment` oip ON (oip.id_order_payment = op.id_order_payment)
-					WHERE (oip.id_order != '.(int)$order_invoice->id_order.' OR oip.id_order IS NULL) AND o.id_order = '.(int)$order_invoice->id_order.'
-                    AND opd.`id_order` = '.$order_invoice->id_order);
+					WHERE (oip.id_order != '.(int)$order_invoice->id_order.' OR oip.id_order IS NULL) AND o.id_order = '.(int)$order_invoice->id_order);
 
                 if (count($id_order_payments)) {
                     foreach ($id_order_payments as $order_payment) {
@@ -1367,7 +1303,6 @@ class OrderCore extends ObjectModel
 							INSERT INTO `'._DB_PREFIX_.'order_invoice_payment`
 							SET
 								`id_order_invoice` = '.(int)$order_invoice->id.',
-								`id_order_payment_detail` = '.(int)$order_payment['id_order_payment_detail'].',
 								`id_order_payment` = '.(int)$order_payment['id_order_payment'].',
 								`id_order` = '.(int)$order_invoice->id_order);
                     }
@@ -1375,6 +1310,7 @@ class OrderCore extends ObjectModel
                     Cache::clean('order_invoice_paid_*');
                 }
             }
+
             // Update order cart rule
             Db::getInstance()->execute('
 				UPDATE `'._DB_PREFIX_.'order_cart_rule`
@@ -1412,7 +1348,7 @@ class OrderCore extends ObjectModel
             return;
         }
 
-        $address = new Address((int)$this->id_address_tax);
+        $address = new Address((int)$this->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
         $carrier = new Carrier((int)$this->id_carrier);
         $tax_calculator = $carrier->getTaxCalculator($address);
         $order_invoice->total_discount_tax_excl = $this->total_discounts_tax_excl;
@@ -1663,35 +1599,10 @@ class OrderCore extends ObjectModel
     public function addWs($autodate = true, $null_values = false)
     {
         /** @var PaymentModule $payment_module */
-        $paymentModule = new WebserviceOrder();
-        $paymentModule->orderSource = $this->source;
+        $payment_module = Module::getInstanceByName($this->module);
         $customer = new Customer($this->id_customer);
-
-        $extraVars = array();
-        if (isset($this->transaction_id)) {
-            $extraVars['transaction_id'] = $this->transaction_id;
-        }
-
-        if ($this->total_paid_real > 0) {
-            $orderStatus = Configuration::get('PS_OS_REMOTE_PAYMENT_ACCEPTED');
-        } else {
-            $orderStatus = Configuration::get('PS_OS_AWAITING_REMOTE_PAYMENT');
-        }
-
-        $paymentModule->validateOrder(
-            $this->id_cart,
-            $orderStatus,
-            $this->total_paid,
-            $paymentModule->displayName,
-            'Order created by API request',
-            $extraVars,
-            null,
-            false,
-            $customer->secure_key
-        );
-
-        $this->id = $paymentModule->currentOrder;
-
+        $payment_module->validateOrder($this->id_cart, Configuration::get('PS_OS_WS_PAYMENT'), $this->total_paid, $this->payment, null, array(), null, false, $customer->secure_key);
+        $this->id = $payment_module->currentOrder;
         return true;
     }
 
@@ -1773,12 +1684,11 @@ class OrderCore extends ObjectModel
     {
         // if one of the order details use the tax computation method the display will be different
         return Db::getInstance()->getValue('
-            SELECT od.`tax_computation_method`
-            FROM `'._DB_PREFIX_.'order_detail_tax` odt
-            LEFT JOIN `'._DB_PREFIX_.'order_detail` od ON (od.`id_order_detail` = odt.`id_order_detail`)
-            WHERE od.`id_order` = '.(int)$this->id.'
-            AND od.`tax_computation_method` = '.(int)TaxCalculator::ONE_AFTER_ANOTHER_METHOD
-        );
+		SELECT od.`tax_computation_method`
+		FROM `'._DB_PREFIX_.'order_detail_tax` odt
+		LEFT JOIN `'._DB_PREFIX_.'order_detail` od ON (od.`id_order_detail` = odt.`id_order_detail`)
+		WHERE od.`id_order` = '.(int)$this->id.'
+		AND od.`tax_computation_method` = '.(int)TaxCalculator::ONE_AFTER_ANOTHER_METHOD);
     }
 
     /**
@@ -1794,21 +1704,6 @@ class OrderCore extends ObjectModel
     }
 
     /**
-     * This method allows to get all Order Payment detail for the current order
-     * @since 1.5.0.1
-     * @return array of OrderPaymentDetails
-     */
-    public function getOrderPaymentDetail()
-    {
-        return Db::getInstance()->executeS('
-            SELECT opd.`amount` as `real_paid_amount`, opd.*, op.*
-            FROM `'._DB_PREFIX_.'order_payment_detail` opd
-            INNER JOIN `'._DB_PREFIX_.'order_payment` op ON (opd.`id_order_payment` = op.`id_order_payment`)
-            WHERE `id_order` = '.$this->id
-        );
-    }
-
-    /**
      *
      * This method allows to add a payment to the current order
      * @since 1.5.0.1
@@ -1818,23 +1713,17 @@ class OrderCore extends ObjectModel
      * @param Currency $currency
      * @param string $date
      * @param OrderInvoice $order_invoice
-     * @param bool $update_payment_detail :: if false, be sure to add payment detail in payment detail table
      * @return bool
      */
-    public function addOrderPayment($amount_paid, $payment_method = null, $payment_transaction_id = null, $currency = null, $date = null, $order_invoice = null, $payment_type = null, $update_payment_detail = true)
+    public function addOrderPayment($amount_paid, $payment_method = null, $payment_transaction_id = null, $currency = null, $date = null, $order_invoice = null)
     {
         $order_payment = new OrderPayment();
         $order_payment->order_reference = $this->reference;
         $order_payment->id_currency = ($currency ? $currency->id : $this->id_currency);
         // we kept the currency rate for historization reasons
-        $order_payment->conversion_rate = (
-            $currency ?
-            $currency->conversion_rate :
-            (new Currency($this->id_currency))->getConversationRate()
-        );
+        $order_payment->conversion_rate = ($currency ? $currency->conversion_rate : 1);
         // if payment_method is define, we used this
         $order_payment->payment_method = ($payment_method ? $payment_method : $this->payment);
-        $order_payment->payment_type = ($payment_type ? $payment_type : $this->payment_type);
         $order_payment->transaction_id = $payment_transaction_id;
         $order_payment->amount = $amount_paid;
         $order_payment->date_add = ($date ? $date : null);
@@ -1844,60 +1733,30 @@ class OrderCore extends ObjectModel
             $order_payment->date_add .= ' '.date('H:i:s');
         }
 
-        // We put autodate parameter of add method to true if date_add field is null
-        if ($res = $order_payment->add(is_null($order_payment->date_add))) {
-            if ($update_payment_detail) {
-                $res = $res && $this->addOrderPaymentDetail($order_payment, $amount_paid, $order_invoice);
-            }
+        // Update total_paid_real value for backward compatibility reasons
+        if ($order_payment->id_currency == $this->id_currency) {
+            $this->total_paid_real += $order_payment->amount;
+        } else {
+            $this->total_paid_real += Tools::ps_round(Tools::convertPrice($order_payment->amount, $order_payment->id_currency, false), 2);
         }
 
-        // Whenever payment is adding in any order then set a cumulative conversion rate for the payment currency in the order
-        if ($avgConversionRate = $order_payment->getAverageConversionRate($this->reference, $this->id_currency)) {
-            $this->conversion_rate = $avgConversionRate;
+        // We put autodate parameter of add method to true if date_add field is null
+        $res = $order_payment->add(is_null($order_payment->date_add)) && $this->update();
+
+        if (!$res) {
+            return false;
         }
-        $this->save();
+
+        if (!is_null($order_invoice)) {
+            $res = Db::getInstance()->execute('
+			INSERT INTO `'._DB_PREFIX_.'order_invoice_payment` (`id_order_invoice`, `id_order_payment`, `id_order`)
+			VALUES('.(int)$order_invoice->id.', '.(int)$order_payment->id.', '.(int)$this->id.')');
+
+            // Clear cache
+            Cache::clean('order_invoice_paid_*');
+        }
 
         return $res;
-    }
-
-    public function addOrderPaymentDetail(OrderPayment $payment, $amount = null, $order_invoice = null)
-    {
-        if (Validate::isLoadedObject($payment)) {
-            if (is_null($amount)) {
-                $amount = $payment->amount;
-            }
-            $order_payment_detail = new OrderPaymentDetail();
-            $order_payment_detail->id_order = $this->id;
-            $order_payment_detail->id_order_payment = (int)$payment->id;
-            $order_payment_detail->amount = $amount;
-
-            if ($payment->id_currency == $this->id_currency) {
-                $this->total_paid_real += $order_payment_detail->amount;
-            } else {
-                $this->total_paid_real += Tools::ps_round(
-                    Tools::convertPriceFull($order_payment_detail->amount, new Currency($payment->id_currency), new Currency($this->id_currency)),
-                    6
-                );
-            }
-
-            if (!validate::isPrice($this->total_paid_real)) {
-                return false;
-            }
-
-            if ($order_payment_detail->add() && $this->update()) {
-                if (!is_null($order_invoice)) {
-                    $res = Db::getInstance()->execute('
-                    INSERT INTO `'._DB_PREFIX_.'order_invoice_payment` (`id_order_invoice`, `id_order_payment`, `id_order_payment_detail`, `id_order`)
-                    VALUES('.(int)$order_invoice->id.', '.(int)(int)$payment->id.', '.(int)$order_payment_detail->id.', '.(int)$this->id.')');
-
-                    // Clear cache
-                    Cache::clean('order_invoice_paid_*');
-                }
-
-                return $order_payment_detail->id;
-            }
-        }
-        return false;
     }
 
     /**
@@ -1916,18 +1775,18 @@ class OrderCore extends ObjectModel
                 unset($invoices[$key]);
             }
         }
-        // $delivery_slips = $this->getDeliverySlipsCollection()->getResults();
-        // // @TODO review
-        // foreach ($delivery_slips as $key => $delivery) {
-        //     $delivery->is_delivery = true;
-        //     $delivery->date_add = $delivery->delivery_date;
-        //     if (!$invoice->delivery_number) {
-        //         unset($delivery_slips[$key]);
-        //     }
-        // }
+        $delivery_slips = $this->getDeliverySlipsCollection()->getResults();
+        // @TODO review
+        foreach ($delivery_slips as $key => $delivery) {
+            $delivery->is_delivery = true;
+            $delivery->date_add = $delivery->delivery_date;
+            if (!$invoice->delivery_number) {
+                unset($delivery_slips[$key]);
+            }
+        }
         $order_slips = $this->getOrderSlipsCollection()->getResults();
 
-        $documents = array_merge($invoices, $order_slips);
+        $documents = array_merge($invoices, $order_slips, $delivery_slips);
         usort($documents, array('Order', 'sortDocuments'));
 
         return $documents;
@@ -2032,15 +1891,14 @@ class OrderCore extends ObjectModel
         }
 
         $total = 0;
-
         // Retrieve all payments
-        $payments = $this->getOrderPaymentDetail();
+        $payments = $this->getOrderPaymentCollection();
         foreach ($payments as $payment) {
             /** @var OrderPayment $payment */
-            if ($payment['id_currency'] == $currency->id) {
-                $total += $payment['real_paid_amount'];
+            if ($payment->id_currency == $currency->id) {
+                $total += $payment->amount;
             } else {
-                $amount = Tools::convertPrice($payment['real_paid_amount'], $payment['id_currency'], false);
+                $amount = Tools::convertPrice($payment->amount, $payment->id_currency, false);
                 if ($currency->id == Configuration::get('PS_CURRENCY_DEFAULT', null, null, $this->id_shop)) {
                     $total += $amount;
                 } else {
@@ -2053,22 +1911,18 @@ class OrderCore extends ObjectModel
     }
 
     /**
-     * Get the sum of total_paid_tax_incl/advance_paid_amount of the orders with similar reference
-     * @param integer $getAdvancePaid (send 1 if want total advance paid amount)
+     * Get the sum of total_paid_tax_incl of the orders with similar reference
+     *
+     * @since 1.5.0.1
      * @return float
      */
-    public function getOrdersTotalPaid($getAdvancePaid = 0)
+    public function getOrdersTotalPaid()
     {
-        $sql = 'SELECT';
-        if ($getAdvancePaid) {
-            $sql .= ' SUM(advance_paid_amount)';
-        } else {
-            $sql .= ' SUM(total_paid_tax_incl)';
-        }
-        $sql .=  'FROM `'._DB_PREFIX_.'orders` WHERE `reference` = \''.pSQL($this->reference).
-        '\' AND `id_cart` = '.(int)$this->id_cart;
-
-        return Db::getInstance()->getValue($sql);
+        return Db::getInstance()->getValue('
+			SELECT SUM(total_paid_tax_incl)
+			FROM `'._DB_PREFIX_.'orders`
+			WHERE `reference` = \''.pSQL($this->reference).'\'
+			AND `id_cart` = '.(int)$this->id_cart);
     }
 
     /**
@@ -2306,11 +2160,6 @@ class OrderCore extends ObjectModel
         return OrderPayment::getByOrderReference($this->reference);
     }
 
-    public function getOrderPaymentsDetail()
-    {
-        return OrderPaymentDetail::getByOrderId($this->id);
-    }
-
     /**
      * Return a unique reference like : GWJTHMZUN#2
      *
@@ -2426,7 +2275,7 @@ class OrderCore extends ObjectModel
      * @param $limitToOrderDetails Optional array of OrderDetails to take into account. False by default to take all OrderDetails from the current Order.
      * @return array A list of tax rows applied to the given OrderDetails (or all OrderDetails linked to the current Order).
      */
-    public function getProductTaxesDetails($limitToOrderDetails = false, $bookingProducts = null, $product_service_type = null)
+    public function getProductTaxesDetails($limitToOrderDetails = false)
     {
         $round_type = $this->round_type;
         if ($round_type == 0) {
@@ -2443,11 +2292,6 @@ class OrderCore extends ObjectModel
         $product_specific_discounts = array();
 
         $expected_total_base = $this->total_products - $this->total_discounts_tax_excl;
-        $expected_total_base = (float)$this->getTotalProductsWithoutTaxes(
-            $limitToOrderDetails,
-            $bookingProducts,
-            $product_service_type
-        );
 
         foreach ($this->getCartRules() as $order_cart_rule) {
             if ($order_cart_rule['free_shipping'] && $free_shipping_tax === 0) {
@@ -2476,12 +2320,7 @@ class OrderCore extends ObjectModel
         $breakdown = array();
 
         // Get order_details
-        if ($limitToOrderDetails !== false) {
-            $order_details = $limitToOrderDetails;
-        } else {
-            $order_details = $this->getOrderDetailList();
-        }
-        $expected_total_tax = (float)$this->getTotalProductsWithTaxes($limitToOrderDetails) - (float)$this->getTotalProductsWithoutTaxes($limitToOrderDetails);
+        $order_details = $limitToOrderDetails ? $limitToOrderDetails : $this->getOrderDetailList();
 
         $order_ecotax_tax = 0;
 
@@ -2515,6 +2354,7 @@ class OrderCore extends ObjectModel
             foreach ($tax_calculator->taxes as $tax) {
                 $tax_rates[$tax->id] = $tax->rate;
             }
+
             foreach ($tax_calculator->getTaxesAmount($discounted_price_tax_excl) as $id_tax => $unit_amount) {
                 $total_tax_base = 0;
                 switch ($round_type) {
@@ -2550,6 +2390,7 @@ class OrderCore extends ObjectModel
                 );
             }
         }
+
         if (!empty($order_detail_tax_rows)) {
             foreach ($breakdown as $data) {
                 $actual_total_tax += Tools::ps_round($data['tax_amount'], _PS_PRICE_COMPUTE_PRECISION_, $this->round_mode);
@@ -2559,12 +2400,12 @@ class OrderCore extends ObjectModel
             $order_ecotax_tax = Tools::ps_round($order_ecotax_tax, _PS_PRICE_COMPUTE_PRECISION_, $this->round_mode);
 
             $tax_rounding_error = $expected_total_tax - $actual_total_tax - $order_ecotax_tax;
-            if ($tax_rounding_error != 0) {
+            if ($tax_rounding_error !== 0) {
                 Tools::spreadAmount($tax_rounding_error, _PS_PRICE_COMPUTE_PRECISION_, $order_detail_tax_rows, 'total_amount');
             }
 
             $base_rounding_error = $expected_total_base - $actual_total_base;
-            if ($base_rounding_error != 0) {
+            if ($base_rounding_error !== 0) {
                 Tools::spreadAmount($base_rounding_error, _PS_PRICE_COMPUTE_PRECISION_, $order_detail_tax_rows, 'total_tax_base');
             }
         }
@@ -2624,53 +2465,45 @@ class OrderCore extends ObjectModel
         return Db::getInstance()->executeS('SELECT  * FROM '._DB_PREFIX_.'orders WHERE id_cart = '.(int)$id_cart);
     }
 
-    /**
-     * Function to check if order has been completely refunded
-     * @param integer action: can have 3 values as below
-     * Order::ORDER_COMPLETE_REFUND_FLAG for complete refunded and
-     * Order::ORDER_COMPLETE_CANCELLATION_FLAG for completely cancelled and
-     * Order::ORDER_COMPLETE_CANCELLATION_OR_REFUND_REQUEST_FLAG for all rooms are either cancelled or requested for refunded
-     * @return boolean: true if order has been completely refunded as per requested parameters or false
-     */
-    public function hasCompletelyRefunded($action = 0)
+    // Order is considered as refunded if all bookings are requested for refund and all are with refunded status
+    // $refundFlag [ORDER_RETURN_STATE_FLAG_REFUNDED || ORDER_RETURN_STATE_FLAG_DENIED]
+    public function hasCompletelyRefunded($refundFlag = 0)
     {
-        $objHotelBooking = new HotelBookingdetail();
-        if ($orderBookings = $objHotelBooking->getOrderCurrentDataByOrderId($this->id)) {
-            // If action is Order::ORDER_COMPLETE_REFUND_FLAG (for refunded) then we will check
-            // that all rooms must be refunded and at least one booking is not cancelled
-            if ($action == Order::ORDER_COMPLETE_REFUND_FLAG) {
-                $uniqueRefundedBookings = array_unique(array_column($orderBookings, 'is_refunded'));
-                if (count($uniqueRefundedBookings) == 1 && $uniqueRefundedBookings[0] == 1) {
-                    foreach ($orderBookings as $booking) {
-                        if ($booking['is_cancelled'] == 0) {
-                            return true;
+        if ($refundBookings = OrderReturn::getOrdersReturnDetail($this->id)) {
+            $objHotelBooking = new HotelBookingdetail();
+            if ($orderBookings = $objHotelBooking->getOrderCurrentDataByOrderId($this->id)) {
+                if (count($refundBookings) == count($orderBookings)) {
+                    if ($refundFlag) {
+                        foreach ($refundBookings as $refundRow) {
+                            if (Validate::isLoadedObject(
+                                $objReturnState = new OrderReturnState($refundRow['current_state']
+                            ))) {
+                                if ($refundFlag == OrderReturnState::ORDER_RETURN_STATE_FLAG_REFUNDED
+                                    && !$objReturnState->refunded
+                                ) {
+                                    return false;
+                                }
+                                if ($refundFlag == OrderReturnState::ORDER_RETURN_STATE_FLAG_DENIED
+                                    && !$objReturnState->denied
+                                ) {
+                                    return false;
+                                }
+                            }
                         }
                     }
-                }
-            // If action is Order::ORDER_COMPLETE_CANCELLATION_FLAG (for cancelled) then we will check that all rooms must be cancelled
-            } elseif ($action == Order::ORDER_COMPLETE_CANCELLATION_FLAG) {
-                $uniqueRefundedBookings = array_unique(array_column($orderBookings, 'is_cancelled'));
-                if (count($uniqueRefundedBookings) == 1 && $uniqueRefundedBookings[0] == 1) {
-                    return true;
-                }
-            // If action is Order::ORDER_COMPLETE_CANCELLATION_OR_REFUND_REQUEST_FLAG (for cancelled and refund requests) then we will check that all rooms are either cancelled or requested for refund
-            } elseif ($action == Order::ORDER_COMPLETE_CANCELLATION_OR_REFUND_REQUEST_FLAG) {
-                foreach ($orderBookings as $booking) {
-                    if (!$booking['is_refunded']) {
-                        if (!OrderReturn::getOrdersReturnDetail($this->id, 0, $booking['id'])) {
-                            return false;
-                        }
-                    }
-                }
-                return true;
-            // Default process to check if order is fully refunded or cancelled or not
-            } else {
-                // if is_refunded is 1 means booking either is cancelled or refunded. So check all bookings must have is_refunded = 1
-                $uniqueRefundedBookings = array_unique(array_column($orderBookings, 'is_refunded'));
-                if (count($uniqueRefundedBookings) == 1 && $uniqueRefundedBookings[0] == 1) {
                     return true;
                 }
             }
+        }
+
+        return false;
+    }
+
+    // Order is considered as denied if all bookings are requested for refund and all are with denied status
+    public function orderRefundHasBeenDenied()
+    {
+        if (OrderReturn::getOrdersReturn($this->id_customer, $this->id)) {
+
         }
 
         return false;
@@ -2681,10 +2514,5 @@ class OrderCore extends ObjectModel
         return Db::getInstance()->executeS(
             'SELECT `id` FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `id_order` = '.(int)$this->id.' ORDER BY `id` ASC'
         );
-    }
-
-    public function setWsTransactionId($transactionId)
-    {
-        $this->transaction_id = $transactionId;
     }
 }

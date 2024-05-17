@@ -49,18 +49,14 @@ class IdentityControllerCore extends FrontController
         $origin_newsletter = (bool)$this->customer->newsletter;
 
         if (Tools::isSubmit('submitIdentity')) {
-            Hook::exec('actionSubmitIdentityBefore');
-
             $email = trim(Tools::getValue('email'));
 
-            if (Configuration::get('PS_CUSTOMER_BIRTHDATE')) {
-                if (Tools::getValue('months') != '' && Tools::getValue('days') != '' && Tools::getValue('years') != '') {
-                    $this->customer->birthday = (int)Tools::getValue('years').'-'.(int)Tools::getValue('months').'-'.(int)Tools::getValue('days');
-                } elseif (Tools::getValue('months') == '' && Tools::getValue('days') == '' && Tools::getValue('years') == '') {
-                    $this->customer->birthday = null;
-                } else {
-                    $this->errors[] = Tools::displayError('Invalid date of birth.');
-                }
+            if (Tools::getValue('months') != '' && Tools::getValue('days') != '' && Tools::getValue('years') != '') {
+                $this->customer->birthday = (int)Tools::getValue('years').'-'.(int)Tools::getValue('months').'-'.(int)Tools::getValue('days');
+            } elseif (Tools::getValue('months') == '' && Tools::getValue('days') == '' && Tools::getValue('years') == '') {
+                $this->customer->birthday = null;
+            } else {
+                $this->errors[] = Tools::displayError('Invalid date of birth.');
             }
 
             if (Tools::getIsset('old_passwd')) {
@@ -128,8 +124,6 @@ class IdentityControllerCore extends FrontController
      */
     public function initContent()
     {
-        $this->show_breadcrump = true;
-
         parent::initContent();
 
         if ($this->customer->birthday) {
@@ -156,7 +150,6 @@ class IdentityControllerCore extends FrontController
         ));
 
         $newsletter = Configuration::get('PS_CUSTOMER_NWSL') || (Module::isInstalled('blocknewsletter') && Module::getInstanceByName('blocknewsletter')->active);
-        $this->context->smarty->assign('birthday', (bool) Configuration::get('PS_CUSTOMER_BIRTHDATE'));
         $this->context->smarty->assign('newsletter', $newsletter);
         $this->context->smarty->assign('optin', (bool)Configuration::get('PS_CUSTOMER_OPTIN'));
 

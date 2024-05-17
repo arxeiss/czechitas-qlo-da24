@@ -262,16 +262,6 @@ class AdminLanguagesControllerCore extends AdminController
             'title' => $this->l('Save'),
         );
 
-        $this->fields_form['buttons'] = array(
-            'save-and-stay' => array(
-                'title' => $this->l('Save and stay'),
-                'name' => 'submitAdd'.$this->table.'AndStay',
-                'type' => 'submit',
-                'class' => 'btn btn-default pull-right',
-                'icon' => 'process-icon-save',
-            ),
-        );
-
         /** @var Language $obj */
         if (!($obj = $this->loadObject(true))) {
             return;
@@ -553,7 +543,7 @@ class AdminLanguagesControllerCore extends AdminController
 
         // Get all iso code available
         if ($lang_packs = Tools::file_get_contents('http://www.prestashop.com/download/lang_packs/get_language_pack.php?version='.Tools::getValue('ps_version').'&iso_lang='.Tools::strtolower(Tools::getValue('iso_lang')))) {
-            $result = json_decode($lang_packs);
+            $result = Tools::jsonDecode($lang_packs);
             if ($lang_packs !== '' && $result && !isset($result->error)) {
                 $this->status = 'ok';
                 $this->content = $lang_packs;

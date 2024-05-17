@@ -38,8 +38,6 @@ class HelperListCore extends Helper
     /** @var array WHERE clause determined by filter fields */
     protected $_filter;
 
-    public $_new_list_header_design = false;
-
     /** @var array Number of results in list per page (used in select field) */
     public $_pagination = array(20, 50, 100, 300, 1000);
 
@@ -82,8 +80,6 @@ class HelperListCore extends Helper
      * active : allow to toggle status
      */
     protected $fields_list;
-
-    protected $fields_optional = array();
 
     /** @var bool Content line is clickable if true */
     public $no_link = false;
@@ -337,12 +333,6 @@ class HelperListCore extends Helper
             }
         }
 
-        foreach ($this->fields_list as $key => $params) {
-            if (isset($field['optional']) && $field['optional']) {
-                $this->fields_optional[$key] = $field;
-            }
-        }
-
         $this->content_tpl->assign(array_merge($this->tpl_vars, array(
             'shop_link_type' => $this->shopLinkType,
             'name' => isset($name) ? $name : null,
@@ -358,7 +348,6 @@ class HelperListCore extends Helper
             'order_way' => $this->orderWay,
             'is_cms' => $this->is_cms,
             'fields_display' => $this->fields_list,
-            'fields_optional' => $this->fields_optional,
             'list' => $this->_list,
             'actions' => $this->actions,
             'no_link' => $this->no_link,
@@ -446,7 +435,7 @@ class HelperListCore extends Helper
             'token' => $token != null ? $token : $this->token,
             'action' => self::$cache_lang['Details'],
             'params' => $ajax_params,
-            'json_params' => json_encode($ajax_params)
+            'json_params' => Tools::jsonEncode($ajax_params)
         ));
         return $tpl->fetch();
     }
@@ -611,7 +600,7 @@ class HelperListCore extends Helper
                 $params['type'] = 'text';
             }
 
-            $value_key = $prefix.$this->list_id.'Filter_'.(array_key_exists('filter_key', $params) ? $params['filter_key'] : $key);
+            $value_key = $prefix.$this->list_id.'Filter_'.(array_key_exists('filter_key', $params) && $key != 'active' ? $params['filter_key'] : $key);
             $value = Context::getContext()->cookie->{$value_key};
             if (!$value && Tools::getIsset($value_key)) {
                 $value = Tools::getValue($value_key);
@@ -637,17 +626,6 @@ class HelperListCore extends Helper
                     if (isset($value[0]) && !Validate::isCleanHtml($value[0]) || isset($value[1]) && !Validate::isCleanHtml($value[1])) {
                         $value = '';
                     }
-                    if (isset($value[0]) && !Validate::isDate($value[0])) {
-                        $value[0] = '';
-                    }
-                    if (isset($value[1]) && !Validate::isDate($value[1])) {
-                        $value[1] = '';
-                    }
-                    if (isset($value[0]) && !empty($value[0]) && strtotime($value[0]) > strtotime($value[1])) {
-                        $value[1] = '';
-                    }
-
-
                     $name = $this->list_id.'Filter_'.(isset($params['filter_key']) ? $params['filter_key'] : $key);
                     $name_id = str_replace('!', '__', $name);
 
@@ -657,46 +635,12 @@ class HelperListCore extends Helper
                     $this->context->controller->addJqueryUI('ui.datepicker');
                     break;
 
-                case 'range':
-                    if (is_string($value)) {
-                        $value = json_decode($value, true);
-                    }
-
-                    // set validation type
-                    if (isset($params['validation']) && $params['validation'] && method_exists('Validate', $params['validation'])) {
-                        $validation = $params['validation'];
-                    } else {
-                        $validation = 'isUnsignedInt';
-                    }
-
-                    $hasValueFrom = isset($value[0]) && ($value[0] !== '' || $value[0] === 0);
-                    if ($hasValueFrom && !Validate::$validation($value[0])) {
-                        $value[0] = '';
-                    }
-
-                    $hasValueTo = isset($value[1]) && ($value[1] !== '' || $value[1] === 0);
-                    if ($hasValueTo && !Validate::$validation($value[1])) {
-                        $value[1] = '';
-                    }
-
-                    if ($hasValueFrom && $hasValueTo && $value[0] > $value[1]) {
-                        $value[1] = '';
-                    }
-                    break;
-
                 case 'select':
-                    if (isset($params['multiple']) && $params['multiple']) {
-                        if (!isset($params['operator'])) {
-                            $params['operator'] = 'or';
-                        }
-                        $value = json_decode($value, true);
-                    } else {
-                        foreach ($params['list'] as $option_value => $option_display) {
-                            if (isset(Context::getContext()->cookie->{$prefix.$this->list_id.'Filter_'.$params['filter_key']})
-                                && Context::getContext()->cookie->{$prefix.$this->list_id.'Filter_'.$params['filter_key']} == $option_value
-                                && Context::getContext()->cookie->{$prefix.$this->list_id.'Filter_'.$params['filter_key']} != '') {
-                                $this->fields_list[$key]['select'][$option_value]['selected'] = 'selected';
-                            }
+                    foreach ($params['list'] as $option_value => $option_display) {
+                        if (isset(Context::getContext()->cookie->{$prefix.$this->list_id.'Filter_'.$params['filter_key']})
+                            && Context::getContext()->cookie->{$prefix.$this->list_id.'Filter_'.$params['filter_key']} == $option_value
+                            && Context::getContext()->cookie->{$prefix.$this->list_id.'Filter_'.$params['filter_key']} != '') {
+                            $this->fields_list[$key]['select'][$option_value]['selected'] = 'selected';
                         }
                     }
                     break;
@@ -723,28 +667,14 @@ class HelperListCore extends Helper
                 $has_value = true;
                 break;
             }
-        }
-
-        // get selected fields to display
-        $list_visibility = json_decode($this->context->cookie->{'list_visibility_'.$this->context->controller->className});
-        foreach ($this->fields_list as $key => $field) {
             if (!(isset($field['search']) && $field['search'] === false)) {
                 $has_search_field = true;
-            }
-            if (isset($field['optional']) && $field['optional']) {
-                $this->fields_optional[$key] = $field;
-                if ((empty($list_visibility) && isset($field['visible_default']) && $field['visible_default'])
-                    || $list_visibility && in_array($key , $list_visibility)
-                ) {
-                    $this->fields_optional[$key]['selected'] = true;
-                }
             }
         }
 
         Context::getContext()->smarty->assign(array(
             'page' => $page,
             'simple_header' => $this->simple_header,
-            'new_list_header_design' => $this->_new_list_header_design,
             'total_pages' => $total_pages,
             'selected_pagination' => $selected_pagination,
             'pagination' => $this->_pagination,
@@ -769,7 +699,6 @@ class HelperListCore extends Helper
             'order_way' => $this->orderWay,
             'order_by' => $this->orderBy,
             'fields_display' => $this->fields_list,
-            'fields_optional' => $this->fields_optional,
             'delete' => in_array('delete', $this->actions),
             'identifier' => $this->identifier,
             'id_cat' => $id_cat,

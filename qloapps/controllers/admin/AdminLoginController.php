@@ -45,17 +45,6 @@ class AdminLoginControllerCore extends AdminController
         }
     }
 
-    public function init()
-    {
-        parent::init();
-
-        if ($this->ajax && Tools::getValue('action') == 'checkLoginStatus') {
-            $this->ajaxDie(json_encode(array(
-                'is_logged_in' => $this->context->employee->isLoggedBack(),
-            )));
-        }
-    }
-
     public function setMedia()
     {
         $this->addJquery();
@@ -230,14 +219,14 @@ class AdminLoginControllerCore extends AdminController
                 }
 
                 if (Tools::isSubmit('ajax')) {
-                    die(json_encode(array('hasErrors' => false, 'redirect' => $url)));
+                    die(Tools::jsonEncode(array('hasErrors' => false, 'redirect' => $url)));
                 } else {
                     $this->redirect_after = $url;
                 }
             }
         }
         if (Tools::isSubmit('ajax')) {
-            die(json_encode(array('hasErrors' => true, 'errors' => $this->errors)));
+            die(Tools::jsonEncode(array('hasErrors' => true, 'errors' => $this->errors)));
         }
     }
 
@@ -281,19 +270,19 @@ class AdminLoginControllerCore extends AdminController
                 if (!$result) {
                     $this->errors[] = Tools::displayError('An error occurred while attempting to change your password.');
                 } else {
-                    die(json_encode(array(
+                    die(Tools::jsonEncode(array(
                         'hasErrors' => false,
                         'confirm' => $this->l('Your password has been emailed to you.', 'AdminTab', false, false)
                     )));
                 }
             } else {
-                die(json_encode(array(
+                die(Tools::jsonEncode(array(
                     'hasErrors' => true,
                     'errors' => array(Tools::displayError('An error occurred while attempting to change your password.'))
                 )));
             }
         } elseif (Tools::isSubmit('ajax')) {
-            die(json_encode(array('hasErrors' => true, 'errors' => $this->errors)));
+            die(Tools::jsonEncode(array('hasErrors' => true, 'errors' => $this->errors)));
         }
     }
 }

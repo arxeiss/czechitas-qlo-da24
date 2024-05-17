@@ -18,50 +18,6 @@
 */
 
 $(document).ready(function() {
-    // manage refund options checkboxes as per the refund paramenters
-    if ($('#order_return_form .table input[name^="refund_amounts"]').length) {
-        manageRefundOptions();
-    }
-
-    // initialize tootip for room price
-    if ($('#rooms_refund_info .price_info').length) {
-        $('#rooms_refund_info .price_info').each(function (i, element) {
-			$(this).find('img').tooltip({
-				content: $(this).closest('td').find('.price_info_container').html(),
-				items: "span",
-				trigger : 'hover',
-				tooltipClass: "price_info-tooltip",
-				open: function(event, ui)
-				{
-					if (typeof(event.originalEvent) === 'undefined')
-					{
-						return false;
-					}
-
-					var $id = $(ui.tooltip).attr('id');
-
-					if ($('div.ui-tooltip').not('#' + $id).length) {
-						return false;
-					}
-				},
-				close: function(event, ui)
-				{
-					ui.tooltip.hover(function()
-					{
-						$(this).stop(true).fadeTo(400, 1);
-					},
-					function()
-					{
-						$(this).fadeOut('400', function()
-						{
-							$(this).remove();
-						});
-					});
-				}
-			});
-		});
-	}
-
     $(document).on('change', '#refundTransactionAmount', function() {
 		if ($(this).is(':checked')) {
 			$(".refund_transaction_fields").show(200);
@@ -86,47 +42,11 @@ $(document).ready(function() {
         }
     });
 
-    $('#generateCreditSlip, #generateDiscount').click(function() {
+    $('#refundTransactionAmount, #generateDiscount').click(function() {
         if ($(this).is(':checked')) {
-            $('#generateCreditSlip, #generateDiscount').prop('checked', false);
+            $('#refundTransactionAmount, #generateDiscount').prop('checked', false);
 			$(this).prop('checked', true);
 		}
-        $('#generateCreditSlip').change();
+        $('#refundTransactionAmount').change();
 	});
-
-    $(document).on('keyup', '#order_return_form .table input[name^="refund_amounts"]', function() {
-        manageRefundOptions();
-    });
 });
-
-// This function manages (Enable/disable) the refund options check-boxes according to the refund parameters like refund amount
-function manageRefundOptions()
-{
-    let refundAmountInputs = $('#order_return_form .table input[name^="refund_amounts"]');
-
-    let disableRefundOptions = false;
-    $(refundAmountInputs).each(function(index, element) {
-        let val = parseFloat($(element).val().trim());
-        if (isNaN(val)) { // if at least one amount input is empty
-            disableRefundOptions = true;
-            return;
-        }
-    });
-
-    if (!disableRefundOptions) {
-        let hasAllZero = true;
-        $(refundAmountInputs).each(function(index, element) {
-            let val = parseFloat($(element).val().trim());
-            if (val != 0) {
-                hasAllZero = false;
-                return;
-            }
-        });
-
-        if (hasAllZero) { // if all amount inputs are 0
-            disableRefundOptions = true;
-        }
-    }
-
-    $('#generateCreditSlip, #refundTransactionAmount, #generateDiscount').attr('disabled', disableRefundOptions);
-}

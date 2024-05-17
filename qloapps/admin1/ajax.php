@@ -72,12 +72,12 @@ if (Tools::isSubmit('ajaxProductPackItems')) {
 
 if (Tools::isSubmit('getChildrenCategories') && Tools::isSubmit('id_category_parent')) {
     $children_categories = Category::getChildrenWithNbSelectedSubCat(Tools::getValue('id_category_parent'), Tools::getValue('selectedCat'), Context::getContext()->language->id, null, Tools::getValue('use_shop_context'));
-    die(json_encode($children_categories));
+    die(Tools::jsonEncode($children_categories));
 }
 
 if (Tools::isSubmit('getNotifications')) {
     $notification = new Notification;
-    die(json_encode($notification->getLastElements()));
+    die(Tools::jsonEncode($notification->getLastElements()));
 }
 
 if (Tools::isSubmit('updateElementEmployee') && Tools::getValue('updateElementEmployeeType')) {
@@ -111,7 +111,7 @@ if (Tools::isSubmit('getParentCategoriesId') && $id_category = Tools::getValue('
         $output[] = $result;
     }
 
-    die(json_encode($output));
+    die(Tools::jsonEncode($output));
 }
 
 if (Tools::isSubmit('getZones')) {
@@ -121,7 +121,7 @@ if (Tools::isSubmit('getZones')) {
     }
     $html .= '</select>';
     $array = array('hasError' => false, 'errors' => '', 'data' => $html);
-    die(json_encode($array));
+    die(Tools::jsonEncode($array));
 }
 
 if (Tools::isSubmit('getEmailHTML') && $email = Tools::getValue('email')) {

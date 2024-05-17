@@ -23,17 +23,17 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once _PS_MODULE_DIR_.'hotelreservationsystem/define.php';
-require_once dirname(__FILE__).'/../wkhotelfeaturesblock/classes/WkHotelFeaturesBlockDb.php';
 require_once dirname(__FILE__).'/../wkhotelfeaturesblock/classes/WkHotelFeaturesData.php';
 
 class WkHotelFeaturesBlock extends Module
 {
+    const INSTALL_SQL_FILE = 'install.sql';
     public function __construct()
     {
         $this->name = 'wkhotelfeaturesblock';
         $this->tab = 'front_office_features';
-        $this->version = '2.0.6';
-        $this->author = 'Webkul';
+        $this->version = '2.0.4';
+        $this->author = 'webkul';
         $this->bootstrap = true;
         parent::__construct();
 
@@ -44,8 +44,8 @@ class WkHotelFeaturesBlock extends Module
 
     public function hookDisplayHome()
     {
-        $this->context->controller->addCSS($this->_path.'/views/css/wkHotelFeaturesBlockFront.css');
-        $this->context->controller->addJS($this->_path.'/views/js/wkHotelFeaturesBlockFront.js');
+        $this->context->controller->addCSS(_PS_MODULE_DIR_.$this->name.'/views/css/wkHotelFeaturesBlockFront.css');
+        $this->context->controller->addJS(_PS_MODULE_DIR_.$this->name.'/views/js/wkHotelFeaturesBlockFront.js');
 
         $objFeaturesData = new WkHotelFeaturesData();
         $hotelAmenities = $objFeaturesData->getHotelAmenities(1);
@@ -61,6 +61,13 @@ class WkHotelFeaturesBlock extends Module
             )
         );
         return $this->display(__FILE__, 'hotelfeaturescontent.tpl');
+    }
+
+    public function hookDisplayAddModuleSettingLink()
+    {
+        $hrefFeaturesConf = $this->context->link->getAdminLink('AdminFeaturesModuleSetting');
+        $this->context->smarty->assign('features_setting_link', $hrefFeaturesConf);
+        return $this->display(__FILE__, 'hotelFeatureSettingLink.tpl');
     }
 
     /**
@@ -114,25 +121,30 @@ class WkHotelFeaturesBlock extends Module
 
     public function install()
     {
-        $objHotelFeaturesBlockDb = new WkHotelFeaturesBlockDb();
-        if (!parent::install()
-            || !$objHotelFeaturesBlockDb->createTables()
-            || !$this->registerModuleHooks()
-            || !$this->callInstallTab()
-        ) {
+        if (!file_exists(dirname(__FILE__).'/'.self::INSTALL_SQL_FILE)) {
+            return false;
+        } elseif (!$sql = Tools::file_get_contents(dirname(__FILE__).'/'.self::INSTALL_SQL_FILE)) {
             return false;
         }
 
-        // if module should create demo data during installation
-        if (isset($this->populateData) && $this->populateData) {
-            $objHotelFeaturesData = new WkHotelFeaturesData();
-            if (!$objHotelFeaturesData->insertModuleDemoData()) {
-                return false;
-            }
-        } else {
-            Tools::deleteDirectory($this->local_path.'views/img/dummy_img');
-        }
+        $sql = str_replace(array('PREFIX_',  'ENGINE_TYPE'), array(_DB_PREFIX_, _MYSQL_ENGINE_), $sql);
+        $sql = preg_split("/;\s*[\r\n]+/", $sql);
 
+        foreach ($sql as $query) {
+            if ($query) {
+                if (!Db::getInstance()->execute(trim($query))) {
+                    return false;
+                }
+            }
+        }
+        $objFeaturesData = new WkHotelFeaturesData();
+        if (!parent::install()
+            || !$this->registerModuleHooks()
+            || !$this->callInstallTab()
+            || !$objFeaturesData->insertModuleDemoData()
+        ) {
+            return false;
+        }
         return true;
     }
 
@@ -142,23 +154,18 @@ class WkHotelFeaturesBlock extends Module
             array (
                 'displayHome',
                 'displayFooterExploreSectionHook',
+                'displayAddModuleSettingLink',
                 'actionObjectLanguageAddAfter'
             )
         );
     }
 
-    public function getContent()
-    {
-        Tools::redirectAdmin($this->context->link->getAdminLink('AdminFeaturesModuleSetting'));
-    }
-
     public function uninstall()
     {
-        $objHotelFeaturesBlockDb = new WkHotelFeaturesBlockDb();
         if (!parent::uninstall()
             || !$this->deleteHotelAmenityImg()
             || !$this->uninstallTab()
-            || !$objHotelFeaturesBlockDb->dropTables()
+            || !$this->deleteTables()
             || !$this->deleteConfigKeys()
         ) {
             return false;
@@ -193,7 +200,16 @@ class WkHotelFeaturesBlock extends Module
         }
         return true;
     }
-    
+
+    public function deleteTables()
+    {
+        return Db::getInstance()->execute(
+            'DROP TABLE IF EXISTS
+            `'._DB_PREFIX_.'htl_features_block_data`,
+            `'._DB_PREFIX_.'htl_features_block_data_lang`'
+        );
+    }
+
     public function uninstallTab()
     {
         $moduleTabs = Tab::getCollectionFromModule($this->name);

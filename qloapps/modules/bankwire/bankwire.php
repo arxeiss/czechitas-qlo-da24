@@ -28,7 +28,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class Bankwire extends PaymentModule
+class bankwire extends PaymentModule
 {
     protected $_html = '';
     protected $_postErrors = array();
@@ -41,7 +41,7 @@ class Bankwire extends PaymentModule
     {
         $this->name = 'bankwire';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.5';
+        $this->version = '1.1.3';
         $this->author = 'PrestaShop';
         $this->controllers = array('payment', 'validation');
         $this->is_eu_compatible = 1;
@@ -64,7 +64,7 @@ class Bankwire extends PaymentModule
         parent::__construct();
 
         $this->displayName = $this->l('Bank wire');
-        $this->description = $this->l('This module allows you to accept payments for bookings via bank wire transfer.');
+        $this->description = $this->l('Accept payments for your products via bank wire transfer.');
         $this->confirmUninstall = $this->l('Are you sure about removing these details?');
         if (!isset($this->owner) || !isset($this->details) || !isset($this->address)) {
             $this->warning = $this->l('Account owner and account details must be configured before using this module.');
@@ -74,29 +74,11 @@ class Bankwire extends PaymentModule
             $this->warning = $this->l('No currency has been set for this module.');
         }
 
-        $this->payment_type = OrderPayment::PAYMENT_TYPE_REMOTE_PAYMENT;
-    }
-
-    public function getExtraMailContent($id_order_state, $order)
-    {
-        if (Configuration::get('PS_OS_AWAITING_PAYMENT') == $id_order_state) {
-            $this->context->smarty->assign(array(
-                'bankwire_owner' => Configuration::get('BANK_WIRE_OWNER'),
-                'bankwire_details' => nl2br(Configuration::get('BANK_WIRE_DETAILS')),
-                'bankwire_address' => nl2br(Configuration::get('BANK_WIRE_ADDRESS')),
-                'lang' => new Language($order->id_lang)
-            ));
-
-            return array(
-                '{extra_mail_content_html}' => $this->context->smarty->fetch(
-                    $this->local_path.'views/templates/mail/mail_template_html.tpl'
-                ),
-                '{extra_mail_content_txt}' => $this->context->smarty->fetch(
-                    $this->local_path.'views/templates/mail/mail_template_text.tpl'
-                )
-            );
-        }
-        return array();
+        $this->extra_mail_vars = array(
+                                        '{bankwire_owner}' => Configuration::get('BANK_WIRE_OWNER'),
+                                        '{bankwire_details}' => nl2br(Configuration::get('BANK_WIRE_DETAILS')),
+                                        '{bankwire_address}' => nl2br(Configuration::get('BANK_WIRE_ADDRESS'))
+                                        );
     }
 
     public function install()
@@ -206,35 +188,31 @@ class Bankwire extends PaymentModule
         if (!$this->active) {
             return;
         }
-
         $objOrder = $params['objOrder'];
-        $orderState = $objOrder->getCurrentState();
-        $smartyVars = array();
-        if (in_array(
-            $orderState,
-            array(
-                Configuration::get('PS_OS_AWAITING_PAYMENT'),
-            )
-        )) {
-            $objCart = new Cart($objOrder->id_cart);
-            if ($objCart->is_advance_payment) {
-                $cartTotal = $objOrder->getOrdersTotalPaid(1);
+        $cart = new Cart($objOrder->id_cart);
+        $state = $objOrder->getCurrentState();
+        if (in_array($state, array(Configuration::get('PS_OS_BANKWIRE'), Configuration::get('PS_OS_OUTOFSTOCK'), Configuration::get('PS_OS_OUTOFSTOCK_UNPAID')))) {
+            if ($objOrder->is_advance_payment) {
+                $order_total = $objOrder->advance_paid_amount;
             } else {
-                $cartTotal = $objOrder->getOrdersTotalPaid();
+                $order_total = $objOrder->total_paid;
 			}
 
-            $smartyVars['total_to_pay'] = Tools::displayPrice($cartTotal, $params['currencyObj'], false);
-            $smartyVars['bankwireDetails'] = Tools::nl2br($this->details);
-            $smartyVars['bankwireAddress'] = Tools::nl2br($this->address);
-            $smartyVars['bankwireOwner'] = $this->owner;
-            $smartyVars['status'] = 'ok';
-            $smartyVars['id_order'] = $objOrder->id;
-            $smartyVars['reference'] = $objOrder->reference;
+            $this->smarty->assign(array(
+                'total_to_pay' => Tools::displayPrice($order_total, $params['currencyObj'], false),
+                'bankwireDetails' => Tools::nl2br($this->details),
+                'bankwireAddress' => Tools::nl2br($this->address),
+                'bankwireOwner' => $this->owner,
+                'status' => 'ok',
+                'id_order' => $objOrder->id
+            ));
+            if (isset($objOrder->reference) && !empty($objOrder->reference)) {
+                $this->smarty->assign('reference', $objOrder->reference);
+            }
         } else {
-            $smartyVars['status'] = 'failed';
+            $this->smarty->assign('status', 'failed');
         }
 
-        $this->smarty->assign($smartyVars);
         return $this->display(__FILE__, 'payment_return.tpl');
     }
 

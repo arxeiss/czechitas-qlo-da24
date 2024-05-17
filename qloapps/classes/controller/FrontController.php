@@ -214,44 +214,7 @@ class FrontControllerCore extends Controller
         self::$initialized = true;
 
         parent::init();
-        $this->context->smarty->assign([
-            'css_dir' => _THEME_CSS_DIR_,
-            'img_ps_dir' => _PS_IMG_,
-            'tpl_dir' => _PS_THEME_DIR_,
-            'js_dir' => _THEME_JS_DIR_,
-            'base_dir' => __PS_BASE_URI__,
-            'language_code'       => $this->context->language->language_code ? $this->context->language->language_code : $this->context->language->iso_code,
-            'language_is_rtl' => $this->context->language->is_rtl,
-        ]);
 
-        /* get page name to display it in body id */
-
-        // Are we in a payment module
-        $module_name = '';
-        if (Validate::isModuleName(Tools::getValue('module'))) {
-            $module_name = Tools::getValue('module');
-        }
-
-        if (!empty($this->page_name)) {
-            $page_name = $this->page_name;
-        } elseif (!empty($this->php_self)) {
-            $page_name = $this->php_self;
-        } elseif (Tools::getValue('fc') == 'module' && $module_name != '' && (Module::getInstanceByName($module_name) instanceof PaymentModule)) {
-            $page_name = 'module-payment-submit';
-        }
-        // @retrocompatibility Are we in a module ?
-        elseif (preg_match('#^'.preg_quote($this->context->shop->physical_uri, '#').'modules/([a-zA-Z0-9_-]+?)/(.*)$#', $_SERVER['REQUEST_URI'], $m)) {
-            $page_name = 'module-'.$m[1].'-'.str_replace(array('.php', '/'), array('', '-'), $m[2]);
-        } else {
-            $page_name = Dispatcher::getInstance()->getController();
-            $page_name = (preg_match('/^[0-9]/', $page_name) ? 'page_'.$page_name : $page_name);
-        }
-
-        $this->context->smarty->assign(Meta::getMetaTags($this->context->language->id, $page_name));
-        $this->context->smarty->assign('request_uri', Tools::safeOutput(urldecode($_SERVER['REQUEST_URI'])));
-
-        Tools::setCookieLanguage($this->context->cookie);
-        $this->displayMaintenancePage();
         // If current URL use SSL, set it true (used a lot for module redirect)
         if (Tools::usingSecureMode()) {
             $useSSL = true;
@@ -273,10 +236,12 @@ class FrontControllerCore extends Controller
             $this->context->smarty->assign('account_created', 1);
             unset($this->context->cookie->account_created);
         }
+
         ob_start();
 
         // Init cookie language
         // @TODO This method must be moved into switchLanguage
+        Tools::setCookieLanguage($this->context->cookie);
 
         $protocol_link = (Configuration::get('PS_SSL_ENABLED') || Tools::usingSecureMode()) ? 'https://' : 'http://';
         $useSSL = ((isset($this->ssl) && $this->ssl && Configuration::get('PS_SSL_ENABLED')) || Tools::usingSecureMode()) ? true : false;
@@ -342,7 +307,7 @@ class FrontControllerCore extends Controller
             }
 
             if (Validate::isLoadedObject($cart) && $cart->OrderExists()) {
-                PrestaShopLogger::addLog('Frontcontroller::init - Cart cannot be loaded or a booking has already been created using this cart', 1, null, 'Cart', (int)$this->context->cookie->id_cart, true);
+                PrestaShopLogger::addLog('Frontcontroller::init - Cart cannot be loaded or an order has already been placed using this cart', 1, null, 'Cart', (int)$this->context->cookie->id_cart, true);
                 unset($this->context->cookie->id_cart, $cart, $this->context->cookie->checkedTOS);
                 $this->context->cookie->check_cgv = false;
             }
@@ -405,6 +370,32 @@ class FrontControllerCore extends Controller
             $this->context->cart = $cart;
         }
 
+        /* get page name to display it in body id */
+
+        // Are we in a payment module
+        $module_name = '';
+        if (Validate::isModuleName(Tools::getValue('module'))) {
+            $module_name = Tools::getValue('module');
+        }
+
+        if (!empty($this->page_name)) {
+            $page_name = $this->page_name;
+        } elseif (!empty($this->php_self)) {
+            $page_name = $this->php_self;
+        } elseif (Tools::getValue('fc') == 'module' && $module_name != '' && (Module::getInstanceByName($module_name) instanceof PaymentModule)) {
+            $page_name = 'module-payment-submit';
+        }
+        // @retrocompatibility Are we in a module ?
+        elseif (preg_match('#^'.preg_quote($this->context->shop->physical_uri, '#').'modules/([a-zA-Z0-9_-]+?)/(.*)$#', $_SERVER['REQUEST_URI'], $m)) {
+            $page_name = 'module-'.$m[1].'-'.str_replace(array('.php', '/'), array('', '-'), $m[2]);
+        } else {
+            $page_name = Dispatcher::getInstance()->getController();
+            $page_name = (preg_match('/^[0-9]/', $page_name) ? 'page_'.$page_name : $page_name);
+        }
+
+        $this->context->smarty->assign(Meta::getMetaTags($this->context->language->id, $page_name));
+        $this->context->smarty->assign('request_uri', Tools::safeOutput(urldecode($_SERVER['REQUEST_URI'])));
+
         /* Breadcrumb */
         $navigation_pipe = (Configuration::get('PS_NAVIGATION_PIPE') ? Configuration::get('PS_NAVIGATION_PIPE') : '>');
         $this->context->smarty->assign('navigationPipe', $navigation_pipe);
@@ -413,16 +404,16 @@ class FrontControllerCore extends Controller
         if (!empty($this->php_self) && !Tools::getValue('ajax')) {
             $this->canonicalRedirection($this->context->link->getPageLink($this->php_self, $this->ssl, $this->context->language->id));
         }
+
         Product::initPricesComputation();
 
         $display_tax_label = $this->context->country->display_tax_label;
         if (isset($cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')}) && $cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')}) {
-            if ($infos = Address::getCountryAndState((int)$cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')})) {
-                $country = new Country((int)$infos['id_country']);
-                $this->context->country = $country;
-                if (Validate::isLoadedObject($country)) {
-                    $display_tax_label = $country->display_tax_label;
-                }
+            $infos = Address::getCountryAndState((int)$cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
+            $country = new Country((int)$infos['id_country']);
+            $this->context->country = $country;
+            if (Validate::isLoadedObject($country)) {
+                $display_tax_label = $country->display_tax_label;
             }
         }
 
@@ -437,15 +428,6 @@ class FrontControllerCore extends Controller
             $compared_products = CompareProduct::getCompareProducts($this->context->cookie->id_compare);
         }
 
-        $isOccupancyWiseSearch = false;
-        if (Configuration::get('PS_FRONT_SEARCH_TYPE') == HotelBookingDetail::SEARCH_TYPE_OWS) {
-            $isOccupancyWiseSearch = true;
-        }
-
-        $occupancyRequiredForBooking = false;
-        if (Configuration::get('PS_FRONT_ROOM_UNIT_SELECTION_TYPE') == HotelBookingDetail::PS_ROOM_UNIT_SELECTION_TYPE_OCCUPANCY) {
-            $occupancyRequiredForBooking = true;
-        }
         $this->context->smarty->assign(array(
             // Useful for layout.tpl
             'mobile_device'       => $this->context->getMobileDevice(),
@@ -462,11 +444,13 @@ class FrontControllerCore extends Controller
             'force_ssl'           => Configuration::get('PS_SSL_ENABLED') && Configuration::get('PS_SSL_ENABLED_EVERYWHERE'),
             'content_dir'         => $protocol_content.Tools::getHttpHost().__PS_BASE_URI__,
             'base_uri'            => $protocol_content.Tools::getHttpHost().__PS_BASE_URI__.(!Configuration::get('PS_REWRITING_SETTINGS') ? 'index.php' : ''),
+            'tpl_dir'             => _PS_THEME_DIR_,
             'tpl_uri'             => _THEME_DIR_,
             'modules_dir'         => _MODULE_DIR_,
             'mail_dir'            => _MAIL_DIR_,
             'lang_iso'            => $this->context->language->iso_code,
             'lang_id'             => (int)$this->context->language->id,
+            'language_code'       => $this->context->language->language_code ? $this->context->language->language_code : $this->context->language->iso_code,
             'come_from'           => Tools::getHttpHost(true, true).Tools::htmlentitiesUTF8(str_replace(array('\'', '\\'), '', urldecode($_SERVER['REQUEST_URI']))),
             'cart_qties'          => (int)$cart->nbProducts(),
             'currencies'          => Currency::getCurrencies(),
@@ -481,6 +465,7 @@ class FrontControllerCore extends Controller
             'use_taxes'           => (int)Configuration::get('PS_TAX'),
             'show_taxes'          => (int)(Configuration::get('PS_TAX_DISPLAY') == 1 && (int)Configuration::get('PS_TAX')),
             'display_tax_label'   => (bool)$display_tax_label,
+            'vat_management'      => (int)Configuration::get('VATNUMBER_MANAGEMENT'),
             'opc'                 => (bool)Configuration::get('PS_ORDER_PROCESS_TYPE'),
             'PS_CATALOG_MODE'     => (bool)Configuration::get('PS_CATALOG_MODE') || (Group::isFeatureActive() && !(bool)Group::getCurrent()->show_prices),
             'b2b_enable'          => (bool)Configuration::get('PS_B2B_ENABLE'),
@@ -493,10 +478,6 @@ class FrontControllerCore extends Controller
             'currencySign'        => $currency->sign, // backward compat, see global.tpl
             'currencyFormat'      => $currency->format, // backward compat
             'currencyBlank'       => $currency->blank, // backward compat
-            'is_occupancy_wise_search'    => $isOccupancyWiseSearch,
-            'occupancy_required_for_booking' => $occupancyRequiredForBooking,
-            'max_child_age' => Configuration::get('WK_GLOBAL_CHILD_MAX_AGE'),
-            'max_child_in_room' => Configuration::get('WK_GLOBAL_MAX_CHILD_IN_ROOM'),
         ));
 
         // Add the tpl files directory for mobile
@@ -514,6 +495,7 @@ class FrontControllerCore extends Controller
         ));
 
         $assign_array = array(
+            'img_ps_dir'    => _PS_IMG_,
             'img_cat_dir'   => _THEME_CAT_DIR_,
             'img_lang_dir'  => _THEME_LANG_DIR_,
             'img_prod_dir'  => _THEME_PROD_DIR_,
@@ -523,6 +505,8 @@ class FrontControllerCore extends Controller
             'img_store_dir' => _THEME_STORE_DIR_,
             'img_col_dir'   => _THEME_COL_DIR_,
             'img_dir'       => _THEME_IMG_DIR_,
+            'css_dir'       => _THEME_CSS_DIR_,
+            'js_dir'        => _THEME_JS_DIR_,
             'pic_dir'       => _THEME_PROD_PIC_DIR_
         );
 
@@ -555,12 +539,14 @@ class FrontControllerCore extends Controller
         self::$link   = $link;
         $defaultCountry = $this->context->country;
 
+        $this->displayMaintenancePage();
+
         if ($this->restrictedCountry) {
             $this->displayRestrictedCountryPage();
         }
 
         if (Tools::isSubmit('live_edit') && !$this->checkLiveEditAccess()) {
-            Tools::redirect('index.php');
+            Tools::redirect('index.php?controller=404');
         }
 
         $this->iso               = $iso;
@@ -764,104 +750,22 @@ class FrontControllerCore extends Controller
      */
     protected function displayMaintenancePage()
     {
-        if (isset(Context::getContext()->cookie->remote_addr)
-            && Context::getContext()->cookie->remote_addr != ip2long(Tools::getRemoteAddr())
-        ) {
-            $cookie = Context::getContext()->cookie;
-            if (isset($cookie->remote_addr)) {
-                $cookie->enable_maintenance_view = false;
-                $cookie->remote_addr = false;
-                $cookie->write();
+        if ($this->maintenance == true || !(int)Configuration::get('PS_SHOP_ENABLE')) {
+            $this->maintenance = true;
+            if (!in_array(Tools::getRemoteAddr(), explode(',', Configuration::get('PS_MAINTENANCE_IP')))) {
+                header('HTTP/1.1 503 temporarily overloaded');
+
+                $this->context->smarty->assign($this->initLogoAndFavicon());
+                $this->context->smarty->assign(array(
+                    'HOOK_MAINTENANCE' => Hook::exec('displayMaintenance', array()),
+                ));
+
+                // If the controller is a module, then getTemplatePath will try to find the template in the modules, so we need to instanciate a real frontcontroller
+                $front_controller = preg_match('/ModuleFrontController$/', get_class($this)) ? new FrontController() : $this;
+                $this->smartyOutputContent($front_controller->getTemplatePath($this->getThemeDir().'maintenance.tpl'));
+                exit;
             }
         }
-
-        if (Tools::isSubmit('SubmitLogin')
-            && Configuration::get('PS_ALLOW_EMP')
-            && !Context::getContext()->cookie->enable_maintenance_view
-        ) {
-            $email = trim(Tools::getValue('email'));
-            $passwd = trim(Tools::getValue('passwd'));
-            $this->processLogin($email, $passwd);
-        }
-
-        if (!Context::getContext()->cookie->enable_maintenance_view || !Configuration::get('PS_ALLOW_EMP')) {
-            Context::getContext()->cookie->__unset('enable_maintenance_view');
-            Context::getContext()->cookie->write();
-            if ($this->maintenance == true || !(int)Configuration::get('PS_SHOP_ENABLE')) {
-                $this->maintenance = true;
-                if (!in_array(Tools::getRemoteAddr(), explode(',', Configuration::get('PS_MAINTENANCE_IP')))) {
-                    header('HTTP/1.1 503 temporarily overloaded');
-
-                    $this->context->smarty->assign($this->initLogoAndFavicon());
-                    $this->context->smarty->assign(array(
-                        'HOOK_MAINTENANCE' => Hook::exec('displayMaintenance', array()),
-                        'allowEmployee' => Configuration::get('PS_ALLOW_EMP'),
-                        'maintenance' => $this->context->link->getAdminLink('AdminMaintenance', false),
-                        'languages' => Language::getLanguages(true, $this->context->shop->id),
-                        'lang_iso' => $this->context->language->iso_code,
-                        'link' => $this->context->link,
-                    ));
-                    // If the controller is a module, then getTemplatePath will try to find the template in the modules, so we need to instanciate a real frontcontroller
-                    $front_controller = preg_match('/ModuleFrontController$/', get_class($this)) ? new FrontController() : $this;
-                    $this->smartyOutputContent($front_controller->getTemplatePath($this->getThemeDir().'maintenance.tpl'));
-                    exit;
-                }
-            }
-        }
-    }
-
-    protected function processLogin($email, $passwd)
-    {
-        $result = false;
-        $objMaintenanceAccess = new MaintenanceAccess();
-
-        /* Check fields validity */
-        if (empty($email)) {
-            $this->errors[] = Tools::displayError('Email is empty.');
-        } elseif (!Validate::isEmail($email)) {
-            $this->errors[] = Tools::displayError('Invalid email address.');
-        }
-
-        if (empty($passwd)) {
-            $this->errors[] = Tools::displayError('The password field is blank.');
-        } elseif (!Validate::isPasswd($passwd)) {
-            $this->errors[] = Tools::displayError('Invalid password.');
-        }
-
-        if ($objMaintenanceAccess->checkLimit($email)) {
-            $this->errors[] =Tools::displayError('You have exceeded the limit of login attempts, please try after some time');
-        }
-
-        if (!count($this->errors)) {
-            // Find employee
-            $this->context->employee = new Employee();
-            $is_employee_loaded = $this->context->employee->getByEmail($email, $passwd);
-            $employee_associated_shop = $this->context->employee->getAssociatedShops();
-            if (!$is_employee_loaded) {
-                $this->errors[] = Tools::displayError('The Employee does not exist, or the password provided is incorrect.');
-                $this->context->employee->logout();
-            } elseif (empty($employee_associated_shop) && !$this->context->employee->isSuperAdmin()) {
-                $this->errors[] = Tools::displayError('This employee does not manage the shop anymore (Either the shop has been deleted or permissions have been revoked).');
-                $this->context->employee->logout();
-            } else {
-                // Update cookie
-                $cookie = Context::getContext()->cookie;
-                $cookie->enable_maintenance_view = $this->context->employee->id;
-                $cookie->remote_addr = ip2long(Tools::getRemoteAddr());
-                $cookie->write();
-            }
-            if (count($this->errors)) {
-                $this->context->smarty->assign('errors', $this->errors);
-                $objMaintenanceAccess->email = $email;
-                $objMaintenanceAccess->ip_address = Tools::getRemoteAddr();
-                $objMaintenanceAccess->save();
-            } else {
-                Tools::redirect('index.php');
-            }
-        } else {
-            $this->context->smarty->assign('errors', $this->errors);
-        }
-        return $result;
     }
 
     /**
@@ -922,16 +826,8 @@ class FrontControllerCore extends Controller
             }
             $excluded_key = array('isolang', 'id_lang', 'controller', 'fc', 'id_product', 'id_category', 'id_manufacturer', 'id_supplier', 'id_cms');
             foreach ($_GET as $key => $value) {
-                if (!in_array($key, $excluded_key)) {
-                    if (is_array($value)) {
-                        if (Validate::isUrl($key)) {
-                            $params[Tools::safeOutput($key)] = $this->sanitizeQueryOutput($value);
-                        }
-                    } else {
-                        if (Validate::isUrl($key) && Validate::isUrl($value)) {
-                            $params[Tools::safeOutput($key)] = Tools::safeOutput($value);
-                        }
-                    }
+                if (!in_array($key, $excluded_key) && Validate::isUrl($key) && Validate::isUrl($value)) {
+                    $params[Tools::safeOutput($key)] = Tools::safeOutput($value);
                 }
             }
 
@@ -954,24 +850,6 @@ class FrontControllerCore extends Controller
             header('Cache-Control: no-cache');
             Tools::redirectLink($final_url);
         }
-    }
-
-    protected function sanitizeQueryOutput($query)
-    {
-        $params = array();
-        foreach ($query as $key => $value) {
-            if (Validate::isUrl($key)) {
-                if (is_array($value)) {
-                    $params[Tools::safeOutput($key)] = $this->sanitizeQueryOutput($value);
-                } else {
-                    if (Validate::isUrl($value)) {
-                        $params[Tools::safeOutput($key)] = Tools::safeOutput($value);
-                    }
-                }
-            }
-        }
-
-        return $params;
     }
 
     /**
@@ -1103,18 +981,11 @@ class FrontControllerCore extends Controller
             }
         }
 
-        $this->addJS(_PS_JS_DIR_.'daterangepicker/moment.min.js');
-        $this->addjqueryPlugin('daterangepicker.min', _PS_JS_DIR_.'daterangepicker/');
-        $this->addJS(_PS_JS_DIR_.'daterangepicker/qlodaterangepicker.js');
-
-        $this->addCSS(_THEME_CSS_DIR_.'daterangepicker.css');
-
         if (Tools::isSubmit('live_edit') && Tools::getValue('ad') && Tools::getAdminToken('AdminModulesPositions'.(int)Tab::getIdFromClassName('AdminModulesPositions').(int)Tools::getValue('id_employee'))) {
             $this->addJqueryUI('ui.sortable');
             $this->addjqueryPlugin('fancybox');
             $this->addJS(_PS_JS_DIR_.'hookLiveEdit.js');
         }
-        $this->addJqueryUI('ui.tooltip', 'base', true);
 
         if (Configuration::get('PS_QUICK_VIEW')) {
             $this->addjqueryPlugin('fancybox');
@@ -1135,7 +1006,9 @@ class FrontControllerCore extends Controller
      */
     public function initHeader()
     {
-        header('Powered-By: QloApps');
+        /** @see P3P Policies (http://www.w3.org/TR/2002/REC-P3P-20020416/#compact_policies) */
+        header('P3P: CP="IDC DSP COR CURa ADMa OUR IND PHY ONL COM STA"');
+        header('Powered-By: PrestaShop');
 
         // Hooks are voluntary out the initialize array (need those variables already assigned)
         $this->context->smarty->assign(array(
@@ -1558,7 +1431,6 @@ class FrontControllerCore extends Controller
                     $this->context->cookie->is_guest = $customer->isGuest();
                     $this->context->cookie->passwd = $customer->passwd;
                     $this->context->cookie->email = $customer->email;
-                    $this->context->cookie->id_guest = (int) $cart->id_guest;
                     return $id_cart;
                 }
             }
@@ -1710,10 +1582,17 @@ class FrontControllerCore extends Controller
      */
     public function setMobileTemplate($template)
     {
+        // Needed for site map
+        $blockmanufacturer = Module::getInstanceByName('blockmanufacturer');
+        $blocksupplier     = Module::getInstanceByName('blocksupplier');
+
         $this->context->smarty->assign(array(
             'categoriesTree'            => Category::getRootCategory()->recurseLiteCategTree(0),
             'categoriescmsTree'         => CMSCategory::getRecurseCategory($this->context->language->id, 1, 1, 1),
             'voucherAllowed'            => (int)CartRule::isFeatureActive(),
+            'display_manufacturer_link' => (bool)$blockmanufacturer->active,
+            'display_supplier_link'     => (bool)$blocksupplier->active,
+            'PS_DISPLAY_SUPPLIERS'      => Configuration::get('PS_DISPLAY_SUPPLIERS'),
             'PS_DISPLAY_BEST_SELLERS'   => Configuration::get('PS_DISPLAY_BEST_SELLERS'),
             'display_store'             => Configuration::get('PS_STORES_DISPLAY_SITEMAP'),
             'conditions'                => Configuration::get('PS_CONDITIONS'),

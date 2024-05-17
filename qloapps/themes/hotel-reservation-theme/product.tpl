@@ -36,7 +36,7 @@
 		{assign var='productPriceWithoutReduction' value=$product->getPriceWithoutReduct(true, $smarty.const.NULL)}
 	{/if}
 <div class="product_wrapper" itemscope itemtype="http://schema.org/Product">
-	{if isset($product) && $product}
+	{if isset($product_id_hotel) && $product_id_hotel}
 		<meta itemprop="url" content="{$link->getProductLink($product)}">
 		<div class="primary_block row">
 			<!-- {if !$content_only}
@@ -46,7 +46,7 @@
 			{/if} --><!-- by webkul -->
 			{if isset($adminActionDisplay) && $adminActionDisplay}
 				<div id="admin-action" class="container">
-					<p class="alert alert-info">{l s='This room type is not visible to your customers.'}
+					<p class="alert alert-info">{l s='This product is not visible to your customers.'}
 						<input type="hidden" id="admin-action-product-id" value="{$product->id}" />
 						<a id="publish_button" class="btn btn-default button button-small" href="#">
 							<span>{l s='Publish'}</span>
@@ -68,15 +68,19 @@
 				<div class="room_type_img_containter card">
 					<div class="room_hotel_name_block">
 						<div class="hotel_name_block">
-							<span>{$product->name}
-								{* Block for booking products *}
-								{if isset($id_hotel) && $id_hotel}&nbsp;-&nbsp;{$hotel_name}{/if}
-							</span>
-							{hook h='displayRoomTypeDetailRoomTypeNameBlock' id_product=$product->id}
+							<span>{$product->name}&nbsp;-&nbsp;{$hotel_name}</span>
 						</div>
-						{hook h='displayRoomTypeDetailRoomTypeNameAfter' id_product=$product->id}
+						{if isset($num_reviews)}
+							{for $foo=1 to 5}
+								{if $foo <= $ratting}
+									<div class="room_ratting_yes" style="background-image:url({$ratting_img_path});"></div>
+								{else}
+									<div class="room_ratting_no" style="background-image:url({$ratting_img_path});"></div>
+								{/if}
+							{/for}
+							<span class="num_reviews">{$num_reviews} &nbsp;{l s='Review(s)'}</span>
+						{/if}
 					</div>
-					{hook h='displayRoomTypeDetailRoomTypeImageBlockBefore' id_product=$product->id}
 					<!-- product img-->
 					<div class="row">
 
@@ -172,112 +176,44 @@
 					{/if}
 				</div>
 
-				<div id="service_products_cont">
-					{if isset($service_products_exists) && $service_products_exists}
-						{include file="{$tpl_dir}_partials/service-products.tpl"}
-					{/if}
-				</div>
-
-				<div class="product_info_containter">
+				<div class="room_type_info_containter">
 					<!-- tab hook is added here -->
 					<!--HOOK_PRODUCT_TAB -->
 					<section class="page-product-box">
 						<ul class="nav nav-tabs product_description_tabs">
-							<li class="active"><a href="#product_info_tab" class="idTabHrefShort" data-toggle="tab">{l s='Room Information'}</a></li>
-							{* Block for booking products *}
-							{if isset($id_hotel) && $id_hotel}
-								<li><a href="#refund_policies_tab" class="idTabHrefShort" data-toggle="tab">{l s='Refund Policies'}</a></li>
-							{/if}
-							{if $display_google_maps && ($hotel_latitude|floatval != 0 && $hotel_longitude|floatval != 0)}
-								<li><a href="#room_type_map_tab" class="idTabHrefShort" data-toggle="tab">{l s='View on Map'}</a></li>
-							{/if}
+							<li class="active"><a href="#room_info_tab" class="idTabHrefShort" data-toggle="tab">{l s='Room Information'}</a></li>
+							<li><a href="#refund_policies_tab" class="idTabHrefShort" data-toggle="tab">{l s='Refund policies'}</a></li>
 							{$HOOK_PRODUCT_TAB}
 						</ul>
 						<div class="tab-content product_description_tabs_contents">
-							<div id="product_info_tab" class="tab-pane active card">
-								<div id="product_info_tab_information">
+							<div id="room_info_tab" class="tab-pane active card">
+								<div id="room_info_tab_information">
 									<div class="row info_margin_div room_description">
 										<div class="col-sm-12">
 											{$product->description}
 										</div>
 									</div>
-									{if isset($room_type_info['adults']) && isset($room_type_info['children']) }
-										<div class="info_margin_div">
-											<div class="room_info_heading">
-												<span>{l s='Max Capacity'}</span>
-											</div>
-											<div class="room_info_content">
-												<p>{$room_type_info['adults']} {l s='Adults'}, {$room_type_info['children']} {if $room_type_info['children'] > 1}{l s='Children'}{else}{l s='Child'}{/if} ({l s='Max guests'}: {$room_type_info['max_guests']|escape:'htmlall':'UTF-8'})</p>
-											</div>
-										</div>
-									{/if}
-									{if isset($id_hotel) && $id_hotel}
-										<div class="info_margin_div">
-											<div class="room_info_heading">
-												<span>{l s='Check-in and check-out time'}</span>
-											</div>
-											<div class="room_info_content">
-												<p>{l s='Check-in: '}{$hotel_check_in|escape:'html':'UTF-8'}</p>
-												<p>{l s='Check-out: '}{$hotel_check_out|escape:'html':'UTF-8'}</p>
-											</div>
-										</div>
-									{/if}
 									{if isset($features) && $features}
 										<div class="info_margin_div">
 											<div class="room_info_heading">
 												<span>{l s='Room Features'}</span>
 											</div>
-											<div class="room_info_content row">
+											<div class="room_info_content">
 												{foreach from=$features key=ftr_k item=ftr_v}
-													<div class="col-md-3 col-sm-4 col-xs-6">
-														<div class="rm_ftr_wrapper" title="{$ftr_v.name|escape:'html':'UTF-8'}" alt="{$ftr_v.name|escape:'html':'UTF-8'}" >
-															<img src="{$link->getMediaLink("`$ftr_img_src|escape:'html':'UTF-8'`{$ftr_v.value|escape:'html':'UTF-8'}")}">  {$ftr_v.name|escape:'html':'UTF-8'}
-														</div>
-													</div>
+													<img title="{$ftr_v.name|escape:'html':'UTF-8'}" alt="{$ftr_v.name|escape:'html':'UTF-8'}" width="15px" src="{$link->getMediaLink("`$ftr_img_src|escape:'html':'UTF-8'`{$ftr_v.value|escape:'html':'UTF-8'}")}">&nbsp;
 												{/foreach}
 											</div>
 										</div>
 									{/if}
-									{* Block for booking products *}
-									{if isset($id_hotel) && $id_hotel}
-										{if isset($hotel_features) && $hotel_features}
-											<div class="info_margin_div">
-												<div class="room_info_heading">
-													<span>{l s='Hotel Features'}</span>
-												</div>
-												<div class="room_info_content row">
-													{foreach from=$hotel_features key=ftr_k item=ftr_v}
-														<div class="col-sm-4 col-xs-12"><i class="circle-small">o</i> {$ftr_v|escape:'html':'UTF-8'}</div>
-													{/foreach}
-												</div>
+									{if isset($hotel_features) && $hotel_features}
+										<div class="info_margin_div">
+											<div class="room_info_heading">
+												<span>{l s='Hotel Features'}</span>
 											</div>
-										{/if}
-									{/if}
-									{if isset($hotel_has_images) && $hotel_has_images}
-										<div class="room_info_hotel_images_wrap">
-											<div class="info_margin_div">
-												<div class="room_info_heading">
-													<span>{l s='Hotel Images'}</span>
-												</div>
-												<div class="room_info_content" id="room_info_hotel_images">
-													<div class="row images-wrap"></div>
-													<div class="row skeleton-loading-wrap">
-														<div class="skeleton-loading-wave clearfix">
-															<div class="col-sm-4">
-																<div class="loading-container-box"></div>
-															</div>
-															<div class="col-sm-4">
-																<div class="loading-container-box"></div>
-															</div>
-															<div class="col-sm-4">
-																<div class="loading-container-box"></div>
-															</div>
-														</div>
-													</div>
-												</div>
-												<a class="btn btn-primary btn-show-more-images hide" data-id-product="{$product->id}" data-next-page="1">
-													<span>{l s='SHOW MORE'}</span>
-												</a>
+											<div class="room_info_content row">
+												{foreach from=$hotel_features key=ftr_k item=ftr_v}
+													<div class="col-sm-4 col-xs-12"><i class="circle-small">o</i> {$ftr_v|escape:'html':'UTF-8'}</div>
+												{/foreach}
 											</div>
 										</div>
 									{/if}
@@ -299,48 +235,23 @@
 									{/if}
 								</div>
 							</div>
-							{* Block for booking products *}
-							{if isset($id_hotel) && $id_hotel}
-								<div id="refund_policies_tab" class="tab-pane card">
-									{if isset($isHotelRefundable) && $isHotelRefundable}
-										{if isset($hotelRefundRules) && $hotelRefundRules}
-											{foreach $hotelRefundRules as $refundRule}
-												<div class="info_margin_div">
-													<div class="room_info_content">
-														<i class="circle-small">o</i> <span class="refund-rule-name">{$refundRule['name']|escape:'html':'UTF-8'} - </span> <span>{$refundRule['description']|escape:'html':'UTF-8'}</span>
-													</div>
+							<div id="refund_policies_tab" class="tab-pane card">
+								{if isset($isHotelRefundable) && $isHotelRefundable}
+									{if isset($hotelRefundRules) && $hotelRefundRules}
+										{foreach $hotelRefundRules as $refundRule}
+											<div class="info_margin_div">
+												<div class="room_info_content">
+													<i class="circle-small">o</i> <span class="refund-rule-name">{$refundRule['name']|escape:'html':'UTF-8'} - </span> <span>{$refundRule['description']|escape:'html':'UTF-8'}</span>
 												</div>
-											{/foreach}
-										{else}
-											{l s='N/A'}
-										{/if}
-									{else}
-										<span class="non_refundable_txt error_msg">{l s='Non Refundable'}</span>
-									{/if}
-								</div>
-							{/if}
-							{if $display_google_maps && ($hotel_latitude|floatval != 0 && $hotel_longitude|floatval != 0)}
-								<div id="room_type_map_tab" class="tab-pane card">
-									<div class="map-wrap"></div>
-									<div id="room-info-map-ui-content" style="display: none;">
-										<div class="hotel-info-wrap">
-											{if isset($hotel_image_link) && $hotel_image_link}
-												<div class="hotel-image-wrap">
-													<img class="img img-responsive" src="{$hotel_image_link}">
-												</div>
-											{/if}
-											<div>
-												<p class="name">{$hotel_name|escape:'html':'UTF-8'}</p>
-												<p class="address">{$hotel_address1|escape:'html':'UTF-8'}</p>
-												<p class="contact">{l s='Contact:'} {$hotel_phone|escape:'html':'UTF-8'}</p>
-												<a class="btn view-on-map" href="https://www.google.com/maps/search/?api=1&query={if $hotel_map_input_text != ''}{$hotel_map_input_text|urlencode}{else}{($hotel_latitude|cat:','|cat:$hotel_longitude)|urlencode}{/if}" target="_blank">
-													<span>{l s='View on Map'}</span>
-												</a>
 											</div>
-										</div>
-									</div>
-								</div>
-							{/if}
+										{/foreach}
+									{else}
+										{l s='N/A'}
+									{/if}
+								{else}
+									<span class="non_refundable_txt error_msg">{l s='Non Refundable'}</span>
+								{/if}
+							</div>
 							{if isset($HOOK_PRODUCT_TAB_CONTENT) && $HOOK_PRODUCT_TAB_CONTENT}{$HOOK_PRODUCT_TAB_CONTENT}{/if}
 						</div>
 					</section>
@@ -355,8 +266,106 @@
 						<input type="hidden" name="add" value="1" />
 						<input type="hidden" name="id_product_attribute" id="idCombination" value="" />
 					</p>
+					<div class="booking-form card">
+						<div class="booking_room_fields">
+							<form action="" method="post">
+								<div class="form-group htl_location_block">
+									<label for="" class="control-label">{l s='Hotel Location'}</label>
+									<p>{$hotel_location|escape:'html':'UTF-8'}</p>
+								</div>
+								{if $product->show_price && !isset($restricted_country_mode) && !$PS_CATALOG_MODE && !$order_date_restrict}
+									<div class="row">
+										<div class="form-group col-sm-6">
+											<label for="" class="control-label">{l s='Check In Date'}</label>
+											<input type="text" class="form-control input-date" name="room_check_in" id="room_check_in" value="{if isset($date_from)}{$date_from|date_format:"%d-%m-%Y"}{/if}" autocomplete="off" readonly />
+										</div>
+										<div class="form-group col-sm-6">
+											<label for="" class="control-label">{l s='Check Out Date'}</label>
+											<input type="text" class="form-control input-date" name="room_check_out" id="room_check_out" value="{if isset($date_to)}{$date_to|escape:'html':'UTF-8'|date_format:"%d-%m-%Y"}{/if}" autocomplete="off" readonly />
+										</div>
+									</div>
+									<div class="room_unavailability_date_error_div"></div>
+									<div class="unvail_rooms_cond_display row">
+										<div class="form-group col-sm-6" id="quantity_wanted_p"{if (!$allow_oosp && $product->quantity <= 0) || !$product->available_for_order || $PS_CATALOG_MODE} style="display: none;"{/if}>
+											<label for="quantity_wanted">{l s='No. of Rooms'}</label>
+											<div class="qty_sec_cont">
+												<div class="qty_input_cont row margin-lr-0">
+													<input autocomplete="off" type="text" min="1" name="qty" id="quantity_wanted" class="text" value="{if isset($quantityBackup)}{$quantityBackup|intval}{else}{if $product->minimal_quantity > 1}{$product->minimal_quantity}{else}1{/if}{/if}">
 
-					{include file='./_partials/booking-form.tpl'}
+													<input type="hidden" id="num_days" value="{if isset($num_days)}{$num_days|escape:'html':'UTF-8'}{/if}">
+													<input type="hidden" id="max_avail_type_qty" value="{if isset($total_available_rooms)}{$total_available_rooms|escape:'html':'UTF-8'}{/if}">
+												</div>
+												<div class="qty_direction">
+													<a href="#" data-field-qty="qty" class="btn btn-default product_quantity_up">
+														<span>
+															<i class="icon-plus"></i>
+														</span>
+													</a>
+													<a href="#" data-field-qty="qty" class="btn btn-default product_quantity_down">
+														<span>
+															<i class="icon-minus"></i>
+														</span>
+													</a>
+												</div>
+											</div>
+											<span class="clearfix"></span>
+										</div>
+									</div>
+									{if isset($room_type_demands) && $room_type_demands}
+										<hr class="separator-hr-mg-10 unvail_rooms_cond_display">
+										<div class="row price_desc_block unvail_rooms_cond_display">
+											<div class="col-sm-6">
+												<label class="control-label">{l s='Room Price'}</label>
+													<p>
+														<span class="total_rooms_price_block">{convertPrice price=$total_price|floatval}</span>
+														<span class="pull-right plus-sign">+</span>
+													</p>
+											</div>
+											<div class="col-sm-6">
+												<label class="control-label">{l s='Extra Facilities'}</label>
+													<p class="extra_demands_price_block">{convertPrice price=0}</p>
+											</div>
+										</div>
+										<hr class="separator-hr-mg-10 form-group unvail_rooms_cond_display">
+									{/if}
+									<div class="room_unavailability_qty_error_div"></div>
+									<div class="row unvail_rooms_cond_display">
+										<div class="total_price_block col-xs-7 form-group">
+											<label class="control-label">{l s='Subtotal'}</label>
+											<p>
+												{convertPrice price=$total_price|floatval}
+											</p>
+										</div>
+										<div class="col-xs-5 form-group pull-right num_quantity_alert">
+											<span class="num_searched_avail_rooms">{$total_available_rooms|escape:'html':'UTF-8'}</span> {l s='Room(s) Left !'}
+										</div>
+									</div>
+
+									<!-- End -->
+									<div class="sold_out_alert">
+										<span>{l s='Rooms Sold Out !'}</span>
+									</div>
+								{/if}
+								{if $order_date_restrict}
+									<div class="order_restrict_alert">
+										<span>{l s='You can\'t book for rooms after date'} {$max_order_date|date_format:"%d-%m-%Y"}</span>
+									</div>
+								{/if}
+								<div class="unvail_rooms_cond_display">
+									{if (!$allow_oosp && $product->quantity <= 0) || !$product->available_for_order || (isset($restricted_country_mode) && $restricted_country_mode) || $PS_CATALOG_MODE || $order_date_restrict}
+									{else}
+										<p id="add_to_cart" class="buttons_bottom_block no-print">
+											<button type="submit" name="Submit" class="exclusive book_now_submit">
+												<span>
+													{if $content_only && (isset($product->customization_required) && $product->customization_required)}{l s='Customize'}{else}{l s='Book Now'}{/if}
+												</span>
+											</button>
+										</p>
+									{/if}
+								</div>
+							</form>
+						</div>
+					</div>
 
 					{* extra room type demands *}
 					{if isset($room_type_demands) && $room_type_demands}
@@ -367,12 +376,12 @@
 									{if $product->show_price && !isset($restricted_country_mode) && !$PS_CATALOG_MODE}
 										<div class="col-xs-1">
 											<p class="checkbox">
-												<input value="{$idGlobalDemand|escape:'html':'UTF-8'}" type="checkbox" class="id_room_type_demand" data-id_global_demand="{$idGlobalDemand|escape:'html':'UTF-8'}" />
+												<input value="{$idGlobalDemand|escape:'html':'UTF-8'}" type="checkbox" class="id_room_type_demand" />
 											</p>
 										</div>
 									{/if}
 									<div class="col-xs-11 demand_adv_option_block">
-										<p>{$demand['name']|escape:'html':'UTF-8'} {if $product->show_price && !isset($restricted_country_mode) && !$PS_CATALOG_MODE}<span class="pull-right"><span class="extra_demand_option_price">{convertPrice price = $demand['price']}</span>{if $demand['price_calc_method'] == $WK_PRICE_CALC_METHOD_EACH_DAY}{l s='/Night'}{/if}</span>{/if}</p>
+										<p>{$demand['name']|escape:'html':'UTF-8'} {if $product->show_price && !isset($restricted_country_mode) && !$PS_CATALOG_MODE}<span class="pull-right extra_demand_option_price">{convertPrice price = {$demand['price']}}</span>{/if}</p>
 										{if isset($demand['adv_option']) && $demand['adv_option']}
 											<select class="id_option">
 												{foreach $demand['adv_option'] as $idOption => $option}
@@ -395,7 +404,7 @@
 
 		</div> <!-- end primary_block -->
 		{if !$content_only}
-			{if (isset($quantity_discounts) && count($quantity_discounts) > 0)}
+	{if (isset($quantity_discounts) && count($quantity_discounts) > 0)}
 				<!-- quantity discount -->
 				<section class="page-product-box ">
 					<h3 class="page-product-heading">{l s='Volume discounts'}</h3>
@@ -655,18 +664,15 @@
 				{/if}
 			{/if}
 		{/if}
-		{* Block for booking products *}
-		{if isset($id_hotel) && $id_hotel}
-			{strip}
-				{addJsDef id_hotels = $id_hotel}
-				{addJsDef max_order_date = $max_order_date}
-				{addJsDef preparation_time = $preparation_time}
-				{addJsDef booking_date_to = $date_to}
-				{addJsDef booking_date_from = $date_from}
-			{/strip}
-		{/if}
+		{strip}
+			{* By webkul variable needed in product.js *}
+			{addJsDef total_avail_rms = $total_available_rooms}
+			{addJsDef max_order_date = $max_order_date}
+			{addJsDef booking_date_to = $date_to}
+			{addJsDef booking_date_from = $date_from}
 
-
+			{addJsDef product_controller_url=$product_controller_url}
+		{/strip}
 	{else}
 		<div class="bootstrap">
 			<div class="alert alert-warning">
@@ -682,7 +688,6 @@
 	{if isset($smarty.get.adtoken) && $smarty.get.adtoken}
 		{addJsDefL name=adtoken}{$smarty.get.adtoken|escape:'html':'UTF-8'}{/addJsDefL}
 	{/if}
-	{addJsDef product_controller_url=$product_controller_url}
 	{addJsDef allowBuyWhenOutOfStock=$allow_oosp|boolval}
 	{addJsDef availableNowValue=$product->available_now|escape:'quotes':'UTF-8'}
 	{addJsDef availableLaterValue=$product->available_later|escape:'quotes':'UTF-8'}
@@ -783,11 +788,5 @@
 	{addJsDefL name=unavail_qty_text}{l s='Required quantity of rooms are Not available.' js=1}{/addJsDefL}
 	{addJsDefL name=out_of_stock_cond}{l s='No room is available for this period.' js=1}{/addJsDefL}
 	{addJsDefL name=wrong_qty_cond}{l s='you are trying for a invalid quantity.' js=1}{/addJsDefL}
-	{addJsDefL name=select_txt}{l s='Select' js=1}{/addJsDefL}
-	{addJsDefL name=remove_txt}{l s='Remove' js=1}{/addJsDefL}
-	{addJsDefL name=unselect_txt}{l s='Unselect' js=1}{/addJsDefL}
-    {addJsDefL name=service_added_txt}{l s='Service added' js=1}{/addJsDefL}
-    {addJsDefL name=service_removed_txt}{l s='Service removed' js=1}{/addJsDefL}
-    {addJsDefL name=service_updated_txt}{l s='Service updated' js=1}{/addJsDefL}
 	{/strip}
 {/if}

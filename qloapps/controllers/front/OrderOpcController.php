@@ -75,7 +75,7 @@ class OrderOpcControllerCore extends ParentOrderController
                                         $this->getFormatedSummaryDetail()
                                     );
                                     Cart::addExtraCarriers($return);
-                                    $this->ajaxDie(json_encode($return));
+                                    $this->ajaxDie(Tools::jsonEncode($return));
                                 } else {
                                     $this->errors[] = Tools::displayError('An error occurred while updating the cart.');
                                 }
@@ -89,7 +89,7 @@ class OrderOpcControllerCore extends ParentOrderController
                         case 'updateTOSStatusAndGetPayments':
                             if (Tools::isSubmit('checked')) {
                                 $this->context->cookie->checkedTOS = (int)Tools::getValue('checked');
-                                $this->ajaxDie(json_encode(array(
+                                $this->ajaxDie(Tools::jsonEncode(array(
                                     'HOOK_TOP_PAYMENT' => Hook::exec('displayPaymentTop'),
                                     'HOOK_PAYMENT' => $this->_getPaymentMethods()
                                 )));
@@ -97,7 +97,7 @@ class OrderOpcControllerCore extends ParentOrderController
                             break;
 
                         case 'getCarrierList':
-                            $this->ajaxDie(json_encode($this->_getCarrierList()));
+                            $this->ajaxDie(Tools::jsonEncode($this->_getCarrierList()));
                             break;
 
                         case 'editCustomer':
@@ -121,31 +121,6 @@ class OrderOpcControllerCore extends ParentOrderController
                             $this->context->customer->newsletter = (int)Tools::isSubmit('newsletter');
                             $this->context->customer->optin = (int)Tools::isSubmit('optin');
                             $this->context->customer->is_guest = (Tools::isSubmit('is_new_customer') ? !Tools::getValue('is_new_customer', 1) : 0);
-
-                            if ($idAddressDelivery = Tools::getValue('opc_id_address_delivery')) {
-                                $objAddress = new Address($idAddressDelivery);
-                                if (Validate::isLoadedObject($objAddress)) {
-                                    $phoneMobile = Tools::getValue('phone_mobile');
-
-                                    if (Configuration::get('PS_ONE_PHONE_AT_LEAST') && !$phoneMobile) {
-                                        $this->errors[] = Tools::displayError('Mobile phone number is a required field.', false);
-                                    }
-
-                                    if (!Validate::isPhoneNumber($phoneMobile)) {
-                                        $this->errors[] = Tools::displayError('Please enter a valid Mobile phone number.', false);
-                                    }
-
-                                    if (!count($this->errors)) {
-                                        $objAddress->phone_mobile = $phoneMobile;
-                                        $objAddress->firstname = $this->context->customer->firstname;
-                                        $objAddress->lastname = $this->context->customer->lastname;
-                                        if (!$objAddress->save()) {
-                                            $this->errors[] = Tools::displayError('Something went wrong while saving phone number. Please try again.', false);
-                                        }
-                                    }
-                                }
-                            }
-
                             $return = array(
                                 'hasError' => !empty($this->errors),
                                 'errors' => $this->errors,
@@ -157,44 +132,14 @@ class OrderOpcControllerCore extends ParentOrderController
                             } else {
                                 $return['isSaved'] = false;
                             }
-                            $this->ajaxDie(json_encode($return));
-                            break;
-
-                        case 'transformGuestAccount':
-                            $passwd = Tools::getValue('passwd');
-
-                            if (!$passwd) {
-                                $this->errors[] = Tools::displayError('Please enter a password.');
-                            }
-
-                            if ($passwd && !Validate::isPasswd($passwd)) {
-                                $this->errors[] = Tools::displayError('Please enter a valid password.');
-                            }
-
-                            if (!count($this->errors)) {
-                                $customer = new Customer($this->context->customer->id);
-                                if (!$customer->isGuest()) {
-                                    $this->errors[] = Tools::displayError('This account is already registered as a customer.');
-                                } else if ($customer->transformToCustomer($this->context->language->id, $passwd)) {
-                                    $this->context->updateCustomer($customer);
-                                } else {
-                                    $this->errors[] = Tools::displayError('An error occurred while transforming your account into a registered customer.');
-                                }
-                            }
-
-                            $return = array(
-                                'hasError' => !empty($this->errors),
-                                'errors' => $this->errors,
-                            );
-
-                            $this->ajaxDie(json_encode($return));
+                            $this->ajaxDie(Tools::jsonEncode($return));
                             break;
 
                         case 'getAddressBlockAndCarriersAndPayments':
                             if ($this->context->customer->isLogged() || $this->context->customer->isGuest()) {
                                 // check if customer have addresses
                                 if (!Customer::getAddressesTotalById($this->context->customer->id)) {
-                                    $this->ajaxDie(json_encode(array('no_address' => 1)));
+                                    $this->ajaxDie(Tools::jsonEncode(array('no_address' => 1)));
                                 }
                                 if (file_exists(_PS_MODULE_DIR_.'blockuserinfo/blockuserinfo.php')) {
                                     include_once(_PS_MODULE_DIR_.'blockuserinfo/blockuserinfo.php');
@@ -238,7 +183,7 @@ class OrderOpcControllerCore extends ParentOrderController
                                     ),
                                     $this->getFormatedSummaryDetail()
                                 );
-                                $this->ajaxDie(json_encode($return));
+                                $this->ajaxDie(Tools::jsonEncode($return));
                             }
                             die(Tools::displayError());
                             break;
@@ -248,19 +193,10 @@ class OrderOpcControllerCore extends ParentOrderController
                             if (($id_order = $this->_checkFreeOrder()) && $id_order) {
                                 $order = new Order((int)$id_order);
                                 $email = $this->context->customer->email;
-                                $orderConfirmationUrl = $this->context->link->getPageLink('order-confirmation').'?id_cart='.$order->id_cart.'&id_module=-1'.'&id_order='.$id_order.'&key='.$order->secure_key;
                                 if ($this->context->customer->is_guest) {
                                     $this->context->customer->logout();
                                 } // If guest we clear the cookie for security reason
-
-                                $return = array(
-                                    'success' => true,
-                                    'reference' => $order->reference,
-                                    'email' => $email,
-                                    'order_confirmation_url' => $orderConfirmationUrl,
-                                );
-
-                                $this->ajaxDie(json_encode($return));
+                                $this->ajaxDie('freeorder:'.$order->reference.':'.$email);
                             }
                             exit;
                             break;
@@ -329,11 +265,11 @@ class OrderOpcControllerCore extends ParentOrderController
                                             'refresh' => (bool)$this->ajax_refresh),
                                             $this->getFormatedSummaryDetail()
                                         );
-                                        $this->ajaxDie(json_encode($result));
+                                        $this->ajaxDie(Tools::jsonEncode($result));
                                     }
                                 }
                                 if (count($this->errors)) {
-                                    $this->ajaxDie(json_encode(array(
+                                    $this->ajaxDie(Tools::jsonEncode(array(
                                         'hasError' => true,
                                         'errors' => $this->errors
                                     )));
@@ -374,15 +310,11 @@ class OrderOpcControllerCore extends ParentOrderController
                             $this->ajaxDie();
                             break;
                         case 'getRoomTypeBookingDemands':
-                            $this->ajaxDie($this->getRoomTypeBookingServices());
+                            $this->ajaxDie($this->getRoomTypeBookingDemands());
                             exit;
                             break;
                         case 'changeRoomDemands':
                             $this->ajaxDie($this->changeRoomDemands());
-                            exit;
-                            break;
-                        case 'submitCustomerGuestDetail':
-                            $this->ajaxDie($this->submitCustomerGuestDetail());
                             exit;
                             break;
                         default:
@@ -413,6 +345,7 @@ class OrderOpcControllerCore extends ParentOrderController
         }
 
         $this->addJS(array(
+            _THEME_JS_DIR_.'tools/vatManagement.js',
             _THEME_JS_DIR_.'tools/statesManagement.js',
             _THEME_JS_DIR_.'order-carrier.js',
             _PS_JS_DIR_.'validate.js'
@@ -425,10 +358,10 @@ class OrderOpcControllerCore extends ParentOrderController
      */
     public function initContent()
     {
-        // validate room types before payment by customer
-        $orderRestrictErr = HotelCartBookingData::validateCartBookings();
-
         parent::initContent();
+
+        // check ORDER RESTRICT condition before payment by the customer
+        $orderRestrictErr = HotelOrderRestrictDate::validateOrderRestrictDateOnPayment($this);
 
         /* id_carrier is not defined in database before choosing a carrier, set it to a default one to match a potential cart _rule */
         if (empty($this->context->cart->id_carrier)) {
@@ -489,17 +422,21 @@ class OrderOpcControllerCore extends ParentOrderController
         $this->context->smarty->assign('checkout_process_steps', $this->checkoutProcess->getSteps());
 
         // set room type demands
-        // $objGlobalDemand = new HotelRoomTypeGlobalDemand();
-        // $allDemands = $objGlobalDemand->getAllDemands();
-        // $objCurrency = new Currency(Configuration::get('PS_CURRENCY_DEFAULT'));
+        $objCartBookingData = new HotelCartBookingData();
+        $objGlobalDemand = new HotelRoomTypeGlobalDemand();
+        $allDemands = $objGlobalDemand->getAllDemands();
+        $objCurrency = new Currency(Configuration::get('PS_CURRENCY_DEFAULT'));
+        $totalFacilityCostTI = $objCartBookingData->getCartExtraDemands($this->context->cart->id, 0, 0, 0, 0, 1, 0, 1);
+        $totalFacilityCostTE = $objCartBookingData->getCartExtraDemands($this->context->cart->id, 0, 0, 0, 0, 1, 0, 0);
         $this->context->smarty->assign(
             array(
                 'orderRestrictErr' => $orderRestrictErr,
-                // 'allDemands' => $allDemands,
-                // 'defaultcurrencySign' => $objCurrency->sign,
+                'additional_facilities_tax' => ($totalFacilityCostTI - $totalFacilityCostTE),
+                'totalFacilityCostTE' => $totalFacilityCostTE,
+                'allDemands' => $allDemands,
+                'defaultcurrencySign' => $objCurrency->sign,
                 'THEME_DIR' => _THEME_DIR_,
-                'PS_REGISTRATION_PROCESS_TYPE' => Configuration::get('PS_REGISTRATION_PROCESS_TYPE'),
-                'PS_ROOM_PRICE_AUTO_ADD_BREAKDOWN' => Configuration::get('PS_ROOM_PRICE_AUTO_ADD_BREAKDOWN'),
+                'PS_CUSTOMER_ADDRESS_CREATION' => Configuration::get('PS_CUSTOMER_ADDRESS_CREATION'),
                 'free_shipping' => $free_shipping,
                 'isGuest' => isset($this->context->cookie->is_guest) ? $this->context->cookie->is_guest : 0,
                 'countries' => $countries,
@@ -541,19 +478,9 @@ class OrderOpcControllerCore extends ParentOrderController
         $this->_assignCarrier();
         // PAYMENT
         $this->_assignPayment();
-        // GUEST BOOKING
-        if ($this->isLogged) {
-            if ($id_customer_guest_detail = CartCustomerGuestDetail::getCartCustomerGuest($this->context->cart->id)) {
-                $this->context->smarty->assign(
-                    'customer_guest_detail', CartCustomerGuestDetail::getCustomerGuestDetail($id_customer_guest_detail)
-                );
-            }
-            $this->context->smarty->assign('id_customer_guest_detail', $id_customer_guest_detail);
-        }
         Tools::safePostVars();
 
-        $newsletter = Module::isInstalled('blocknewsletter') && Module::getInstanceByName('blocknewsletter')->active && Configuration::get('PS_CUSTOMER_NWSL');
-        $this->context->smarty->assign('birthday', (bool) Configuration::get('PS_CUSTOMER_BIRTHDATE'));
+        $newsletter = Configuration::get('PS_CUSTOMER_NWSL') || (Module::isInstalled('blocknewsletter') && Module::getInstanceByName('blocknewsletter')->active);
         $this->context->smarty->assign('newsletter', $newsletter);
         $this->context->smarty->assign('optin', (bool)Configuration::get('PS_CUSTOMER_OPTIN'));
         $this->context->smarty->assign('field_required', $this->context->customer->validateFieldsRequiredDatabase());
@@ -583,20 +510,14 @@ class OrderOpcControllerCore extends ParentOrderController
             $this->setTemplate(_PS_THEME_DIR_ . 'order-opc-advanced.tpl');
         } else {
             // set used objects in the below code
-            // $objBookingDetail = new HotelBookingDetail();
-            // $objHtlRoomType = new HotelRoomType();
+            $objBookingDetail = new HotelBookingDetail();
+            $objHtlRoomType = new HotelRoomType();
 
-            $cartProducts = $this->context->cart->getProducts();
-
-            if (!empty($cartProducts)) {
+            $roomTypeList = $this->context->cart->getProducts();
+            if (!empty($roomTypeList)) {
 
                 if ($cartBookingInfo = HotelCartBookingData::getHotelCartBookingData()) {
-                    // ddd($cartBookingInfo);
                     $this->context->smarty->assign('cart_htl_data', $cartBookingInfo);
-                }
-                $objHotelServiceProductCartDetail = new HotelServiceProductCartDetail();
-                if ($normalCartProduct = $objHotelServiceProductCartDetail->getHotelProducts($this->context->cart->id, 0, 0, 0, null, null, true)) {
-                    $this->context->smarty->assign('cart_normal_data', $normalCartProduct);
                 }
 
                 // For Advanced Payment work
@@ -676,6 +597,7 @@ class OrderOpcControllerCore extends ParentOrderController
             'company' => Tools::htmlentitiesUTF8($address_delivery->company),
             'lastname' => Tools::htmlentitiesUTF8($address_delivery->lastname),
             'firstname' => Tools::htmlentitiesUTF8($address_delivery->firstname),
+            'vat_number' => Tools::htmlentitiesUTF8($address_delivery->vat_number),
             'dni' => Tools::htmlentitiesUTF8($address_delivery->dni),
             'address1' => Tools::htmlentitiesUTF8($address_delivery->address1),
             'postcode' => Tools::htmlentitiesUTF8($address_delivery->postcode),
@@ -691,6 +613,7 @@ class OrderOpcControllerCore extends ParentOrderController
             'company_invoice' => Tools::htmlentitiesUTF8($address_invoice->company),
             'lastname_invoice' => Tools::htmlentitiesUTF8($address_invoice->lastname),
             'firstname_invoice' => Tools::htmlentitiesUTF8($address_invoice->firstname),
+            'vat_number_invoice' => Tools::htmlentitiesUTF8($address_invoice->vat_number),
             'dni_invoice' => Tools::htmlentitiesUTF8($address_invoice->dni),
             'address1_invoice' => Tools::htmlentitiesUTF8($address_invoice->address1),
             'address2_invoice' => Tools::htmlentitiesUTF8($address_invoice->address2),
@@ -769,6 +692,9 @@ class OrderOpcControllerCore extends ParentOrderController
         }
         $address_delivery = new Address($this->context->cart->id_address_delivery);
         $address_invoice = ($this->context->cart->id_address_delivery == $this->context->cart->id_address_invoice ? $address_delivery : new Address($this->context->cart->id_address_invoice));
+        if (!$this->context->cart->id_address_delivery || !$this->context->cart->id_address_invoice || !Validate::isLoadedObject($address_delivery) || !Validate::isLoadedObject($address_invoice) || $address_invoice->deleted || $address_delivery->deleted) {
+            return '<p class="warning">'.Tools::displayError('Error: Please select an address.').'</p>';
+        }
         if (count($this->context->cart->getDeliveryOptionList()) == 0 && !$this->context->cart->isVirtualCart()) {
             if ($this->context->cart->isMultiAddressDelivery()) {
                 return '<p class="warning">'.Tools::displayError('Error: None of your chosen carriers deliver to some of the addresses you have selected.').'</p>';
@@ -981,9 +907,9 @@ class OrderOpcControllerCore extends ParentOrderController
         return $result;
     }
 
-    public function getRoomTypeBookingServices()
+    public function getRoomTypeBookingDemands()
     {
-        $response = array('reload' => true);
+        $extraDemandsTpl = '';
         if ($idProduct = Tools::getValue('id_product')) {
             if (($dateFrom = Tools::getValue('date_from'))
                 && ($dateTo = Tools::getValue('date_to'))
@@ -1017,32 +943,14 @@ class OrderOpcControllerCore extends ParentOrderController
                         }
                         $this->context->smarty->assign('roomTypeDemands', $roomTypeDemands);
                         $this->context->smarty->assign('selectedRoomDemands', $selectedRoomDemands);
-
+                        $extraDemandsTpl .= $this->context->smarty->fetch(
+                            _PS_THEME_DIR_.'_partials/cart_booking_demands.tpl'
+                        );
                     }
                 }
-                $objRoomTypeServiceProductCartDetail = new RoomTypeServiceProductCartDetail();
-                $objRoomTypeServiceProduct = new RoomTypeServiceProduct();
-                $roomTypeServiceProducts = $objRoomTypeServiceProduct->getServiceProductsData($idProduct, 1, 0, true, 1);
-                $cartRooms = $objCartBookingData->getHotelCartRoomsInfoByRoomType($this->context->cart->id, $idProduct,$dateFrom, $dateTo);
-                foreach($cartRooms as &$room) {
-                    $room['selected_service'] = $objRoomTypeServiceProductCartDetail->getRoomServiceProducts(
-                        $room['id'],
-                        0,
-                        null,
-                        null
-                    );
-                }
-                $this->context->smarty->assign(array(
-                    'roomTypeServiceProducts' => $roomTypeServiceProducts,
-                    'cartRooms' => $cartRooms
-                ));
             }
         }
-        $response['extra_demands'] = $this->context->smarty->fetch(
-            _PS_THEME_DIR_.'_partials/cart_booking_demands.tpl'
-        );
-
-        return json_encode($response);
+        return $extraDemandsTpl;
     }
 
     public function changeRoomDemands()
@@ -1050,8 +958,8 @@ class OrderOpcControllerCore extends ParentOrderController
         if ($idCartBooking = Tools::getValue('id_cart_booking')) {
             if (Validate::isLoadedObject($objCartbookingCata = new HotelCartBookingData($idCartBooking))) {
                 $roomDemands = Tools::getValue('room_demands');
-                $roomDemands = json_decode($roomDemands, true);
-                $roomDemands = json_encode($roomDemands);
+                $roomDemands = Tools::jsonDecode($roomDemands, true);
+                $roomDemands = Tools::jsonEncode($roomDemands);
                 $objCartbookingCata->extra_demands = $roomDemands;
                 if ($objCartbookingCata->save()) {
                     die('1');
@@ -1059,49 +967,5 @@ class OrderOpcControllerCore extends ParentOrderController
             }
         }
         die('0');
-    }
-
-    public function submitCustomerGuestDetail()
-    {
-        $customerGuestDetail = Tools::getValue('customer_guest_detail');
-        $this->context->cookie->__set('customer_details_proceeded', 0);
-        $this->context->cookie->checkedTOS = false;
-        if ($customerGuestDetail) {
-            if ($id_customer_guest_detail = CartCustomerGuestDetail::getCartCustomerGuest($this->context->cart->id)) {
-                $objCustomerGuestDetail = new CartCustomerGuestDetail($id_customer_guest_detail);
-            } else {
-                $objCustomerGuestDetail = new CartCustomerGuestDetail();
-            }
-
-            $customerGuestDetailGender = Tools::getValue('customer_guest_detail_gender');
-            $customerGuestDetailFirstname = Tools::getValue('customer_guest_detail_firstname');
-            $customerGuestDetailLastname = Tools::getValue('customer_guest_detail_lastname');
-            $customerGuestDetailEmail = Tools::getValue('customer_guest_detail_email');
-            $customerGuestDetailPhone = Tools::getValue('customer_guest_detail_phone');
-            if (trim($customerGuestDetailGender) && Validate::isUnsignedInt($customerGuestDetailGender)) {
-                $objCustomerGuestDetail->id_gender = $customerGuestDetailGender;
-            }
-            if (trim($customerGuestDetailFirstname) && Validate::isName($customerGuestDetailFirstname)) {
-                $objCustomerGuestDetail->firstname = $customerGuestDetailFirstname;
-            }
-            if (trim($customerGuestDetailLastname) && Validate::isName($customerGuestDetailLastname)) {
-                $objCustomerGuestDetail->lastname = $customerGuestDetailLastname;
-            }
-            if (trim($customerGuestDetailEmail) && Validate::isEmail($customerGuestDetailEmail)) {
-                $objCustomerGuestDetail->email = $customerGuestDetailEmail;
-            }
-            if (trim($customerGuestDetailPhone) && Validate::isPhoneNumber($customerGuestDetailPhone)) {
-                $objCustomerGuestDetail->phone = $customerGuestDetailPhone;
-            }
-            $objCustomerGuestDetail->id_cart = $this->context->cart->id;
-            $objCustomerGuestDetail->save();
-        } else {
-            if ($id_customer_guest_detail = CartCustomerGuestDetail::getCartCustomerGuest($this->context->cart->id)) {
-                if (Validate::isLoadedObject($objCustomerGuestDetail = new CartCustomerGuestDetail($id_customer_guest_detail))) {
-                    $objCustomerGuestDetail->delete();
-                }
-            }
-        }
-        $this->context->cart->save();
     }
 }

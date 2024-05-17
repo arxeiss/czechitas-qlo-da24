@@ -20,8 +20,7 @@
   <tab id="Administration" name="Administration"/>
   <tab id="Stats" name="Stats"/>
   <tab id="Stock" name="Stock"/>
-  <tab id="Products" name="Manage Service Products"/>
-  <tab id="Room_Types" name="Manage Room Types"/>
+  <tab id="Products" name="Products"/>
   <tab id="Categories" name="Categories"/>
   <tab id="Monitoring" name="Monitoring"/>
   <tab id="Attributes_and_Values" name="Product Attributes"/>
@@ -60,7 +59,6 @@
   <tab id="Tax_Rules" name="Tax Rules"/>
   <tab id="Translations" name="Translations"/>
   <tab id="Modules_1" name="Modules"/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id="Modules_Themes_Catalog" name="Modules &amp; Themes Catalog"/>
   <tab id="Positions" name="Positions"/>
   <tab id="Payment" name="Payment"/>

@@ -60,21 +60,18 @@
     <tab id="Administration" id_parent="" active="1" hide_host_mode="0">
       <class_name>AdminAdmin</class_name>
     </tab>
-    <!-- <tab id="Stats" id_parent="" active="1" hide_host_mode="0">
+    <tab id="Stats" id_parent="" active="1" hide_host_mode="0">
       <class_name>AdminParentStats</class_name>
-    </tab> -->
+    </tab>
     <tab id="Stock" id_parent="" active="1" hide_host_mode="0">
       <class_name>AdminStock</class_name>
     </tab>
-    <tab id="Room_Types" id_parent="Catalog" active="1" hide_host_mode="0">
+    <tab id="Products" id_parent="Catalog" active="1" hide_host_mode="0">
       <class_name>AdminProducts</class_name>
     </tab>
-    <tab id="Products" id_parent="Catalog" active="1" hide_host_mode="0">
-      <class_name>AdminNormalProducts</class_name>
-    </tab>
-    <tab id="Categories" id_parent="Catalog" active="1" hide_host_mode="0">
+    <!-- <tab id="Categories" id_parent="Catalog" active="1" hide_host_mode="0">
       <class_name>AdminCategories</class_name>
-    </tab>
+    </tab> -->
     <!-- <tab id="Monitoring" id_parent="Catalog" active="1" hide_host_mode="0">
       <class_name>AdminTracking</class_name>
     </tab> -->
@@ -90,9 +87,9 @@
     <!-- <tab id="Suppliers" id_parent="Catalog" active="1" hide_host_mode="0">
       <class_name>AdminSuppliers</class_name>
     </tab> -->
-    <!-- <tab id="Tags" id_parent="Catalog" active="1" hide_host_mode="0">
+    <tab id="Tags" id_parent="Catalog" active="1" hide_host_mode="0">
       <class_name>AdminTags</class_name>
-    </tab> -->
+    </tab>
     <!-- <tab id="Attachments" id_parent="Catalog" active="1" hide_host_mode="0">
       <class_name>AdminAttachments</class_name>
     </tab> -->
@@ -189,9 +186,6 @@
     <tab id="Modules_1" id_parent="Modules" active="1" hide_host_mode="0">
       <class_name>AdminModules</class_name>
     </tab>
-    <tab id="Modules_Catalog" id_parent="Modules" active="1" hide_host_mode="0">
-      <class_name>AdminModulesCatalog</class_name>
-    </tab>
     <!-- <tab id="Modules_Themes_Catalog" id_parent="Modules" active="1" hide_host_mode="0">
       <class_name>AdminAddonsCatalog</class_name>
     </tab> -->
@@ -282,15 +276,15 @@
     <tab id="Menus" id_parent="Administration" active="1" hide_host_mode="0">
       <class_name>AdminTabs</class_name>
     </tab>
-    <tab id="Stats_1" id_parent="" active="1" hide_host_mode="0">
+    <tab id="Stats_1" id_parent="Stats" active="1" hide_host_mode="0">
       <class_name>AdminStats</class_name>
     </tab>
-    <!-- <tab id="Search_Engines" id_parent="Stats" active="1" hide_host_mode="0">
+    <tab id="Search_Engines" id_parent="Stats" active="1" hide_host_mode="0">
       <class_name>AdminSearchEngines</class_name>
-    </tab> -->
-    <!-- <tab id="Referrers" id_parent="Stats" active="1" hide_host_mode="0">
+    </tab>
+    <tab id="Referrers" id_parent="Stats" active="1" hide_host_mode="0">
       <class_name>AdminReferrers</class_name>
-    </tab> -->
+    </tab>
     <tab id="Warehouses" id_parent="Stock" active="1" hide_host_mode="0">
       <class_name>AdminWarehouses</class_name>
     </tab>

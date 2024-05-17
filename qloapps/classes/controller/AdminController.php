@@ -197,9 +197,6 @@ class AdminControllerCore extends Controller
     /** @var string */
     protected $_filterHaving;
 
-    /** @var string */
-    protected $_new_list_header_design = false;
-
     /** @var array Temporary SQL table WHERE clause determined by filter fields */
     protected $_tmpTableFilter = '';
 
@@ -241,9 +238,6 @@ class AdminControllerCore extends Controller
 
     /** @var HelperList */
     protected $helper;
-
-    /** @var bool */
-    protected static $is_qloapps_up = true;
 
     /**
      * Actions to execute on multiple selections.
@@ -400,17 +394,6 @@ class AdminControllerCore extends Controller
 
     /** @var int level for permissions View/read */
     const LEVEL_VIEW = 1;
-    const QLO_SEARCH_TYPE_CATELOG = 1;
-    const QLO_SEARCH_TYPE_CUSTOMER_BY_NAME = 2;
-    const QLO_SEARCH_TYPE_ORDER = 3;
-    const QLO_SEARCH_TYPE_INVOICE = 4;
-    const QLO_SEARCH_TYPE_CART = 5;
-    const QLO_SEARCH_TYPE_CUSTOMER_BY_IP = 6;
-    const QLO_SEARCH_TYPE_MODULE = 7;
-    const QLO_SEARCH_TYPE_HOTEL = 8;
-
-    /** @var string path for recomendation content */
-    const RECOMMENDATION_CONTENT_FILE_PATH = '';
 
     public function __construct()
     {
@@ -421,9 +404,6 @@ class AdminControllerCore extends Controller
 
         $this->controller_type = 'admin';
         $this->controller_name = get_class($this);
-        if (strpos($this->controller_name, 'ControllerOverride')) {
-            $this->controller_name = substr($this->controller_name, 0, -18);
-        }
         if (strpos($this->controller_name, 'Controller')) {
             $this->controller_name = substr($this->controller_name, 0, -10);
         }
@@ -726,24 +706,6 @@ class AdminControllerCore extends Controller
                                     $filter_value .= ' - '.$date[1];
                                 }
                             }
-                        } elseif (isset($t['type']) && $t['type'] == 'range') {
-                            $range = json_decode($val, true);
-                            if (isset($range[0]) && !empty($range[0])) {
-                                if (Validate::isUnsignedInt($range[0])) {
-                                    $filter_value = $range[0];
-                                    if (isset($range[1]) && !empty($range[1])) {
-                                        if (Validate::isUnsignedInt($range[1]) && $range[0] < $range[1]) {
-                                            $filter_value .= ' - '.$range[1];
-                                        }
-                                    }
-                                }
-                            } else {
-                                if (isset($range[1]) && !empty($range[1])) {
-                                    if (Validate::isUnsignedInt($range[1])) {
-                                        $filter_value = $range[1];
-                                    }
-                                }
-                            }
                         } elseif (is_string($val)) {
                             $filter_value = htmlspecialchars($val, ENT_QUOTES, 'UTF-8');
                         }
@@ -766,7 +728,7 @@ class AdminControllerCore extends Controller
             }
 
             if (count($filters)) {
-                return sprintf($this->l('Filter by %s'), implode(', ', $filters));
+                return sprintf($this->l('filter by %s'), implode(', ', $filters));
             }
         }
     }
@@ -884,7 +846,6 @@ class AdminControllerCore extends Controller
         foreach ($filters as $key => $value) {
             /* Extracting filters from $_POST on key filter_ */
             if ($value != null && !strncmp($key, $prefix.$this->list_id.'Filter_', 7 + Tools::strlen($prefix.$this->list_id))) {
-                $key_org = $key;
                 $key = Tools::substr($key, 7 + Tools::strlen($prefix.$this->list_id));
                 /* Table alias could be specified using a ! eg. alias!field */
                 $tmp_tab = explode('!', $key);
@@ -892,15 +853,13 @@ class AdminControllerCore extends Controller
 
                 if ($field = $this->filterToField($key, $filter)) {
                     $type = (array_key_exists('filter_type', $field) ? $field['filter_type'] : (array_key_exists('type', $field) ? $field['type'] : false));
-                    if ((($type == 'date' || $type == 'datetime' || $type == 'range') || ($type == 'select' && (isset($field['multiple']) && $field['multiple'])))
-                        && is_string($value)
-                    ) {
+                    if (($type == 'date' || $type == 'datetime') && is_string($value)) {
                         $value = json_decode($value, true);
                     }
                     $key = isset($tmp_tab[1]) ? $tmp_tab[0].'.`'.$tmp_tab[1].'`' : '`'.$tmp_tab[0].'`';
 
                     // as in database 0 means position 1 in the renderlist
-                    if (isset($field['position']) && Validate::isInt($value)) {
+                    if (isset($field['position'])) {
                         $value -= 1;
                     }
 
@@ -913,55 +872,21 @@ class AdminControllerCore extends Controller
                         $sql_filter = & $this->_filter;
                     }
 
+                    /* Only for date filtering (from, to) */
                     if (is_array($value)) {
-                        if ($type == 'select' && (isset($field['multiple']) && $field['multiple']) && isset($field['operator'])) {
-                            if ($field['operator'] == 'and') {
-                                $sql_filter .= ' AND '.pSQL($key).' IN ('.pSQL(implode(',', $value)).')';
-                                $this->_filterHaving .= ' AND COUNT(DISTINCT '.pSQL($key).') = '.(int) count($value);
-                            } elseif ($field['operator'] == 'or') {
-                                $sql_filter .= ' AND '.pSQL($key).' IN ('.pSQL(implode(',', $value)).')';
-                            }
-                        } elseif ($type == 'range') {
-                            // set validation type
-                            if (isset($field['validation']) && $field['validation'] && method_exists('Validate', $field['validation'])) {
-                                $validation = $field['validation'];
+                        if (isset($value[0]) && !empty($value[0])) {
+                            if (!Validate::isDate($value[0])) {
+                                $this->errors[] = Tools::displayError('The \'From\' date format is invalid (YYYY-MM-DD)');
                             } else {
-                                $validation = 'isUnsignedInt';
+                                $sql_filter .= ' AND '.pSQL($key).' >= \''.pSQL(Tools::dateFrom($value[0])).'\'';
                             }
+                        }
 
-                            if (isset($value[0]) && ($value[0] !== '' || $value[0] === 0)) {
-                                if (!Validate::$validation($value[0])) {
-                                    $this->errors[] = Tools::displayError('The \'From\' value is invalid');
-                                } else {
-                                    $sql_filter .= ' AND '.pSQL($key).' >= '.pSQL($value[0]);
-                                }
-                            }
-                            if (isset($value[1]) && ($value[1] !== '' || $value[1] === 0)) {
-                                if (!Validate::$validation($value[1])) {
-                                    $this->errors[] = Tools::displayError('The \'To\' value is invalid');
-                                } elseif ((isset($value[0]) && ($value[0] !== '' || $value[0] === 0)) && $value[0] > $value[1]) {
-                                    $this->errors[] = Tools::displayError('The \'To\' value cannot be less than \'From\' value');
-                                } else {
-                                    $sql_filter .= ' AND '.pSQL($key).' <= '.pSQL($value[1]);
-                                }
-                            }
-                        } else {
-                            if (isset($value[0]) && !empty($value[0])) {
-                                if (!Validate::isDate($value[0])) {
-                                    $this->errors[] = Tools::displayError('The \'From\' date format is invalid (YYYY-MM-DD)');
-                                } else {
-                                    $sql_filter .= ' AND '.pSQL($key).' >= \''.pSQL(Tools::dateFrom($value[0])).'\'';
-                                }
-                            }
-
-                            if (isset($value[1]) && !empty($value[1])) {
-                                if (!Validate::isDate($value[1])) {
-                                    $this->errors[] = Tools::displayError('The \'To\' date format is invalid (YYYY-MM-DD)');
-                                } elseif (isset($value[0]) && !empty($value[0]) && strtotime($value[0]) > strtotime($value[1])) {
-                                    $this->errors[] = Tools::displayError('The \'To\' date cannot be earlier than \'From\' date');
-                                } else {
-                                    $sql_filter .= ' AND '.pSQL($key).' <= \''.pSQL(Tools::dateTo($value[1])).'\'';
-                                }
+                        if (isset($value[1]) && !empty($value[1])) {
+                            if (!Validate::isDate($value[1])) {
+                                $this->errors[] = Tools::displayError('The \'To\' date format is invalid (YYYY-MM-DD)');
+                            } else {
+                                $sql_filter .= ' AND '.pSQL($key).' <= \''.pSQL(Tools::dateTo($value[1])).'\'';
                             }
                         }
                     } else {
@@ -985,27 +910,6 @@ class AdminControllerCore extends Controller
                 }
             }
         }
-    }
-
-    public function processListVisibility()
-    {
-        $listFieldsVisibility = Tools::getValue('list_fields_visibility');
-        $controller = 'list_visibility_'.$this->context->controller->className;
-        $this->context->cookie->$controller = json_encode($listFieldsVisibility);
-
-        return true;
-    }
-
-    protected function ajaxProcessChangeKpiVisibility()
-    {
-        $cookieKey = 'kpi_visibility_'.$this->context->controller->className.'_'.Tools::getValue('kpi_id');
-        $this->context->cookie->$cookieKey = (int) Tools::getValue('is_visible');
-    }
-
-    protected function ajaxProcessSaveKpiView()
-    {
-        $cookieKey = 'kpi_wrapping_'.$this->context->controller->className;
-        $this->context->cookie->$cookieKey = (int) Tools::getValue('no_wrapping');
     }
 
     /**
@@ -1668,7 +1572,6 @@ class AdminControllerCore extends Controller
             $this->page_header_toolbar_title = $this->toolbar_title[count($this->toolbar_title) - 1];
         }
 
-        $this->initTabModuleList();
         $this->addPageHeaderToolBarModulesListButton();
 
         $this->context->smarty->assign('help_link', 'http://help.prestashop.com/'.Language::getIsoById($this->context->employee->id_lang).'/doc/'
@@ -1738,6 +1641,7 @@ class AdminControllerCore extends Controller
                     );
                 }
         }
+        $this->addToolBarModulesListButton();
     }
 
     /**
@@ -1899,14 +1803,14 @@ class AdminControllerCore extends Controller
         }
 
         if ($conf = Tools::getValue('conf')) {
-            $this->context->smarty->assign('conf', $this->json ? json_encode($this->_conf[(int)$conf]) : $this->_conf[(int)$conf]);
+            $this->context->smarty->assign('conf', $this->json ? Tools::jsonEncode($this->_conf[(int)$conf]) : $this->_conf[(int)$conf]);
         }
 
         foreach (array('errors', 'warnings', 'informations', 'confirmations') as $type) {
             if (!is_array($this->$type)) {
                 $this->$type = (array)$this->$type;
             }
-            $this->context->smarty->assign($type, $this->json ? json_encode(array_unique($this->$type)) : array_unique($this->$type));
+            $this->context->smarty->assign($type, $this->json ? Tools::jsonEncode(array_unique($this->$type)) : array_unique($this->$type));
         }
 
         if ($this->show_page_header_toolbar && !$this->lite_display) {
@@ -1920,7 +1824,7 @@ class AdminControllerCore extends Controller
 
         $this->context->smarty->assign(
             array(
-                'page' =>  $this->json ? json_encode($page) : $page,
+                'page' =>  $this->json ? Tools::jsonEncode($page) : $page,
                 'header' => $this->context->smarty->fetch($header_tpl),
                 'footer' => $this->context->smarty->fetch($footer_tpl),
             )
@@ -2075,14 +1979,6 @@ class AdminControllerCore extends Controller
                 'employee' => $this->context->employee,
                 'search_type' => Tools::getValue('bo_search_type'),
                 'bo_query' => Tools::safeOutput(Tools::stripslashes(Tools::getValue('bo_query'))),
-                'QLO_SEARCH_TYPE_CATELOG' => self::QLO_SEARCH_TYPE_CATELOG,
-                'QLO_SEARCH_TYPE_CUSTOMER_BY_NAME' => self::QLO_SEARCH_TYPE_CUSTOMER_BY_NAME,
-                'QLO_SEARCH_TYPE_CUSTOMER_BY_IP' => self::QLO_SEARCH_TYPE_CUSTOMER_BY_IP,
-                'QLO_SEARCH_TYPE_ORDER' => self::QLO_SEARCH_TYPE_ORDER,
-                'QLO_SEARCH_TYPE_INVOICE' => self::QLO_SEARCH_TYPE_INVOICE,
-                'QLO_SEARCH_TYPE_CART' => self::QLO_SEARCH_TYPE_CART,
-                'QLO_SEARCH_TYPE_MODULE' => self::QLO_SEARCH_TYPE_MODULE,
-                'QLO_SEARCH_TYPE_HOTEL' => self::QLO_SEARCH_TYPE_HOTEL,
                 'quick_access' => $quick_access,
                 'multi_shop' => Shop::isFeatureActive(),
                 'shop_list' => $helperShop->getRenderedShopList(),
@@ -2179,13 +2075,15 @@ class AdminControllerCore extends Controller
 
         $this->getLanguages();
         $this->initToolbar();
-        // $this->initTabModuleList();
+        $this->initTabModuleList();
         $this->initPageHeaderToolbar();
 
         if ($this->display == 'edit' || $this->display == 'add') {
-            if ($this->loadObject(true)) {
-                $this->content .= $this->renderForm();
+            if (!$this->loadObject(true)) {
+                return;
             }
+
+            $this->content .= $this->renderForm();
         } elseif ($this->display == 'view') {
             // Some controllers use the view action without an object
             if ($this->className) {
@@ -2215,7 +2113,7 @@ class AdminControllerCore extends Controller
             'page_header_toolbar_title' => $this->page_header_toolbar_title,
             'title' => $this->page_header_toolbar_title,
             'toolbar_btn' => $this->page_header_toolbar_btn,
-            'page_header_toolbar_btn' => $this->page_header_toolbar_btn,
+            'page_header_toolbar_btn' => $this->page_header_toolbar_btn
         ));
     }
 
@@ -2224,12 +2122,22 @@ class AdminControllerCore extends Controller
      */
     protected function initTabModuleList()
     {
+        if (!$this->isFresh(Module::CACHE_FILE_MUST_HAVE_MODULES_LIST, 86400)) {
+            @file_put_contents(_PS_ROOT_DIR_.Module::CACHE_FILE_MUST_HAVE_MODULES_LIST, Tools::addonsRequest('must-have'));
+        }
+        if (!$this->isFresh(Module::CACHE_FILE_TAB_MODULES_LIST, 604800)) {
+            $this->refresh(Module::CACHE_FILE_TAB_MODULES_LIST, _PS_TAB_MODULE_LIST_URL_);
+        }
+
         $this->tab_modules_list = Tab::getTabModulesList($this->id);
 
         if (is_array($this->tab_modules_list['default_list']) && count($this->tab_modules_list['default_list'])) {
             $this->filter_modules_list = $this->tab_modules_list['default_list'];
         } elseif (is_array($this->tab_modules_list['slider_list']) && count($this->tab_modules_list['slider_list'])) {
+            $this->addToolBarModulesListButton();
+            $this->addPageHeaderToolBarModulesListButton();
             $this->context->smarty->assign(array(
+                'tab_modules_list' => implode(',', $this->tab_modules_list['slider_list']),
                 'admin_module_ajax_url' => $this->context->link->getAdminLink('AdminModules'),
                 'back_tab_modules_list' => $this->context->link->getAdminLink(Tools::getValue('controller')),
                 'tab_modules_open' => (int)Tools::getValue('tab_modules_open')
@@ -2237,26 +2145,31 @@ class AdminControllerCore extends Controller
         }
     }
 
-
-
     protected function addPageHeaderToolBarModulesListButton()
     {
-        $tab_modules_list = Tab::getTabModulesList($this->id);
+        $this->filterTabModuleList();
 
-        $tab_modules_list = $this->filterTabModuleList($tab_modules_list);
-
-        if (!empty($tab_modules_list) && (is_array($tab_modules_list['slider_list']) && count($tab_modules_list['slider_list']))
-            || !Tab::isTabModuleListAvailable()
-        ) {
+        if (is_array($this->tab_modules_list['slider_list']) && count($this->tab_modules_list['slider_list'])) {
             $this->page_header_toolbar_btn['modules-list'] = array(
                 'href' => '#',
-                'desc' => $this->l('Recommendations')
+                'desc' => $this->l('Recommended Modules and Services')
             );
         }
     }
 
+    protected function addToolBarModulesListButton()
+    {
+        $this->filterTabModuleList();
 
-    protected function filterTabModuleList($tab_modules_list)
+        if (is_array($this->tab_modules_list['slider_list']) && count($this->tab_modules_list['slider_list'])) {
+            $this->toolbar_btn['modules-list'] = array(
+                'href' => '#',
+                'desc' => $this->l('Recommended Modules and Services')
+            );
+        }
+    }
+
+    protected function filterTabModuleList()
     {
         static $list_is_filtered = null;
 
@@ -2264,55 +2177,59 @@ class AdminControllerCore extends Controller
             return;
         }
 
-        $all_module_list = array();
+        if (!$this->isFresh(Module::CACHE_FILE_DEFAULT_COUNTRY_MODULES_LIST, 86400)) {
+            file_put_contents(_PS_ROOT_DIR_.Module::CACHE_FILE_DEFAULT_COUNTRY_MODULES_LIST, Tools::addonsRequest('native'));
+        }
+
+        if (!$this->isFresh(Module::CACHE_FILE_ALL_COUNTRY_MODULES_LIST, 86400)) {
+            file_put_contents(_PS_ROOT_DIR_.Module::CACHE_FILE_ALL_COUNTRY_MODULES_LIST, Tools::addonsRequest('native_all'));
+        }
+
+        if (!$this->isFresh(Module::CACHE_FILE_MUST_HAVE_MODULES_LIST, 86400)) {
+            @file_put_contents(_PS_ROOT_DIR_.Module::CACHE_FILE_MUST_HAVE_MODULES_LIST, Tools::addonsRequest('must-have'));
+        }
 
         libxml_use_internal_errors(true);
-        if (file_exists(_PS_ROOT_DIR_.Module::CACHE_FILE_DEFAULT_COUNTRY_MODULES_LIST)) {
-            $country_module_list = file_get_contents(_PS_ROOT_DIR_.Module::CACHE_FILE_DEFAULT_COUNTRY_MODULES_LIST);
-            if (!empty($country_module_list) && $country_module_list_xml = @simplexml_load_string($country_module_list)) {
-                $country_module_list_array = array();
-                if (is_object($country_module_list_xml->module)) {
-                    foreach ($country_module_list_xml->module as $k => $m) {
-                        $all_module_list[] = (string)$m->name;
-                    }
+
+        $country_module_list = file_get_contents(_PS_ROOT_DIR_.Module::CACHE_FILE_DEFAULT_COUNTRY_MODULES_LIST);
+        $must_have_module_list = file_get_contents(_PS_ROOT_DIR_.Module::CACHE_FILE_MUST_HAVE_MODULES_LIST);
+        $all_module_list = array();
+
+        if (!empty($country_module_list) && $country_module_list_xml = @simplexml_load_string($country_module_list)) {
+            $country_module_list_array = array();
+            if (is_object($country_module_list_xml->module)) {
+                foreach ($country_module_list_xml->module as $k => $m) {
+                    $all_module_list[] = (string)$m->name;
                 }
-            } else {
-                foreach (libxml_get_errors() as $error) {
-                    $this->errors[] = Tools::displayError(sprintf('Error found : %1$s in country_module_list.xml file.', $error->message));
-                }
+            }
+        } else {
+            foreach (libxml_get_errors() as $error) {
+                $this->errors[] = Tools::displayError(sprintf('Error found : %1$s in country_module_list.xml file.', $error->message));
             }
         }
 
         libxml_clear_errors();
 
-        if (file_exists(_PS_ROOT_DIR_.Module::CACHE_FILE_MUST_HAVE_MODULES_LIST)) {
-            $must_have_module_list = file_get_contents(_PS_ROOT_DIR_.Module::CACHE_FILE_MUST_HAVE_MODULES_LIST);
-            if (!empty($must_have_module_list) && $must_have_module_list_xml = @simplexml_load_string($must_have_module_list)) {
-                $must_have_module_list_array = array();
-                if (is_object($country_module_list_xml->module)) {
-                    foreach ($must_have_module_list_xml->module as $l => $mo) {
-                        $all_module_list[] = (string)$mo->name;
-                    }
+
+
+        if (!empty($must_have_module_list) && $must_have_module_list_xml = @simplexml_load_string($must_have_module_list)) {
+            $must_have_module_list_array = array();
+            if (is_object($country_module_list_xml->module)) {
+                foreach ($must_have_module_list_xml->module as $l => $mo) {
+                    $all_module_list[] = (string)$mo->name;
                 }
-            } else {
-                foreach (libxml_get_errors() as $error) {
-                    $this->errors[] = Tools::displayError(sprintf('Error found : %1$s in must_have_module_list.xml file.', $error->message));
-                }
+            }
+        } else {
+            foreach (libxml_get_errors() as $error) {
+                $this->errors[] = Tools::displayError(sprintf('Error found : %1$s in must_have_module_list.xml file.', $error->message));
             }
         }
 
         libxml_clear_errors();
 
-        $tab_modules_list['slider_list'] = array_intersect($tab_modules_list['slider_list'], $all_module_list);
+        $this->tab_modules_list['slider_list'] = array_intersect($this->tab_modules_list['slider_list'], $all_module_list);
 
         $list_is_filtered = true;
-
-        return $tab_modules_list;
-    }
-
-    public function ajaxProcessRefreshModuleList($force_reload_cache = false)
-    {
-        $this->status = Module::refreshModuleList($force_reload_cache);
     }
 
     /**
@@ -2323,20 +2240,6 @@ class AdminControllerCore extends Controller
     public function initCursedPage()
     {
         $this->layout = 'invalid_token.tpl';
-    }
-
-    public function setAccessDeniedPageVars()
-    {
-        $breadcrumbs2 = array(
-            'container' => array('name' => $this->l('Access denied'), 'href' => '#'),
-            'tab' => array('name' => '', 'href' => ''),
-        );
-        $this->show_page_header_toolbar = true;
-        $this->context->smarty->assign(array(
-            'title' => $this->l('Access denied'),
-            'toolbar_btn' => array(),
-            'breadcrumbs2' => $breadcrumbs2,
-        ));
     }
 
     /**
@@ -2399,6 +2302,16 @@ class AdminControllerCore extends Controller
         //Force override translation key
         Context::getContext()->override_controller_name_for_translations = 'AdminModules';
 
+        $this->modals[] = array(
+            'modal_id' => 'modal_addons_connect',
+            'modal_class' => 'modal-md',
+            'modal_title' => '<i class="icon-puzzle-piece"></i> <a target="_blank" href="http://addons.prestashop.com/'
+            .'?utm_source=back-office&utm_medium=modules'
+            .'&utm_campaign=back-office-'.Tools::strtoupper($this->context->language->iso_code)
+            .'&utm_content='.(defined('_PS_HOST_MODE_') ? 'cloud' : 'download').'">PrestaShop Addons</a>',
+            'modal_content' => $this->context->smarty->fetch('controllers/modules/login_addons.tpl'),
+        );
+
         //After override translation, remove it
         Context::getContext()->override_controller_name_for_translations = null;
     }
@@ -2436,9 +2349,7 @@ class AdminControllerCore extends Controller
                 foreach ($xml_module->children() as $module) {
                     /** @var SimpleXMLElement $module */
                     foreach ($module->attributes() as $key => $value) {
-                        if (($xml_module->attributes() == 'native' || $xml_module->attributes() == 'disk')
-                            && $key == 'name'
-                        ) {
+                        if ($xml_module->attributes() == 'native' && $key == 'name') {
                             $this->list_natives_modules[] = (string)$value;
                         }
                         if ($xml_module->attributes() == 'partner' && $key == 'name') {
@@ -2517,7 +2428,6 @@ class AdminControllerCore extends Controller
         }
 
         $this->setHelperDisplay($helper);
-        $helper->_new_list_header_design = $this->_new_list_header_design;
         $helper->_default_pagination = $this->_default_pagination;
         $helper->_pagination = $this->_pagination;
         $helper->tpl_vars = $this->getTemplateListVars();
@@ -2893,19 +2803,6 @@ class AdminControllerCore extends Controller
             'displayBackOfficeTop' => Hook::exec('displayBackOfficeTop', array()),
             'submit_form_ajax' => (int)Tools::getValue('submitFormAjax')
         ));
-
-        // get upgrade available info
-        if (!Tools::isFresh(Upgrader::CACHE_FILE_UPGRADE_AVAILABE, _TIME_1_DAY_)) {
-            file_put_contents(_PS_ROOT_DIR_.Upgrader::CACHE_FILE_UPGRADE_AVAILABE, Tools::addonsRequest('check-version'));
-        }
-        if (file_exists(_PS_ROOT_DIR_.Upgrader::CACHE_FILE_UPGRADE_AVAILABE)) {
-            $content = Tools::file_get_contents( _PS_ROOT_DIR_.Upgrader::CACHE_FILE_UPGRADE_AVAILABE);
-            $upgradeInfo = simplexml_load_string($content);
-
-            $this->context->smarty->assign(array(
-                'upgrade_info' => $upgradeInfo
-            ));
-        }
 
         Employee::setLastConnectionDate($this->context->employee->id);
 
@@ -3700,7 +3597,7 @@ class AdminControllerCore extends Controller
     {
         /* Classical fields */
         foreach ($_POST as $key => $value) {
-            if (property_exists($object, $key) && $key != 'id_'.$table) {
+            if (array_key_exists($key, $object) && $key != 'id_'.$table) {
                 /* Do not take care of password field if empty */
                 if ($key == 'passwd' && Tools::getValue('id_'.$table) && empty($value)) {
                     continue;
@@ -3989,98 +3886,6 @@ class AdminControllerCore extends Controller
         die($popup_content);
     }
 
-    public function ajaxProcessGetRecommendationContent()
-    {
-        $response = array('success' => false);
-        if ($this->context->controller->getRecommendationFilePath()) {
-            $response = $this->getRecommendationContent();
-        }
-        $this->context->cookie->write();
-        $this->ajaxDie(json_encode($response));
-    }
-
-    public function getRecommendationContent()
-    {
-        $content = array(
-            'success' => false,
-            'cache' => true,
-            'html' => ''
-        );
-
-        if ($recommendationContent = $this->updateRecommendationContent()) {
-            $content['cache'] = false;
-        }
-        if (file_exists(_PS_ROOT_DIR_.$this->context->controller->getRecommendationFilePath())) {
-            $content['success'] = true;
-            if (!isset($this->context->cookie->{$this->controller_name.'_closed'}) || !$this->context->cookie->{$this->controller_name.'_closed'}) {
-                $content['html'] = file_get_contents(_PS_ROOT_DIR_.$this->context->controller->getRecommendationFilePath());
-            }
-        }
-
-        return $content;
-    }
-
-    public function updateRecommendationContent()
-    {
-        if (!Tools::isFresh($this->context->controller->getRecommendationFilePath(), _TIME_1_DAY_, false)) {
-            if ($recommendationContent =  Tools::addonsRequest(
-                'recommendation',
-                array('controller' => $this->context->controller->controller_name)
-            )) {
-                $recommendationContent = json_decode($recommendationContent, true);
-                if (!isset($this->context->cookie->{$this->context->controller->controller_name.'_key'})) {
-                    $this->context->cookie->{$this->context->controller->controller_name.'_key'} = '';
-                }
-                if ($this->context->cookie->{$this->context->controller->controller_name.'_key'} != $recommendationContent['key']) {
-                    unset($this->context->cookie->{$this->context->controller->controller_name.'_closed'});
-                }
-                $this->context->cookie->{$this->context->controller->controller_name.'_key'} = $recommendationContent['key'];
-                if (isset($recommendationContent['success']) && $recommendationContent['success']) {
-                    @file_put_contents(
-                        _PS_ROOT_DIR_.$this->context->controller->getRecommendationFilePath(),
-                        $recommendationContent['html']
-                    );
-                } elseif (file_exists(_PS_ROOT_DIR_.$this->context->controller->getRecommendationFilePath())) {
-                    unlink(_PS_ROOT_DIR_.$this->context->controller->getRecommendationFilePath());
-                }
-                return $recommendationContent;
-            } else {
-                if (file_exists(_PS_ROOT_DIR_.$this->context->controller->getRecommendationFilePath())) {
-                    unlink(_PS_ROOT_DIR_.$this->context->controller->getRecommendationFilePath());
-                }
-            }
-        }
-        return false;
-    }
-
-    public function ajaxProcessRecommendationClosed()
-    {
-        $this->context->cookie->{Tools::getValue('tab').'_closed'} = true;
-        $response = array('success' => true);
-        $this->ajaxDie(json_encode($response));
-    }
-
-    public function getRecommendationFilePath()
-    {
-        return static::RECOMMENDATION_CONTENT_FILE_PATH;
-    }
-
-    /**
-     * Save list visible columns
-     *
-     * @return json as response
-     */
-    public function ajaxProcessUpdateListVisivility()
-    {
-        $response = array(
-            'success' => false
-        );
-
-        $response['success'] = $this->processListVisibility();
-
-        $this->ajaxDie(json_encode($response));
-    }
-
     /**
      * Enable multiple items
      *
@@ -4117,23 +3922,9 @@ class AdminControllerCore extends Controller
                 $object = new $this->className((int)$id);
                 $object->setFieldsToUpdate(array('active' => true));
                 $object->active = (int)$status;
-                $isUpdated = (bool) $object->update();
-                $result &= $isUpdated;
-
-                if (!$isUpdated) {
-                    $this->errors[] = sprintf($this->l('Can\'t update #%d status.'), (int) $id);
-                }
+                $result &= $object->update();
             }
-
-            if ($result) {
-                $this->redirect_after = self::$currentIndex.'&conf=5&token='.$this->token;
-            } else {
-                $this->errors[] = $this->l('An error occurred while updating the status.');
-            }
-        } else {
-            $this->errors[] = $this->l('You must select at least one item to perform a bulk action.');
         }
-
         return $result;
     }
 
@@ -4241,24 +4032,31 @@ class AdminControllerCore extends Controller
      * @param string $file
      * @param int $timeout
      * @return bool
-     * @deprecated Deprecated 1.6.0.0 Use Tools::isFresh instead
      */
-    public function isFresh($file, $timeout = _TIME_1_WEEK_)
+    public function isFresh($file, $timeout = 604800)
     {
-        Tools::displayAsDeprecated();
-        return Tools::isFresh($file, $timeout);
+        if (($time = @filemtime(_PS_ROOT_DIR_.$file)) && filesize(_PS_ROOT_DIR_.$file) > 0) {
+            return ((time() - $time) < $timeout);
+        }
+
+        return false;
     }
+
+    /** @var bool */
+    protected static $is_prestashop_up = true;
 
     /**
      * @param string $file_to_refresh
      * @param string $external_file
      * @return bool
-     * @deprecated Deprecated 1.6.0.0 Use Tools::refresh instead
      */
     public function refresh($file_to_refresh, $external_file)
     {
-        Tools::displayAsDeprecated();
-        return Tools::refresh($file_to_refresh, $external_file);
+        if (self::$is_prestashop_up && $content = Tools::file_get_contents($external_file)) {
+            return (bool)file_put_contents(_PS_ROOT_DIR_.$file_to_refresh, $content);
+        }
+        self::$is_prestashop_up = false;
+        return false;
     }
 
     /**
@@ -4288,17 +4086,8 @@ class AdminControllerCore extends Controller
         $link_admin_modules = $this->context->link->getAdminLink('AdminModules', true);
 
         $module->options['install_url'] = $link_admin_modules.'&install='.urlencode($module->name).'&tab_module='.$module->tab.'&module_name='.$module->name.'&anchor='.ucfirst($module->name);
-        if ($module->is_native) {
-            $module->options['update_url'] = $link_admin_modules.'&update='.urlencode($module->name).'&tab_module='.$module->tab.'&module_name='.$module->name.'&anchor='.ucfirst($module->name);
-        } else {
-            if ($module->url) {
-                $module->options['update_url'] = $module->url;
-            } else {
-                $module->options['update_url'] = '';
-            }
-        }
+        $module->options['update_url'] = $link_admin_modules.'&update='.urlencode($module->name).'&tab_module='.$module->tab.'&module_name='.$module->name.'&anchor='.ucfirst($module->name);
         $module->options['uninstall_url'] = $link_admin_modules.'&uninstall='.urlencode($module->name).'&tab_module='.$module->tab.'&module_name='.$module->name.'&anchor='.ucfirst($module->name);
-        $module->options['delete_url'] = $link_admin_modules.'&delete='.urlencode($module->name).'&tab_module='.$module->tab.'&module_name='.$module->name.'&anchor='.ucfirst($module->name);
 
         $module->optionsHtml = $this->displayModuleOptions($module, $output_type, $back);
 

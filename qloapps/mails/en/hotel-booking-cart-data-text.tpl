@@ -7,9 +7,9 @@
 
 {$data_v['hotel_name']}
 
-{$rm_v['adults']} {l s='Adults'}, {$rm_v['children']} {l s='Children'}
+{$data_v['adult']} {l s='Adults'}, {$data_v['children']} {l s='Children'}
 
-{convertPrice price=$rm_v['avg_paid_unit_price_tax_excl']}
+{convertPrice price=$data_v['unit_price']}
 
 {$rm_v['num_rm']}
 
@@ -17,7 +17,7 @@
 
 {$rm_v['data_to']|date_format:"%d-%b-%G"}
 
-{$rm_v['amount_tax_excl']}
+{$rm_v['amount']}
 
 
 {/foreach}

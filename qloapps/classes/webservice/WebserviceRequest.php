@@ -183,7 +183,7 @@ class WebserviceRequestCore
     public static $ws_current_classname;
 
 
-    public static $shopIDs = array();
+    public static $shopIDs;
 
 
     public function getOutputEnabled()
@@ -1481,7 +1481,6 @@ class WebserviceRequestCore
             }
 
             if (!$this->hasErrors()) {
-                $object->webservice_validation = 1;
                 if ($i18n && ($retValidateFieldsLang = $object->validateFieldsLang(false, true)) !== true) {
                     $this->setError(400, 'Validation error: "'.$retValidateFieldsLang.'"', 84);
                     return false;

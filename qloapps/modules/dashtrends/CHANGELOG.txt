@@ -1,24 +1,4 @@
 ------------------------------
-# V1.0.1 to V1.0.2
-------------------------------
-
-## Improved/Changed Features:
-
-
-* [BO] : [#451] Improve statistics at back office
-* [BO] : [#412] Resolve dashboard design issues
-* [BO] : [#391] Updated dashboard structure | Fixed dashboard widget
-
-
-------------------------------
-# V1.0.0 to V1.0.1
-------------------------------
-
-## Improved/Changed Features:
-
-* [BO] : [#310] Updated revenue section design
-
-------------------------------
 # V0.7.5 to V1.0.0
 ------------------------------
 

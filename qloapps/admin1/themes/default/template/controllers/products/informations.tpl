@@ -100,9 +100,38 @@
 
 	{include file="controllers/products/multishop/check_fields.tpl" product_tab="Informations"}
 
+	<div class="form-group hidden">
+		<label class="control-label col-lg-3" for="simple_product">
+			{$bullet_common_field} {l s='Type'}
+		</label>
+		<div class="col-lg-9">
+			<div class="radio">
+				<label for="simple_product">
+					<input type="radio" name="type_product" id="simple_product" value="{Product::PTYPE_SIMPLE}" {if $product_type == Product::PTYPE_SIMPLE}checked="checked"{/if}>
+					{l s='Standard product'}</label>
+			</div>
+			<div class="radio">
+				<label for="pack_product">
+					<input type="radio" name="type_product" {if $is_in_pack}disabled="disabled"{/if} id="pack_product" value="{Product::PTYPE_PACK}" {if $product_type == Product::PTYPE_PACK}checked="checked"{/if}> {l s='Pack of existing products'}</label>
+			</div>
+			<div class="radio">
+				<label for="virtual_product">
+					<input type="radio" name="type_product" id="virtual_product" {if $is_in_pack}disabled="disabled"{/if} value="{Product::PTYPE_VIRTUAL}" {if $product_type == Product::PTYPE_VIRTUAL}checked="checked"{/if}>
+					{l s='Virtual product (services, booking, downloadable products, etc.)'}</label>
+			</div>
+			<div class="row row-padding-top">
+				<div id="warn_virtual_combinations" class="alert alert-warning" style="display:none">{l s='You cannot use combinations with a virtual product.'}</div>
+				<div id="warn_pack_combinations" class="alert alert-warning" style="display:none">{l s='You cannot use combinations with a pack.'}</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="product-pack-container" {if $product_type != Product::PTYPE_PACK}style="display:none"{/if}></div>
+
+	{*<hr />*}
 	<div class="form-group">
 		<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="name" type="default" multilang="true"}</span></div>
-		<label class="control-label col-lg-2 required" id="name" for="name_{$id_lang}">
+		<label class="control-label col-lg-2 required" for="name_{$id_lang}">
 			<span class="label-tooltip" data-toggle="tooltip" title="{l s='Write the name of the Room Type for ex. Delux, Executive etc.'} {l s='Invalid characters:'} &lt;&gt;;=#{}">
 				{l s='Room Type'}
 			</span>
@@ -122,9 +151,9 @@
 		<input type="hidden" value="{$htl_room_type['id']}" name="wk_id_room_type">
 	{/if}
 
-	<div class="form-group" id="hotel_selection">
+	<div class="form-group">
 		{if isset($htl_room_type)}
-			<label class="control-label col-sm-3 required">
+			<label class="control-label col-sm-3 required" for="hotel_place">
 				{l s='Hotel'}
 			</label>
 			<div class="col-sm-5">
@@ -137,7 +166,7 @@
 				{l s='Select Hotel'}
 			</label>
 			<div class="col-sm-5">
-				<select name="id_hotel" id="hotel_place" class="form-control chosen">
+				<select name="id_hotel" id="hotel_place" class="form-control">
 					{foreach from=$htl_info item=htl_dtl}
 						<option value="{$htl_dtl['id']}" >{$htl_dtl['hotel_name']}</option>
 					{/foreach}
@@ -232,7 +261,7 @@
 	<div class="form-group redirect_product_options redirect_product_options_product_choise" style="display:none">
 		<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="id_product_redirected" type="radio" onclick=""}</span></div>
 		<label class="control-label col-lg-2" for="related_product_autocomplete_input">
-			{l s='Related room type'}
+			{l s='Related product:'}
 		</label>
 		<div class="col-lg-7">
 			<input type="hidden" value="" name="id_product_redirected" />
@@ -243,7 +272,7 @@
 			</div>
 
 			<div class="form-control-static">
-				<span id="related_product_name"><i class="icon-warning-sign"></i>&nbsp;{l s='No related room type.'}</span>
+				<span id="related_product_name"><i class="icon-warning-sign"></i>&nbsp;{l s='No related product.'}</span>
 				<span id="related_product_remove" style="display:none">
 					<a class="btn btn-default" href="#" onclick="removeRelatedProduct(); return false" id="related_product_remove_link">
 						<i class="icon-remove text-danger"></i>
@@ -253,7 +282,7 @@
 
 		</div>
 		<script>
-			var no_related_product = '{l s='No related room type.'}';
+			var no_related_product = '{l s='No related product'}';
 			var id_product_redirected = {$product->id_product_redirected|intval};
 			var product_name_redirected = '{$product_name_redirected|escape:'html':'UTF-8'}';
 		</script>
@@ -270,27 +299,6 @@
 				<option value="search" {if $product->visibility == 'search'}selected="selected"{/if} >{l s='Search only'}</option>
 				<option value="none" {if $product->visibility == 'none'}selected="selected"{/if}>{l s='Nowhere'}</option>
 			</select>
-		</div>
-	</div>
-
-	<div class="form-group" id="show_at_front_container">
-		<label class="control-label col-lg-3">
-			<span class="label-tooltip" data-toggle="tooltip" title="{l s='Enable if you want this room type to be shown and to be available for booking from front office.'}">
-				{l s='Show at front office'}
-			</span>
-		</label>
-		<div class="col-lg-3">
-			<span class="switch prestashop-switch fixed-width-lg">
-				<input type="radio" name="show_at_front" id="show_at_front_on" value="1" {if $product->show_at_front || !$product->isAssociatedToShop()}checked="checked"{/if}/>
-				<label for="show_at_front_on" class="radioCheck">
-					{l s='Yes'}
-				</label>
-				<input type="radio" name="show_at_front" id="show_at_front_off" value="0" {if !$product->show_at_front && $product->isAssociatedToShop()}checked="checked"{/if}/>
-				<label for="show_at_front_off" class="radioCheck">
-					{l s='No'}
-				</label>
-				<a class="slide-button btn"></a>
-			</span>
 		</div>
 	</div>
 
@@ -327,7 +335,7 @@
 					</div>
 				</div>
 			</div>
-			{* <div class="form-group">
+			<div class="form-group">
 				<div class="col-lg-1"><span class="pull-right">{include file="controllers/products/multishop/checkbox.tpl" field="condition" type="default"}</span></div>
 				<label class="control-label col-lg-2" for="condition">
 					{l s='Condition'}
@@ -339,7 +347,7 @@
 						<option value="refurbished" {if $product->condition == 'refurbished'}selected="selected"{/if}>{l s='Refurbished'}</option>
 					</select>
 				</div>
-			</div> *}
+			</div>
 		</div>
 	</div>
 	<hr/>
@@ -443,28 +451,7 @@
 	</div>
 	{/if}
 
-	{if isset($product->id) && $product->id}
-		<div class="form-group">
-			<label class="control-label col-lg-3" id="category_position" for="category_position">
-				<span class="label-tooltip" data-toggle="tooltip" title="{l s='Set position of the room type when hotel search results are displayed.'}">
-					{l s='Position'}
-				</span>
-			</label>
-			<div class="col-lg-9">
-				<input type="text" id="category_position" class="form-control fixed-width-lg" name="category_position" value="{$category_position}" />
-				<p class="help-block">{l s='Please note that position numbering starts from 0. A position of 0 means room type will be displayed at the topmost.'}</p>
-			</div>
-		</div>
-	{/if}
-
-	{if isset($product->id) && $product->id}
-		<div class="alert alert-info">
-			{l s='You can change positions of room types of this hotel from '}
-			<a href="{$link->getAdminLink('AdminProducts')}&id_category={$htl_full_info['id_category']}">{l s='here.'}</a>
-		</div>
-	{/if}
-
-	{* <div class="form-group">
+	<div class="form-group">
 		<label class="control-label col-lg-3" for="tags_{$id_lang}">
 			<span class="label-tooltip" data-toggle="tooltip"
 				title="{l s='Will be displayed in the tags block when enabled. Tags help customers easily find your room types.'}">
@@ -518,7 +505,7 @@
 			<div class="help-block">{l s='Each tag has to be followed by a comma. The following characters are forbidden: %s' sprintf='!&lt;;&gt;;?=+#&quot;&deg;{}_$%.'}
 			</div>
 		</div>
-	</div> *}
+	</div>
 	<div class="panel-footer">
 		<a href="{$link->getAdminLink('AdminProducts')|escape:'html':'UTF-8'}{if isset($smarty.request.page) && $smarty.request.page > 1}&amp;submitFilterproduct={$smarty.request.page|intval}{/if}" class="btn btn-default"><i class="process-icon-cancel"></i> {l s='Cancel'}</a>
 		<button type="submit" name="submitAddproduct" class="btn btn-default pull-right" disabled="disabled"><i class="process-icon-loading"></i> {l s='Save'}</button>

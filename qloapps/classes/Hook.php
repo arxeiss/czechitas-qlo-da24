@@ -326,9 +326,9 @@ class HookCore extends ObjectModel
             }
             // For payment modules, we check that they are available in the contextual country
             elseif ($frontend) {
-                // if (Validate::isLoadedObject($context->country)) {
-                //     $sql->where('((h.`name` = "displayPayment" OR h.`name` = "displayPaymentEU") AND (SELECT `id_country` FROM `'._DB_PREFIX_.'module_country` mc WHERE mc.`id_module` = m.`id_module` AND `id_country` = '.(int)$context->country->id.' AND `id_shop` = '.(int)$context->shop->id.' LIMIT 1) = '.(int)$context->country->id.')');
-                // }
+                if (Validate::isLoadedObject($context->country)) {
+                    $sql->where('((h.`name` = "displayPayment" OR h.`name` = "displayPaymentEU") AND (SELECT `id_country` FROM `'._DB_PREFIX_.'module_country` mc WHERE mc.`id_module` = m.`id_module` AND `id_country` = '.(int)$context->country->id.' AND `id_shop` = '.(int)$context->shop->id.' LIMIT 1) = '.(int)$context->country->id.')');
+                }
                 if (Validate::isLoadedObject($context->currency)) {
                     $sql->where('((h.`name` = "displayPayment" OR h.`name` = "displayPaymentEU") AND (SELECT `id_currency` FROM `'._DB_PREFIX_.'module_currency` mcr WHERE mcr.`id_module` = m.`id_module` AND `id_currency` IN ('.(int)$context->currency->id.', -1, -2) LIMIT 1) IN ('.(int)$context->currency->id.', -1, -2))');
                 }
@@ -476,6 +476,13 @@ class HookCore extends ObjectModel
 
         if ($disable_non_native_modules && !isset(Hook::$native_module)) {
             Hook::$native_module = Module::getNativeModuleList();
+            if (Module::isInstalled('hotelreservationsystem')) {
+                include_once _PS_MODULE_DIR_.'hotelreservationsystem/classes/HotelHelper.php';
+                $qloNativeMods = array();
+                if ($qloNativeMods = HotelHelper::getQloNativeModules()) {
+                    Hook::$native_module = array_merge(Hook::$native_module, $qloNativeMods);
+                }
+            }
         }
 
         $different_shop = false;
@@ -638,7 +645,7 @@ class HookCore extends ObjectModel
         $order = new Order((int)$id_order);
         $new_os = new OrderState((int)$new_order_status_id, $order->id_lang);
 
-        $return = ((int)$new_os->id == Configuration::get('PS_OS_PAYMENT_ACCEPTED')) ? Hook::exec('paymentConfirm', array('id_order' => (int)($order->id))) : true;
+        $return = ((int)$new_os->id == Configuration::get('PS_OS_PAYMENT')) ? Hook::exec('paymentConfirm', array('id_order' => (int)($order->id))) : true;
         $return = Hook::exec('updateOrderStatus', array('newOrderStatus' => $new_os, 'id_order' => (int)($order->id))) && $return;
         return $return;
     }

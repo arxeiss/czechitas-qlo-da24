@@ -20,8 +20,7 @@
   <tab id="Administration" name="مدیریت"/>
   <tab id="Stats" name="آمارها"/>
   <tab id="Stock" name="موجودی"/>
-  <tab id="Products" name="مدیریت محصولات خدماتی"/>
-  <tab id="Room_Types" name="مدیریت انواع اتاق"/>
+  <tab id="Products" name="محصولات"/>
   <tab id="Categories" name="شاخه‌ها"/>
   <tab id="Monitoring" name="بازرسی"/>
   <tab id="Attributes_and_Values" name="مشخصه‌های محصول"/>
@@ -60,7 +59,6 @@
   <tab id="Tax_Rules" name="قوانین مالیاتی"/>
   <tab id="Translations" name="ترجمه‌ها"/>
   <tab id="Modules_1" name="ماژول ها و سرویس ها"/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id="Modules_Themes_Catalog" name="کاتالوگ ماژول‌ها و قالب‌ها"/>
   <tab id="Positions" name="جایگاه‌ها"/>
   <tab id="Payment" name="پرداخت"/>

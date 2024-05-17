@@ -22,24 +22,9 @@
 *  @license    http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  International Registered Trademark & Property of PrestaShop SA
 *}
-{capture name=path}
-	<a href="{$link->getPageLink('my-account', true)|escape:'html':'UTF-8'}">
-		{l s='My account'}
-	</a>
-	<span class="navigation-pipe">
-		{$navigationPipe}
-	</span>
-	<span class="navigation_page">
-		{l s='Address'}
-	</span>
-{/capture}
-	{if isset($smarty.get.updated) && $smarty.get.updated}
-		<p class="alert alert-success">
-			{l s='Your address has been successfully updated.'}
-		</p>
-	{/if}
+{capture name=path}{l s='Your addresses'}{/capture}
 <div class="box">
-	<h1 class="page-subheading">{l s='Address'}</h1>
+	<h1 class="page-subheading">{l s='Your addresses'}</h1>
 	<p class="info-title">
 		{if isset($id_address) && (isset($smarty.post.alias) || isset($address->alias))}
 			{l s='Modify address'}
@@ -49,7 +34,7 @@
 				{if isset($address->alias)}"{$address->alias|escape:'html':'UTF-8'}"{/if}
 			{/if}
 		{else}
-			{l s='To add an address, please fill out the form below.'}
+			{l s='To add a new address, please fill out the form below.'}
 		{/if}
 	</p>
 	{include file="$tpl_dir./errors.tpl"}
@@ -224,8 +209,8 @@
 </div>
 <ul class="footer_links clearfix">
 	<li>
-		<a class="btn btn-defaul button button-small" href="{$link->getPageLink('my-account', true)|escape:'html':'UTF-8'}">
-			<span><i class="icon-chevron-left"></i> {l s='Back to My account'}</span>
+		<a class="btn btn-defaul button button-small" href="{$link->getPageLink('addresses', true)|escape:'html':'UTF-8'}">
+			<span><i class="icon-chevron-left"></i> {l s='Back to your addresses'}</span>
 		</a>
 	</li>
 </ul>
@@ -246,5 +231,8 @@
 {/if}
 {if isset($countries)}
 	{addJsDef countries=$countries}
+{/if}
+{if isset($vatnumber_ajax_call) && $vatnumber_ajax_call}
+	{addJsDef vatnumber_ajax_call=$vatnumber_ajax_call}
 {/if}
 {/strip}

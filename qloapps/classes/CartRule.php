@@ -421,7 +421,7 @@ class CartRuleCore extends ObjectModel
      * @param $name
      * @return bool
      */
-    public static function cartRuleExists($code, $id_customer = 0)
+    public static function cartRuleExists($name)
     {
         if (!CartRule::isFeatureActive()) {
             return false;
@@ -430,8 +430,7 @@ class CartRuleCore extends ObjectModel
         return (bool)Db::getInstance()->getValue('
 		SELECT `id_cart_rule`
 		FROM `'._DB_PREFIX_.'cart_rule`
-		WHERE `code` = \''.pSQL($code).'\''.
-        ($id_customer ? 'AND `id_customer` = '.(int) $id_customer : ''));
+		WHERE `code` = \''.pSQL($name).'\'');
     }
 
     /**
@@ -602,7 +601,7 @@ class CartRuleCore extends ObjectModel
 
         // Check if the cart rule is only usable by a specific customer, and if the current customer is the right one
         if ($this->id_customer && $context->cart->id_customer != $this->id_customer) {
-            if (!defined('_PS_ADMIN_DIR_') && !Context::getContext()->customer->isLogged()) {
+            if (!Context::getContext()->customer->isLogged()) {
                 return (!$display_error) ? false : (Tools::displayError('You cannot use this voucher').' - '.Tools::displayError('Please log in first'));
             }
             return (!$display_error) ? false : Tools::displayError('You cannot use this voucher');
@@ -876,10 +875,9 @@ class CartRuleCore extends ObjectModel
      * @param bool $use_tax
      * @param Context $context
      * @param bool $use_cache Allow using cache to avoid multiple free gift using multishipping
-     * @param bool $only_advance_payment_products to calculate discount applied only on products that have advance payment
      * @return float|int|string
      */
-    public function getContextualValue($use_tax, Context $context = null, $filter = null, $package = null, $use_cache = true, $only_advance_payment_products = false)
+    public function getContextualValue($use_tax, Context $context = null, $filter = null, $package = null, $use_cache = true)
     {
         if (!CartRule::isFeatureActive()) {
             return 0;
@@ -892,33 +890,14 @@ class CartRuleCore extends ObjectModel
         }
 
         $all_products = $context->cart->getProducts();
-        if (is_null($package)) {
-            $package = array(
-                'products' => $all_products,
-                'id_carrier' => null,
-                'id_address' => 0
-            );
-        }
+        $package_products = (is_null($package) ? $all_products : $package['products']);
 
         $reduction_value = 0;
-        $objHotelAdvancePayment = new HotelAdvancedPayment();
-        $cache_id = 'getContextualValue_'.(int)$this->id.'_'.(int)$use_tax.'_'.(int)$context->cart->id.'_'.(int)$filter.'_'.(int)$only_advance_payment_products;
-        foreach ($package['products'] as $key => $product) {
-            if ($only_advance_payment_products) {
-                if ($advancePaymentInfo = $objHotelAdvancePayment->getIdAdvPaymentByIdProduct($product['id_product'])) {
-                    if (!$advancePaymentInfo['active']) {
-                        unset($package['products'][$key]);
-                        continue;
-                    }
-                } else {
-                    unset($package['products'][$key]);
-                    continue;
-                }
-            }
+
+        $cache_id = 'getContextualValue_'.(int)$this->id.'_'.(int)$use_tax.'_'.(int)$context->cart->id.'_'.(int)$filter;
+        foreach ($package_products as $product) {
             $cache_id .= '_'.(int)$product['id_product'].'_'.(int)$product['id_product_attribute'].(isset($product['in_stock']) ? '_'.(int)$product['in_stock'] : '');
         }
-
-        $package_products = $package['products'];
 
         if (Cache::isStored($cache_id)) {
             return Cache::retrieve($cache_id);
@@ -1022,7 +1001,7 @@ class CartRuleCore extends ObjectModel
                 $reduction_value += $selected_products_reduction * $this->reduction_percent / 100;
             }
 
-            // Discount (by amount)
+            // Discount (¤)
             if ((float)$this->reduction_amount > 0) {
                 $prorata = 1;
                 if (!is_null($package) && count($all_products)) {
@@ -1032,31 +1011,7 @@ class CartRuleCore extends ObjectModel
                     }
                 }
 
-                $restricted_product = null;
                 $reduction_amount = $this->reduction_amount;
-                // If the cart rule is restricted to one room type it can't exceed this room type price
-                if ($this->reduction_product > 0) {
-                    foreach ($package_products as $product) {
-                        if ($product['id_product'] == $this->reduction_product) {
-                            $restricted_product = $product;
-
-                            $prorata = 1; // do not split this cart rule
-                            if ($this->reduction_tax) {
-                                $max_reduction_amount = (int) $restricted_product['cart_quantity'] * (float) $restricted_product['price_wt'];
-                            } else {
-                                $max_reduction_amount = (int) $restricted_product['cart_quantity'] * (float) $restricted_product['price'];
-                            }
-                            $reduction_amount = min($reduction_amount, $max_reduction_amount);
-
-                            break;
-                        }
-                    }
-                }
-
-                if (($this->reduction_product > 0) && !$restricted_product) {
-                    $reduction_amount = 0;
-                }
-
                 // If we need to convert the voucher value to the cart currency
                 if (isset($context->currency) && $this->reduction_currency != $context->currency->id) {
                     $voucherCurrency = new Currency($this->reduction_currency);
@@ -1103,7 +1058,7 @@ class CartRuleCore extends ObjectModel
                             }
                         }
                     }
-                    // Discount (by amount) on the whole order
+                    // Discount (¤) on the whole order
                     elseif ($this->reduction_product == 0) {
                         $cart_amount_te = null;
                         $cart_amount_ti = null;
@@ -1265,7 +1220,7 @@ class CartRuleCore extends ObjectModel
         if ($type == 'shop') {
             $shops = Context::getContext()->employee->getAssociatedShops();
             if (count($shops)) {
-                $shop_list = ' AND t.id_shop IN ('.implode(',', array_map('intval', $shops)).') ';
+                $shop_list = ' AND t.id_shop IN ('.implode(array_map('intval', $shops), ',').') ';
             }
         }
 
@@ -1467,16 +1422,15 @@ class CartRuleCore extends ObjectModel
      * @param $id_lang
      * @return array
      */
-    public static function getCartsRuleByCode($name, $id_lang, $extended = false, $id_customer = 0)
+    public static function getCartsRuleByCode($name, $id_lang, $extended = false)
     {
         $sql_base = 'SELECT cr.*, crl.*
-        FROM '._DB_PREFIX_.'cart_rule cr
-        LEFT JOIN '._DB_PREFIX_.'cart_rule_lang crl ON (cr.id_cart_rule = crl.id_cart_rule AND crl.id_lang = '.(int)$id_lang.')
-        WHERE 1'.($id_customer ? ' AND (cr.`id_customer` = 0 OR cr.`id_customer` = '.(int) $id_customer.')' : '');
+						FROM '._DB_PREFIX_.'cart_rule cr
+						LEFT JOIN '._DB_PREFIX_.'cart_rule_lang crl ON (cr.id_cart_rule = crl.id_cart_rule AND crl.id_lang = '.(int)$id_lang.')';
         if ($extended) {
-            return Db::getInstance()->executeS('('.$sql_base.' AND code LIKE \'%'.pSQL($name).'%\') UNION ('.$sql_base.' AND name LIKE \'%'.pSQL($name).'%\')');
+            return Db::getInstance()->executeS('('.$sql_base.' WHERE code LIKE \'%'.pSQL($name).'%\') UNION ('.$sql_base.' WHERE name LIKE \'%'.pSQL($name).'%\')');
         } else {
-            return Db::getInstance()->executeS($sql_base.' AND code LIKE \'%'.pSQL($name).'%\'');
+            return Db::getInstance()->executeS($sql_base.' WHERE code LIKE \'%'.pSQL($name).'%\'');
         }
     }
 }

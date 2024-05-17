@@ -86,7 +86,7 @@ class HotelBookingDemands extends ObjectModel
             $idCurrency = (int)Configuration::get('PS_CURRENCY_DEFAULT');
         }
         $totalDemandsPrice = 0;
-        $sql = 'SELECT hb.`id_room`, hb.`adults`, hb.`children`, hd.* FROM `'._DB_PREFIX_.'htl_booking_demands` hd
+        $sql = 'SELECT hb.`id_room`, hd.* FROM `'._DB_PREFIX_.'htl_booking_demands` hd
         LEFT JOIN `'._DB_PREFIX_.'htl_booking_detail` hb ON (hd.`id_htl_booking` = hb.`id`)
         WHERE hd.`id_htl_booking` IN
         (SELECT `id` FROM `'._DB_PREFIX_.'htl_booking_detail`
@@ -132,8 +132,6 @@ class HotelBookingDemands extends ObjectModel
                             $demand['extra_demands_tax_label'] = $moduleObj->l('No tax', 'HotelBookingDemands');
                         }
                         $roomDemands[$demand['id_room']]['id_room'] = $demand['id_room'];
-                        $roomDemands[$demand['id_room']]['adults'] = $demand['adults'];
-                        $roomDemands[$demand['id_room']]['children'] = $demand['children'];
                         $roomDemands[$demand['id_room']]['extra_demands'][] = $demand;
                     }
                     unset($taxTemp);
@@ -175,9 +173,10 @@ class HotelBookingDemands extends ObjectModel
         return new TaxCalculator($taxes, $computationMethod);
     }
 
-    public function setBookingDemandTaxDetails($replace = 0)
+    public function setBookingDemandTaxDetails()
     {
-        if ($this->id) {
+        $idBookingDemand = $this->id;
+        if ($idBookingDemand && Validate::isLoadedObject($objBkDemand = new HotelBookingDemands($idBookingDemand))) {
             if ($taxCalculator = $this->tax_calculator) {
                 if (!($taxCalculator instanceof TaxCalculator)) {
                     return false;
@@ -186,11 +185,12 @@ class HotelBookingDemands extends ObjectModel
                     return true;
                 }
                 $values = '';
-                $priceTaxExcl = $this->unit_price_tax_excl;
+                $objGlobalDemand = new HotelRoomTypeGlobalDemand($this->id_global_demand);
+                $priceTaxExcl = $objBkDemand->unit_price_tax_excl;
                 foreach ($taxCalculator->getTaxesAmount($priceTaxExcl) as $idTax => $amount) {
                     $quantity = 1;
-                    if ($this->price_calc_method == HotelRoomTypeGlobalDemand::WK_PRICE_CALC_METHOD_EACH_DAY) {
-                        $objBkDetail = new HotelBookingDetail($this->id_htl_booking);
+                    if ($objGlobalDemand->price_calc_method == HotelRoomTypeGlobalDemand::WK_PRICE_CALC_METHOD_EACH_DAY) {
+                        $objBkDetail = new HotelBookingDetail($objBkDemand->id_htl_booking);
                         $quantity = $objBkDetail->getNumberOfDays($objBkDetail->date_from, $objBkDetail->date_to);
                     }
                     switch (Configuration::get('PS_ROUND_TYPE')) {
@@ -210,15 +210,9 @@ class HotelBookingDemands extends ObjectModel
                             $totalAmount = $unitAmount * $quantity;
                             break;
                     }
-                    $values .= '('.(int)$this->id.','.(int)$idTax.','.(float)$unitAmount.','.
+                    $values .= '('.(int)$idBookingDemand.','.(int)$idTax.','.(float)$unitAmount.','.
                     (float)$totalAmount.'),';
                 }
-
-                // if delete previous details and save new details
-                if ($replace) {
-                    Db::getInstance()->execute('DELETE FROM `'._DB_PREFIX_.'htl_booking_demands_tax` WHERE id_booking_demand='.(int)$this->id);
-                }
-
                 $values = rtrim($values, ',');
                 $sql = 'INSERT INTO `'._DB_PREFIX_.'htl_booking_demands_tax`
                 (id_booking_demand, id_tax, unit_amount, total_amount)

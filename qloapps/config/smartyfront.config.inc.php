@@ -24,10 +24,8 @@
 *  International Registered Trademark & Property of PrestaShop SA
 */
 
-use JetBrains\PhpStorm\Language;
-
 global $smarty;
-$smarty->setTemplateDir(_PS_THEME_DIR_);
+$smarty->setTemplateDir(_PS_THEME_DIR_.'tpl');
 
 if (Configuration::get('PS_HTML_THEME_COMPRESSION')) {
     $smarty->registerFilter('output', 'smartyMinifyHTML');
@@ -36,7 +34,7 @@ if (Configuration::get('PS_JS_HTML_THEME_COMPRESSION')) {
     $smarty->registerFilter('output', 'smartyPackJSinHTML');
 }
 
-function smartyTranslate($params, $smarty)
+function smartyTranslate($params, &$smarty)
 {
     global $_LANG;
 
@@ -50,58 +48,7 @@ function smartyTranslate($params, $smarty)
         $params['mod'] = false;
     }
     if (!isset($params['sprintf'])) {
-        $params['sprintf'] = array();
-    }
-
-    if (!isset($params['d'])) {
-        $params['d'] = null;
-    }
-
-    if (!isset($params['lang'])) {
-        $params['lang'] = null;
-    } else {
-        if (!is_object($params['lang'])) {
-            $params['lang'] = new Language((int)$params['lang']);
-        }
-        if (!Validate::isLoadedObject($params['lang'])) {
-            $params['lang'] = null;
-        }
-    }
-
-    if (!is_null($params['d'])) {
-        if (isset($params['tags'])) {
-            $backTrace = debug_backtrace();
-
-            $errorMessage = sprintf(
-                'Unable to translate "%s" in %s. tags() is not supported anymore, please use sprintf().',
-                $params['s'],
-                $backTrace[0]['args'][1]->template_resource
-            );
-
-            if (_PS_MODE_DEV_) {
-                throw new Exception($errorMessage);
-            } else {
-                PrestaShopLogger::addLog($errorMessage);
-            }
-        }
-
-        if (!is_array($params['sprintf'])) {
-            $backTrace = debug_backtrace();
-
-            $errorMessage = sprintf(
-                'Unable to translate "%s" in %s. sprintf() parameter should be an array.',
-                $params['s'],
-                $backTrace[0]['args'][1]->template_resource
-            );
-
-            if (_PS_MODE_DEV_) {
-                throw new Exception($errorMessage);
-            } else {
-                PrestaShopLogger::addLog($errorMessage);
-
-                return $params['s'];
-            }
-        }
+        $params['sprintf'] = null;
     }
 
     $string = str_replace('\'', '\\\'', $params['s']);
@@ -115,9 +62,9 @@ function smartyTranslate($params, $smarty)
     }
 
     if ($params['mod']) {
-        return Translate::smartyPostProcessTranslation(Translate::getModuleTranslation($params['mod'], $params['s'], $basename, $params['sprintf'], $params['js'], $params['lang']), $params);
+        return Translate::smartyPostProcessTranslation(Translate::getModuleTranslation($params['mod'], $params['s'], $basename, $params['sprintf'], $params['js']), $params);
     } elseif ($params['pdf']) {
-        return Translate::smartyPostProcessTranslation(Translate::getPdfTranslation($params['s'], $params['sprintf'], $params['lang']), $params);
+        return Translate::smartyPostProcessTranslation(Translate::getPdfTranslation($params['s'], $params['sprintf']), $params);
     }
 
     if ($_LANG != null && isset($_LANG[$key])) {

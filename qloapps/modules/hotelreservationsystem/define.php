@@ -18,13 +18,15 @@
 *  @license   https://store.webkul.com/license.html
 */
 
-require_once 'classes/HotelReservationSystemDb.php';
 require_once 'classes/HotelRoomType.php';
 require_once 'classes/HotelRoomInformation.php';
 require_once 'classes/HotelBranchInformation.php';
 require_once 'classes/HotelImage.php';
 require_once 'classes/HotelFeatures.php';
 require_once 'classes/HotelBranchFeatures.php';
+require_once 'classes/HotelRoomStatus.php';
+require_once 'classes/HotelOrderStatus.php';
+require_once 'classes/HotelRoomAllotmentType.php';
 require_once 'classes/HotelBookingDetail.php';
 require_once 'classes/HotelCartBookingData.php';
 require_once 'classes/HotelAdvancedPayment.php';
@@ -39,24 +41,12 @@ require_once 'classes/HotelRoomTypeGlobalDemand.php';
 require_once 'classes/HotelRoomTypeGlobalDemandAdvanceOption.php';
 require_once 'classes/HotelRoomTypeDemandPrice.php';
 require_once 'classes/HotelRoomTypeDemand.php';
-require_once 'classes/HotelRoomTypeRestrictionDateRange.php';
 
 require_once 'classes/QloWebservice.php';
 require_once 'classes/QloRoomType.php';
 require_once 'classes/HotelRoomDisableDates.php';
 require_once 'classes/HotelBranchRefundRules.php';
 
-// linked products
-require_once 'classes/RoomTypeServiceProduct.php';
-require_once 'classes/RoomTypeServiceProductPrice.php';
-require_once 'classes/RoomTypeServiceProductCartDetail.php';
-require_once 'classes/RoomTypeServiceProductOrderDetail.php';
-require_once 'classes/HotelServiceProductCartDetail.php';
-
-
-require_once 'classes/HotelSettingsLink.php';
-require_once 'classes/HotelBookingDocument.php';
-
 // Web services classes
 require_once 'classes/WebserviceSpecificManagementQlo.php';
-require_once 'classes/WebserviceSpecificManagementHotelAri.php';
+require_once 'classes/WebserviceSpecificManagementHotelImages.php';

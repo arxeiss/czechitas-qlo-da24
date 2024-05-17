@@ -183,16 +183,7 @@ class AdminTabsControllerCore extends AdminController
             ),
             'submit' => array(
                 'title' => $this->l('Save'),
-            ),
-            'buttons' => array(
-                'save-and-stay' => array(
-                    'title' => $this->l('Save and stay'),
-                    'name' => 'submitAdd'.$this->table.'AndStay',
-                    'type' => 'submit',
-                    'class' => 'btn btn-default pull-right',
-                    'icon' => 'process-icon-save',
-                ),
-            ),
+            )
         );
 
         $this->fields_form['input'][] = array(
@@ -349,7 +340,7 @@ class AdminTabsControllerCore extends AdminController
     {
         $way = (int)(Tools::getValue('way'));
         $id_tab = (int)(Tools::getValue('id'));
-        $positions = Tools::getValue('menu');
+        $positions = Tools::getValue('tab');
 
         // when changing positions in a tab sub-list, the first array value is empty and needs to be removed
         if (!$positions[0]) {

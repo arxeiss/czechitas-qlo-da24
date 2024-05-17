@@ -40,13 +40,13 @@ class StatsCatalog extends Module
     {
         $this->name = 'statscatalog';
         $this->tab = 'analytics_stats';
-        $this->version = '1.4.2';
+        $this->version = '1.4.1';
         $this->author = 'PrestaShop';
         $this->need_instance = 0;
 
         parent::__construct();
 
-        $this->displayName = $this->l('Hotel statistics');
+        $this->displayName = $this->l('Catalog statistics');
         $this->description = $this->l('Adds a tab containing general statistics about your catalog to the Stats dashboard.');
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => '1.7.0.99');
     }
@@ -58,14 +58,14 @@ class StatsCatalog extends Module
 
     public function getQuery1()
     {
-        $sql = 'SELECT COUNT(DISTINCT p.`id_product`) AS total,
-        IFNULL(SUM(p.`price`) / COUNT(p.`price`), 0) AS average_price
-        FROM `'._DB_PREFIX_.'product` p
-        INNER JOIN `'._DB_PREFIX_.'htl_room_type` hrt ON (hrt.`id_product` = p.`id_product`)
-        '.$this->join.'
-        WHERE p.`active` = 1
-        '.HotelBranchInformation::addHotelRestriction(false, 'hrt').'
-        '.$this->where;
+        $sql = 'SELECT COUNT(DISTINCT p.`id_product`) AS total, SUM(product_shop.`price`) / COUNT(product_shop.`price`) AS average_price, COUNT(DISTINCT i.`id_image`) AS images
+				FROM `'._DB_PREFIX_.'product` p
+				'.Shop::addSqlAssociation('product', 'p').'
+				INNER JOIN `'._DB_PREFIX_.'htl_room_type` hrt ON (p.`id_product` = hrt.`id_product`)
+				LEFT JOIN `'._DB_PREFIX_.'image` i ON i.`id_product` = p.`id_product`
+				'.$this->join.'
+				WHERE product_shop.`active` = 1
+					'.$this->where;
         if ($this->id_hotel) {
             $sql .= ' AND hrt.`id_hotel` = '.(int)$this->id_hotel;
         }
@@ -73,28 +73,7 @@ class StatsCatalog extends Module
         return DB::getInstance(_PS_USE_SQL_SLAVE_)->getRow($sql);
     }
 
-    public function getTotalHotelPageViewed()
-    {
-        $sql = 'SELECT SUM(pv.`counter`)
-        FROM `'._DB_PREFIX_.'page_viewed` pv
-        LEFT JOIN `'._DB_PREFIX_.'page` p ON (p.`id_page` = pv.`id_page`)
-        LEFT JOIN `'._DB_PREFIX_.'page_type` pt ON (pt.`id_page_type` = p.`id_page_type`)
-        LEFT JOIN `'._DB_PREFIX_.'category` cl ON (cl.`id_category` = p.`id_object`)
-        LEFT JOIN `'._DB_PREFIX_.'htl_branch_info` hbi ON (hbi.`id_category` = cl.`id_category`)
-        '.$this->join.'
-        WHERE pt.`name` = "'.pSQL('category').'"
-        '.HotelBranchInformation::addHotelRestriction(false, 'hbi', 'id').'
-        '.$this->where;
-
-        if ($this->id_hotel) {
-            $sql .= ' AND hbi.`id` = '.(int) $this->id_hotel;
-        }
-
-
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue($sql);
-    }
-
-    public function getTotalRoomTypePageViewed()
+    public function getTotalPageViewed()
     {
         $sql = 'SELECT SUM(pv.`counter`)
 		FROM `'._DB_PREFIX_.'product` p
@@ -105,7 +84,6 @@ class StatsCatalog extends Module
 		LEFT JOIN `'._DB_PREFIX_.'page_viewed` pv ON pv.`id_page` = pa.`id_page`
 		'.$this->join.'
 		WHERE product_shop.`active` = 1
-        '.HotelBranchInformation::addHotelRestriction(false, 'hrt').'
 		'.$this->where;
 
         if ($this->id_hotel) {
@@ -122,12 +100,11 @@ class StatsCatalog extends Module
 		LEFT JOIN `'._DB_PREFIX_.'page` pa ON pv.`id_page` = pa.`id_page`
 		LEFT JOIN `'._DB_PREFIX_.'page_type` pt ON pt.`id_page_type` = pa.`id_page_type`
 		LEFT JOIN `'._DB_PREFIX_.'product` p ON p.`id_product` = pa.`id_object`
-		INNER JOIN `'._DB_PREFIX_.'htl_room_type` hrt ON (p.`id_product` = hrt.`id_product`)
+		LEFT JOIN `'._DB_PREFIX_.'htl_room_type` hrt ON (p.`id_product` = hrt.`id_product`)
 		'.Shop::addSqlAssociation('product', 'p').'
 		'.$this->join.'
 		WHERE pt.`name` IN ("product.php", "product")
 		AND product_shop.`active` = 1
-        '.HotelBranchInformation::addHotelRestriction(false, 'hrt').'
 		'.$this->where;
 
         if ($this->id_hotel) {
@@ -136,42 +113,13 @@ class StatsCatalog extends Module
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue($sql);
     }
 
-    public function getAvailableImages()
-    {
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue(
-            'SELECT SUM(hotel_images) + SUM(room_type_images)
-            FROM
-            (
-                SELECT hbi.`id`,
-                (
-                    SELECT COUNT(*)
-                    FROM `'._DB_PREFIX_.'htl_image` hi
-                    WHERE hi.`id_hotel` = hbi.`id`
-                ) AS hotel_images,
-                (
-                    SELECT COUNT(*)
-                    FROM `'._DB_PREFIX_.'image` i
-                    LEFT JOIN `'._DB_PREFIX_.'product` p
-                    ON (p.`id_product` = i.`id_product`)
-                    INNER JOIN `'._DB_PREFIX_.'htl_room_type` hrt
-                    ON (hrt.`id_product` = i.`id_product`)
-                    WHERE hrt.`id_hotel` = hbi.`id`
-                ) AS room_type_images
-                FROM `'._DB_PREFIX_.'htl_branch_info` hbi
-                WHERE 1 '.HotelBranchInformation::addHotelRestriction(false, 'hbi', 'id').'
-            ) AS t
-            '.($this->id_hotel ? ' WHERE t.`id` = '.(int) $this->id_hotel : '')
-        );
-    }
-
     public function getTotalBookedRooms()
     {
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue(
-            'SELECT IFNULL(SUM(DATEDIFF(hbd.`date_to`, hbd.`date_from`)), 0)
-            FROM `'._DB_PREFIX_.'htl_booking_detail` hbd
-            WHERE 1 '.HotelBranchInformation::addHotelRestriction(false, 'hbd').'
-            '.($this->id_hotel ? ' AND hbd.`id_hotel` = '.(int) $this->id_hotel : '')
-        );
+        $sql = 'SELECT COUNT(`id_room`) FROM `'._DB_PREFIX_.'htl_booking_detail`';
+        if ($this->id_hotel) {
+            $sql .= ' WHERE `id_hotel` = '.(int)$this->id_hotel;
+        }
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue($sql);
     }
 
     public function getProductsNB($id_lang)
@@ -180,11 +128,10 @@ class StatsCatalog extends Module
 				FROM `'._DB_PREFIX_.'orders` o
 				LEFT JOIN `'._DB_PREFIX_.'order_detail` od ON o.`id_order` = od.`id_order`
 				LEFT JOIN `'._DB_PREFIX_.'product` p ON p.`id_product` = od.`product_id`
-				INNER JOIN `'._DB_PREFIX_.'htl_room_type` hrt ON (p.`id_product` = hrt.`id_product`)
+				LEFT JOIN `'._DB_PREFIX_.'htl_room_type` hrt ON (p.`id_product` = hrt.`id_product`)
 				'.Shop::addSqlAssociation('product', 'p').'
 				'.$this->join.'
 				WHERE o.valid = 1
-                    '.HotelBranchInformation::addHotelRestriction(false, 'hrt').'
 					'.$this->where.'
 					AND product_shop.`active` = 1';
         if ($this->id_hotel) {
@@ -201,13 +148,12 @@ class StatsCatalog extends Module
         $sql = 'SELECT p.id_product, pl.name, pl.link_rewrite
 				FROM `'._DB_PREFIX_.'product` p
 				'.Shop::addSqlAssociation('product', 'p').'
-				INNER JOIN `'._DB_PREFIX_.'htl_room_type` hrt ON (p.`id_product` = hrt.`id_product`)
+				LEFT JOIN `'._DB_PREFIX_.'htl_room_type` hrt ON (p.`id_product` = hrt.`id_product`)
 				LEFT JOIN `'._DB_PREFIX_.'product_lang` pl
 					ON (pl.`id_product` = p.`id_product` AND pl.id_lang = '.(int)$id_lang.Shop::addSqlRestrictionOnLang('pl').')
 				'.$this->join.'
 				WHERE product_shop.`active` = 1
 					'.(count($precalc2) ? 'AND p.`id_product` NOT IN ('.implode(',', $precalc2).')' : '').'
-                    '.HotelBranchInformation::addHotelRestriction(false, 'hrt').'
 					'.$this->where;
         if ($this->id_hotel) {
             $sql .= ' AND hrt.`id_hotel` = '.(int)$this->id_hotel;
@@ -220,7 +166,7 @@ class StatsCatalog extends Module
     public function hookAdminStatsModules($params)
     {
         $objBranchInfo = new HotelBranchInformation();
-        $hotels = $objBranchInfo->getProfileAccessedHotels($this->context->employee->id_profile, 1);
+        $hotels = $objBranchInfo->hotelBranchesInfo((int)$this->context->language->id);
 
         $product_token = Tools::getAdminToken('AdminProducts'.(int)Tab::getIdFromClassName('AdminProducts').(int)$this->context->employee->id);
         $irow = 0;
@@ -229,11 +175,11 @@ class StatsCatalog extends Module
             $this->id_hotel = $id_hotel;
         }
 
-        $result1 = $this->getQuery1();
+        $result1 = $this->getQuery1(true);
         $total = $result1['total'];
-
         $average_price = $result1['average_price'];
-        $available_images = $this->getAvailableImages();
+        $total_pictures = $result1['images'];
+        $average_pictures = $total ? $total_pictures / $total : 0;
 
         $never_bought = $this->getProductsNB($this->context->language->id);
         $total_nb = $never_bought['total'];
@@ -242,18 +188,17 @@ class StatsCatalog extends Module
         $total_booked_rooms = $this->getTotalBookedRooms();
         $average_purchase = $total ? ($total_booked_rooms / $total) : 0;
 
-        $total_hotel_page_viewed = $this->getTotalHotelPageViewed();
-        $total_room_type_page_viewed = $this->getTotalRoomTypePageViewed();
-        $average_viewed = $total ? ($total_room_type_page_viewed / $total) : 0;
-        $conversion = number_format((float)($total_room_type_page_viewed ? ($total_booked_rooms / $total_room_type_page_viewed) : 0), 2, '.', '');
-        if ($conversion_reverse = number_format((float)($total_booked_rooms ? ($total_room_type_page_viewed / $total_booked_rooms) : 0), 2, '.', '')) {
-            $conversion .= sprintf($this->l(' (1 purchase / %d visits)'), $conversion_reverse);
+        $total_page_viewed = $this->getTotalPageViewed();
+        $average_viewed = $total ? ($total_page_viewed / $total) : 0;
+        $conversion = number_format((float)($total_page_viewed ? ($total_booked_rooms / $total_page_viewed) : 0), 2, '.', '');
+        if ($conversion_reverse = number_format((float)($total_booked_rooms ? ($total_page_viewed / $total_booked_rooms) : 0), 2, '.', '')) {
+            $conversion .= sprintf($this->l('(1 purchase / %d visits)'), $conversion_reverse);
         }
 
         $total_nv = $total - $this->getTotalProductViewed();
 
         $html = '
-		<script type="text/javascript">$(\'#calendar\').hide();</script>
+		<script type="text/javascript">$(\'#calendar\').slideToggle();</script>
 			<div class="panel-heading">
 				'.$this->displayName.'
 			</div>
@@ -266,7 +211,7 @@ class StatsCatalog extends Module
 						<select name="id_hotel" onchange="$(\'#hotelForm\').submit();">
 							<option value="0">'.$this->l('All').'</option>';
         foreach ($hotels as $hotel) {
-            $html .= '<option value="'.$hotel['id_hotel'].'"'.($id_hotel == $hotel['id_hotel'] ? ' selected="selected"' : '').'>'.
+            $html .= '<option value="'.$hotel['id'].'"'.($id_hotel == $hotel['id'] ? ' selected="selected"' : '').'>'.
                 $hotel['hotel_name'].'
 							</option>';
         }
@@ -276,39 +221,33 @@ class StatsCatalog extends Module
 				</div>
 			</form>
 			<ul class="list-group">
-				<li class="list-group-item">'.$this->returnLine($this->l('Available room types'), '<span class="badge">'.(int)$total).'</span></li>
-				<li class="list-group-item">'.$this->returnLine($this->l('Average base price'), '<span class="badge">'.Tools::displayPrice($average_price, $this->context->currency)).'</span></li>
-				<li class="list-group-item">'.$this->returnLine($this->l('Hotel page views'), '<span class="badge">'.(int)$total_hotel_page_viewed).'</span></li>
-				<li class="list-group-item">'.$this->returnLine($this->l('Room type page views'), '<span class="badge">'.(int)$total_room_type_page_viewed).'</span></li>
-				<li class="list-group-item">'.$this->returnLine($this->l('Booked room nights'), '<span class="badge">'.(int)$total_booked_rooms).'</span></li>
-				<li class="list-group-item">'.$this->returnLine($this->l('Average number of page visits'), '<span class="badge">'.number_format((float)$average_viewed, 2, '.', '')).'</span></li>
-				<li class="list-group-item">'.$this->returnLine($this->l('Average number of bookings'), '<span class="badge">'.number_format((float)$average_purchase, 2, '.', '')).'</span></li>
-				<li class="list-group-item">'.$this->returnLine($this->l('Available images'), '<span class="badge">'.(int)$available_images).'</span></li>
-				<li class="list-group-item">'.$this->returnLine($this->l('Room types never viewed'), '<span class="badge">'.(int)$total_nv.' / '.(int)$total).'</span></li>
-				<li class="list-group-item">'.$this->returnLine($this->l('Room types never purchased'), '<span class="badge">'.(int)$total_nb.' / '.(int)$total).'</span></li>
-				<li class="list-group-item">'.$this->returnLine($this->l('Conversion rate*'), '<span class="badge">'.$conversion).'</span></li>
+				<li class="list-group-item">'.$this->returnLine($this->l('Room types available:'), '<span class="badge">'.(int)$total).'</span></li>
+				<li class="list-group-item">'.$this->returnLine($this->l('Average price (base price):'), '<span class="badge">'.Tools::displayPrice($average_price, $this->context->currency)).'</span></li>
+				<li class="list-group-item">'.$this->returnLine($this->l('Room type pages viewed:'), '<span class="badge">'.(int)$total_page_viewed).'</span></li>
+				<li class="list-group-item">'.$this->returnLine($this->l('Booked Rooms:'), '<span class="badge">'.(int)$total_booked_rooms).'</span></li>
+				<li class="list-group-item">'.$this->returnLine($this->l('Average number of page visits:'), '<span class="badge">'.number_format((float)$average_viewed, 2, '.', '')).'</span></li>
+				<li class="list-group-item">'.$this->returnLine($this->l('Average number of bookings:'), '<span class="badge">'.number_format((float)$average_purchase, 2, '.', '')).'</span></li>
+				<li class="list-group-item">'.$this->returnLine($this->l('Images available:'), '<span class="badge">'.(int)$total_pictures).'</span></li>
+				<li class="list-group-item">'.$this->returnLine($this->l('Average number of images:'), '<span class="badge">'.number_format((float)$average_pictures, 2, '.', '')).'</span></li>
+				<li class="list-group-item">'.$this->returnLine($this->l('Room types never viewed:'), '<span class="badge">'.(int)$total_nv.' / '.(int)$total).'</span></li>
+				<li class="list-group-item">'.$this->returnLine($this->l('Room types never purchased:'), '<span class="badge">'.(int)$total_nb.' / '.(int)$total).'</span></li>
+				<li class="list-group-item">'.$this->returnLine($this->l('Conversion rate*:'), '<span class="badge">'.$conversion).'</span></li>
 			</ul>
 			<div class="row row-margin-bottom">
 				<p>
 					<i class="icon-asterisk"></i>'.$this->l('Defines the average conversion rate for the room type page. It is possible to book a room type without viewing the room type page, so this rate can be greater than 1.').'
-				</p>';
-
-		$link = $this->context->link->getAdminLink('AdminModules').'&configure=statsdata';
-		$html .='
-				<p>
-					<strong>'.$this->l('Note: ').'</strong>'.$this->l('You must enable the "Save global page views" option from ').'<a href="'.$link.'" target="_blank">Data mining for statistics</a>'.$this->l(' module for accurate data, or use the QloApps Google Analytics module.').'
 				</p>
 			</div>';
 
         if (count($products_nb) && count($products_nb) < 50) {
             $html .= '
-				<div class="col-sm-12"><div class="panel-heading">'.$this->l('Room types never booked').'</div></div>
+				<div class="panel-heading">'.$this->l('Room type never booked').'</div>
 				<table class="table">
 					<thead>
 						<tr>
 							<th><span class="title_box active">'.$this->l('ID').'</span></th>
 							<th><span class="title_box active">'.$this->l('Name').'</span></th>
-							<th><span class="title_box active">'.$this->l('Edit / Preview').'</span></th>
+							<th><span class="title_box active">'.$this->l('Edit / View').'</span></th>
 						</tr>
 					</thead>
 					<tbody>';
@@ -329,7 +268,7 @@ class StatsCatalog extends Module
 								<ul class="dropdown-menu">
 									<li>
 										<a href="'.Tools::safeOutput($this->context->link->getProductLink($product['id_product'], $product['link_rewrite'])).'" target="_blank">
-											<i class="icon-eye-open"></i> '.$this->l('Preview').'
+											<i class="icon-eye-open"></i> '.$this->l('View').'
 										</a>
 									</li>
 								</ul>

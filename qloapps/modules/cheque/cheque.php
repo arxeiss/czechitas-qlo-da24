@@ -40,7 +40,7 @@ class Cheque extends PaymentModule
 	{
 		$this->name = 'cheque';
 		$this->tab = 'payments_gateways';
-		$this->version = '2.6.6';
+		$this->version = '2.6.4';
 		$this->author = 'PrestaShop';
 		$this->controllers = array('payment', 'validation');
 		$this->is_eu_compatible = 1;
@@ -58,7 +58,7 @@ class Cheque extends PaymentModule
 		parent::__construct();
 
 		$this->displayName = $this->l('Payments by check');
-		$this->description = $this->l('This module allows you to accept payments for bookings by check.');
+		$this->description = $this->l('This module allows you to accept payments by check.');
 		$this->confirmUninstall = $this->l('Are you sure you want to delete these details?');
 
 		if ((!isset($this->chequeName) || !isset($this->address) || empty($this->chequeName) || empty($this->address)))
@@ -69,29 +69,11 @@ class Cheque extends PaymentModule
 			$this->warning = $this->l('No currency has been set for this module.');
 		}
 
-		$this->payment_type = OrderPayment::PAYMENT_TYPE_REMOTE_PAYMENT;
-	}
-
-	public function getExtraMailContent($id_order_state, $order)
-	{
-        if (Configuration::get('PS_OS_AWAITING_PAYMENT') == $id_order_state) {
-			$this->context->smarty->assign(array(
-				'cheque_name' => Configuration::get('CHEQUE_NAME'),
-				'cheque_address' => Configuration::get('CHEQUE_ADDRESS'),
-				'cheque_address_html' => str_replace("\n", '<br />', Configuration::get('CHEQUE_ADDRESS')),
-                'lang' => new Language($order->id_lang)
-			));
-
-			return array(
-                '{extra_mail_content_html}' => $this->context->smarty->fetch(
-                    $this->local_path.'views/templates/mail/mail_template_html.tpl'
-				),
-                '{extra_mail_content_txt}' => $this->context->smarty->fetch(
-                    $this->local_path.'views/templates/mail/mail_template_text.tpl'
-				)
-            );
-		}
-		return array();
+		$this->extra_mail_vars = array(
+											'{cheque_name}' => Configuration::get('CHEQUE_NAME'),
+											'{cheque_address}' => Configuration::get('CHEQUE_ADDRESS'),
+											'{cheque_address_html}' => str_replace("\n", '<br />', Configuration::get('CHEQUE_ADDRESS'))
+											);
 	}
 
 	public function install()
@@ -191,31 +173,28 @@ class Cheque extends PaymentModule
             return;
 		}
 		$objOrder = $params['objOrder'];
-        $orderState = $objOrder->getCurrentState();
-        if (in_array(
-			$orderState,
-			array(
-				Configuration::get('PS_OS_AWAITING_PAYMENT')
-			)
-		)) {
-			$objCart = new Cart($objOrder->id_cart);
-            if ($objCart->is_advance_payment) {
-                $cartTotal = $objOrder->getOrdersTotalPaid(1);
+        $cart = new Cart($objOrder->id_cart);
+        $state = $objOrder->getCurrentState();
+        if (in_array($state, array(Configuration::get('PS_OS_CHEQUE'), Configuration::get('PS_OS_OUTOFSTOCK'), Configuration::get('PS_OS_OUTOFSTOCK_UNPAID')))) {
+            if ($objOrder->is_advance_payment) {
+                $order_total = $objOrder->advance_paid_amount;
             } else {
-                $cartTotal = $objOrder->getOrdersTotalPaid();
+                $order_total = $objOrder->total_paid;
 			}
 
-			$smartyVars['total_to_pay'] = Tools::displayPrice($cartTotal, $params['currencyObj'], false);
-            $smartyVars['chequeName'] = $this->chequeName;
-            $smartyVars['chequeAddress'] = Tools::nl2br($this->address);
-            $smartyVars['status'] = 'ok';
-            $smartyVars['id_order'] = $objOrder->id;
-            $smartyVars['reference'] = $objOrder->reference;
+			$this->smarty->assign(array(
+				'total_to_pay' => Tools::displayPrice($order_total, $params['currencyObj'], false),
+				'chequeName' => $this->chequeName,
+				'chequeAddress' => Tools::nl2br($this->address),
+				'status' => 'ok',
+				'id_order' => $objOrder->id
+			));
+			if (isset($objOrder->reference) && !empty($objOrder->reference))
+				$this->smarty->assign('reference', $objOrder->reference);
 		} else {
-			$smartyVars['status'] = 'failed';
+			$this->smarty->assign('status', 'failed');
 		}
 
-		$this->smarty->assign($smartyVars);
 		return $this->display(__FILE__, 'payment_return.tpl');
 	}
 

@@ -37,7 +37,7 @@ class StatsRegistrations extends ModuleGraph
     {
         $this->name = 'statsregistrations';
         $this->tab = 'analytics_stats';
-        $this->version = '1.4.2';
+        $this->version = '1.4.1';
         $this->author = 'PrestaShop';
         $this->need_instance = 0;
 
@@ -94,11 +94,9 @@ class StatsRegistrations extends ModuleGraph
     {
         $sql = 'SELECT COUNT(DISTINCT o.`id_customer`) as buyers
 				FROM `'._DB_PREFIX_.'orders` o
-                INNER JOIN `'._DB_PREFIX_.'htl_booking_detail` hbd ON (hbd.`id_order` = o.`id_order`)
 				LEFT JOIN `'._DB_PREFIX_.'guest` g ON o.id_customer = g.id_customer
 				LEFT JOIN `'._DB_PREFIX_.'connections` c ON c.id_guest = g.id_guest
 				WHERE o.`date_add` BETWEEN '.ModuleGraph::getDateBetween().'
-                    '.HotelBranchInformation::addHotelRestriction(false, 'hbd').'
 					'.Shop::addSqlRestriction(Shop::SHARE_ORDER, 'o').'
 					AND o.valid = 1
 					AND ABS(TIMEDIFF(o.date_add, c.date_add)+0) < 120000';
@@ -125,7 +123,7 @@ class StatsRegistrations extends ModuleGraph
 		<div class="alert alert-info">
 			<ul>
 				<li>
-					'.$this->l('Number of visitors who stopped at registration step:').' <span class="totalStats">'.(int)$total_blocked.($total_registrations ? ' ('.number_format(100 * $total_blocked / ($total_registrations + $total_blocked), 2).'%)' : '').'</span></li>
+					'.$this->l('Number of visitors who stopped at the registering step:').' <span class="totalStats">'.(int)$total_blocked.($total_registrations ? ' ('.number_format(100 * $total_blocked / ($total_registrations + $total_blocked), 2).'%)' : '').'</span></li>
 					<li>'.$this->l('Number of visitors who placed an order directly after registration:').' <span class="totalStats">'.(int)$total_buyers.($total_registrations ? ' ('.number_format(100 * $total_buyers / ($total_registrations), 2).'%)' : '').'</span></li>
 				<li>
 					'.$this->l('Total customer accounts:').' <span class="totalStats">'.$total_registrations.'</span></li>
@@ -143,7 +141,7 @@ class StatsRegistrations extends ModuleGraph
 			'.$this->l('Here is a summary of what may affect the creation of customer accounts:').'
 			<ul>
 				<li>'.$this->l('An advertising campaign can attract an increased number of visitors to your website. This will likely be followed by an increase in customer accounts and profit margins, which will depend on customer "quality." Well-targeted advertising is typically more effective than large-scale advertising... and it\'s cheaper too!').'</li>
-				<li>'.$this->l('Specials, sales, promotions and/or contests typically demand a customers\' attentions. Offering such things will not only keep your business lively, it will also increase traffic, build customer loyalty and genuinely change your current business philosophy.').'</li>
+				<li>'.$this->l('Specials, sales, promotions and/or contests typically demand a customers\' attentions. Offering such things will not only keep your business lively, it will also increase traffic, build customer loyalty and genuinely change your current e-commerce philosophy.').'</li>
 				<li>'.$this->l('Design and user-friendliness are more important than ever in the world of online sales. An ill-chosen or hard-to-follow graphical theme can keep customers at bay. This means that you should aspire to find the right balance between beauty and functionality for your website.').'</li>
 			</ul>
 		</div>
@@ -155,7 +153,7 @@ class StatsRegistrations extends ModuleGraph
 				</div>
 				<div class="col-lg-4">
 					<a class="btn btn-default export-csv" href="'.Tools::safeOutput($_SERVER['REQUEST_URI'].'&export=1').'">
-						<i class="icon-cloud-download"></i> '.$this->l('CSV Export').'
+						<i class="icon-cloud-upload"></i>'.$this->l('CSV Export').'
 					</a>
 				</div>
 			</div>
@@ -172,11 +170,7 @@ class StatsRegistrations extends ModuleGraph
 			WHERE 1
 				'.Shop::addSqlRestriction(Shop::SHARE_CUSTOMER).'
 				AND `date_add` BETWEEN';
-        if (Tools::getValue('export')) {
-            $this->_titles['main'][] = $this->l('Date');
-        }
-        $this->_titles['main'][] = $this->l('Number of customer registrations');
-        $this->_formats['y'] = 'd';
+        $this->_titles['main'] = $this->l('Number of customer accounts created');
         $this->setDateGraph($layers, true);
     }
 

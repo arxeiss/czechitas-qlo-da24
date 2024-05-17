@@ -35,7 +35,6 @@ class GraphNvD3 extends ModuleGraphEngine
     private $_values;
     private $_legend;
     private $_titles;
-    private $_formats;
 
     public function __construct($type = null)
     {
@@ -44,8 +43,8 @@ class GraphNvD3 extends ModuleGraphEngine
         }
 
         $this->name = 'graphnvd3';
-        $this->tab = 'analytics_stats';
-        $this->version = '1.5.3';
+        $this->tab = 'administration';
+        $this->version = '1.5.1';
         $this->author = 'PrestaShop';
         $this->need_instance = 0;
 
@@ -83,15 +82,14 @@ class GraphNvD3 extends ModuleGraphEngine
         }
 
         $nvd3_func = array(
-            'line' => (isset($params['has_label_y']) && $params['has_label_y']) ?
-                'nv.models.lineChart().margin({ left: 80 })' :
-                'nv.models.lineChart()',
+            'line' => '
+				nv.models.lineChart()',
             'pie' => '
-                nv.models.pieChart()
-                    .x(function(d) { return d.label; })
-                    .y(function(d) { return d.value; })
-                    .showLabels(true)
-                    .showLegend(false)'
+				nv.models.pieChart()
+					.x(function(d) { return d.label; })
+					.y(function(d) { return d.value; })
+					.showLabels(true)
+					.showLegend(false)'
         );
 
         return '
@@ -114,10 +112,6 @@ class GraphNvD3 extends ModuleGraphEngine
 					if (jsonData.axisLabels.yAxis != null)
 						chart.yAxis.axisLabel(jsonData.axisLabels.yAxis);
 
-                    if (jsonData.axisFormat.xAxis)
-                        chart.xAxis.tickFormat(d3.format(jsonData.axisFormat.xAxis));
-                    if (jsonData.axisFormat.yAxis)
-                        chart.yAxis.tickFormat(d3.format(jsonData.axisFormat.yAxis));
 					d3.select("#nvd3_chart_'.($divid++).' svg")
 						.datum(jsonData.data)
 						.transition().duration(500)
@@ -153,16 +147,10 @@ class GraphNvD3 extends ModuleGraphEngine
         $this->_titles = $titles;
     }
 
-    public function setFormat($_formats)
-    {
-        $this->_formats = $_formats;
-    }
-
     public function draw()
     {
         $array = array(
             'axisLabels' => array('xAxis' => $this->_titles['x'], 'yAxis' => $this->_titles['y']),
-            'axisFormat' => array('xAxis' => $this->_formats['x'], 'yAxis' => $this->_formats['y']),
             'data' => array()
         );
 
@@ -188,6 +176,6 @@ class GraphNvD3 extends ModuleGraphEngine
                 $array['data'][] = array('values' => $nvd3_values, 'key' => $this->_titles['main'][$layer]);
             }
         }
-        die(preg_replace('/"([0-9]+)"/', '$1', json_encode($array)));
+        die(preg_replace('/"([0-9]+)"/', '$1', Tools::jsonEncode($array)));
     }
 }

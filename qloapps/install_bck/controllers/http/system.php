@@ -87,11 +87,11 @@ class InstallControllerHttpSystem extends InstallControllerHttp
                     'title' => $this->l('Required PHP parameters'),
                     'success' => 1,
                     'checks' => array(
-                        'phpversion' => $this->l('The required PHP version is between 5.6 to 7.4'),
+                        'phpversion' => $this->l('Minimum PHP 5.4.0 or later is required'),
                         'upload' => $this->l('Cannot upload files'),
                         'system' => $this->l('Cannot create new files and folders'),
                         'gd' => $this->l('GD library is not installed'),
-                        'pdo_mysql' => $this->l('PDO MySQL extension is not loaded'),
+                        'mysql_support' => $this->l('MySQL support is not activated'),
                         'curl' => $this->l('Curl extension is not loaded'),
                         'soap' => $this->l('SOAP extension is not loaded'),
                         'simplexml' => $this->l('SimpleXml extension is not loaded'),
@@ -99,7 +99,6 @@ class InstallControllerHttpSystem extends InstallControllerHttp
                         'max_execution_time' => $this->l('In the PHP configuration set max_execution_time to minimum 500'),
                         'upload_max_filesize' => $this->l('In the PHP configuration set upload_max_filesize to minimum 16M'),
                         'fopen' => $this->l('Cannot open external URLs (requires allow_url_fopen as On).'),
-                        'zip' => $this->l('ZIP extension is not enabled'),
                     )
                 ),
                 array(
@@ -133,11 +132,14 @@ class InstallControllerHttpSystem extends InstallControllerHttp
                     'title' => $this->l('Recommended PHP parameters'),
                     'success' => $this->tests['optional']['success'],
                     'checks' => array(
-                        'new_phpversion' => sprintf($this->l('You are using PHP %s version. Soon, the latest PHP version supported by QloApps will be PHP 5.6. To make sure you’re ready for the future, we recommend you to upgrade to PHP 5.6 now!'), phpversion()),
+                        'new_phpversion' => sprintf($this->l('You are using PHP %s version. Soon, the latest PHP version supported by Qloapps will be PHP 5.4. To make sure you’re ready for the future, we recommend you to upgrade to PHP 5.4 now!'), phpversion()),
                         'register_globals' => $this->l('PHP register_globals option is enabled'),
                         'gz' => $this->l('GZIP compression is not activated'),
+                        'mcrypt' => $this->l('Mcrypt extension is not enabled'),
                         'mbstring' => $this->l('Mbstring extension is not enabled'),
+                        'magicquotes' => $this->l('PHP magic quotes option is enabled'),
                         'dom' => $this->l('Dom extension is not loaded'),
+                        'pdo_mysql' => $this->l('PDO MySQL extension is not loaded')
                     )
                 ),
             ),

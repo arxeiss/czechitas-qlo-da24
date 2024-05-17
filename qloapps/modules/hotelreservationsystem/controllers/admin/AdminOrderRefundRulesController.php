@@ -52,8 +52,7 @@ class AdminOrderRefundRulesController extends ModuleAdminController
         );
 
         $paymentType = array(
-            HotelOrderRefundRules::WK_REFUND_RULE_PAYMENT_TYPE_PERCENTAGE => 'Percentage',
-            HotelOrderRefundRules::WK_REFUND_RULE_PAYMENT_TYPE_FIXED => 'Fixed'
+            HotelOrderRefundRules::WK_REFUND_RULE_PAYMENT_TYPE_PERCENTAGE => 'Percentage', HotelOrderRefundRules::WK_REFUND_RULE_PAYMENT_TYPE_FIXED => 'Fixed'
         );
 
         $this->fields_list = array(
@@ -88,7 +87,7 @@ class AdminOrderRefundRulesController extends ModuleAdminController
                 'callback' => 'setOrderCurrency',
             ),
             'days' => array(
-                'title' => $this->l('Days Before Check-in'),
+                'title' => $this->l('Days'),
                 'align' => 'center',
             )
         );
@@ -152,7 +151,7 @@ class AdminOrderRefundRulesController extends ModuleAdminController
         }
 
         //lang vars
-        $currentLangId = $this->default_form_language ? $this->default_form_language : Configuration::get('PS_LANG_DEFAULT');
+        $currentLangId = Configuration::get('PS_LANG_DEFAULT');
         $smartyVars['languages'] = Language::getLanguages(false);
         $smartyVars['currentLang'] = Language::getLanguage((int) $currentLangId);
 
@@ -213,10 +212,10 @@ class AdminOrderRefundRulesController extends ModuleAdminController
         if ($paymentType == '') {
             $this->errors[] = $this->l('Invalid payment type.');
         }
-        if (!$fullPayAmount && floatval($fullPayAmount) != 0) {
+        if (!$fullPayAmount) {
             $this->errors[] = $this->l('Enter deduction value for full payment.');
         }
-        if (!$advPayAmount && floatval($advPayAmount) != 0) {
+        if (!$advPayAmount) {
             $this->errors[] = $this->l('Enter deduction value for advance payment.');
         }
 
@@ -241,9 +240,17 @@ class AdminOrderRefundRulesController extends ModuleAdminController
         }
         $objRefundRule = new HotelOrderRefundRules($idRefundRule);
         if ($cancelationDays == '') {
-            $this->errors[] = $this->l('Enter number of days before check-in date for this rule to be applicable.');
+            $this->errors[] = $this->l('Enter before how many days of check in date, rule will be applied.');
         } else if (!Validate::isUnsignedInt($cancelationDays)) {
             $this->errors[] = $this->l('Enter valid number of days.');
+        } else if ($objRefundRule->checkIfRuleExistsByCancelationdays($cancelationDays)) {
+            if ($idRefundRule) {
+                if ($objRefundRule->days != $cancelationDays) {
+                    $this->errors[] = $this->l('Refund rule for ').$cancelationDays.$this->l(' days already exists.');
+                }
+            } else {
+                $this->errors[] = $this->l('Refund rule for ').$cancelationDays.$this->l(' days already exists.');
+            }
         }
 
         if (!count($this->errors)) {

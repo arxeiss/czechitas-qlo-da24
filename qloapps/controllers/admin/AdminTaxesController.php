@@ -67,26 +67,25 @@ class AdminTaxesControllerCore extends AdminController
                         'desc' => $this->l('Select whether or not to include tax on purchases.'),
                         'cast' => 'intval', 'type' => 'bool'),
                     'PS_TAX_DISPLAY' => array(
-                        'title' => $this->l('Display tax in the booking cart'),
+                        'title' => $this->l('Display tax in the shopping cart'),
                         'desc' => $this->l('Select whether or not to display tax on a distinct line in the cart.'),
                         'cast' => 'intval',
                         'type' => 'bool'),
-                    // 'PS_TAX_ADDRESS_TYPE' => array(
-                    //     'title' => $this->l('Based on'),
-                    //     'cast' => 'pSQL',
-                    //     'type' => 'select',
-                    //     'list' => array(
-                    //         array(
-                    //             'name' => $this->l('Invoice address'),
-                    //             'id' => 'id_address_invoice'
-                    //         ),
-                    //         array(
-                    //             'name' => $this->l('Delivery address'),
-                    //             'id' => 'id_address_delivery')
-                    //         ),
-                    //     ),
-                    //     'identifier' => 'id'
-                    // ),
+                    'PS_TAX_ADDRESS_TYPE' => array(
+                        'title' => $this->l('Based on'),
+                        'cast' => 'pSQL',
+                        'type' => 'select',
+                        'list' => array(
+                            array(
+                                'name' => $this->l('Invoice address'),
+                                'id' => 'id_address_invoice'
+                                ),
+                            array(
+                                'name' => $this->l('Delivery address'),
+                                'id' => 'id_address_delivery')
+                                ),
+                        'identifier' => 'id'
+                        ),
                     'PS_USE_ECOTAX' => array(
                         'title' => $this->l('Use ecotax'),
                         'desc' => $ecotax_desc,
@@ -233,16 +232,7 @@ class AdminTaxesControllerCore extends AdminController
             ),
             'submit' => array(
                 'title' => $this->l('Save')
-            ),
-            'buttons' => array(
-                'save-and-stay' => array(
-                    'title' => $this->l('Save and stay'),
-                    'name' => 'submitAdd'.$this->table.'AndStay',
-                    'type' => 'submit',
-                    'class' => 'btn btn-default pull-right',
-                    'icon' => 'process-icon-save',
-                ),
-            ),
+            )
         );
 
         return parent::renderForm();
@@ -267,11 +257,7 @@ class AdminTaxesControllerCore extends AdminController
                         if (!$result) {
                             $this->errors[] = Tools::displayError('An error occurred while updating an object.').' <b>'.$this->table.'</b>';
                         } elseif ($this->postImage($object->id)) {
-                            if (Tools::isSubmit('submitAdd'.$this->table.'AndStay')) {
-                                Tools::redirectAdmin(self::$currentIndex.'&update'.$this->table.'&id_'.$this->table.'='.$object->id.'&conf=4'.'&token='.$this->token);
-                            } else {
-                                Tools::redirectAdmin(self::$currentIndex.'&conf=4&token='.$this->token);
-                            }
+                            Tools::redirectAdmin(self::$currentIndex.'&id_'.$this->table.'='.$object->id.'&conf=4'.'&token='.$this->token);
                         }
                     } else {
                         $this->errors[] = Tools::displayError('An error occurred while updating an object.').' <b>'.$this->table.'</b> '.Tools::displayError('(cannot load object)');
@@ -285,17 +271,10 @@ class AdminTaxesControllerCore extends AdminController
                     $this->copyFromPost($object, $this->table);
                     if (!$object->add()) {
                         $this->errors[] = Tools::displayError('An error occurred while creating an object.').' <b>'.$this->table.'</b>';
-                    } elseif ($this->postImage($object->id)) {
-                        if (Tools::isSubmit('submitAdd'.$this->table.'AndStay')) {
-                            Tools::redirectAdmin(self::$currentIndex.'&update'.$this->table.'&id_'.$this->table.'='.$object->id.'&conf=3'.'&token='.$this->token);
-                        } else {
-                            Tools::redirectAdmin(self::$currentIndex.'&conf=3&token='.$this->token);
-                        }
+                    } elseif (($_POST['id_'.$this->table] = $object->id /* voluntary */) && $this->postImage($object->id) && $this->_redirect) {
                         Tools::redirectAdmin(self::$currentIndex.'&id_'.$this->table.'='.$object->id.'&conf=3'.'&token='.$this->token);
                     }
                 }
-            } else {
-                $this->display = 'add';
             }
         } else {
             parent::postProcess();

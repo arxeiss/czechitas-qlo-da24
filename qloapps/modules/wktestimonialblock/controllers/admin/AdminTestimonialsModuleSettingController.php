@@ -36,6 +36,14 @@ class AdminTestimonialsModuleSettingController extends ModuleAdminController
             'modulesetting' => array(
                 'title' =>    $this->l('Hotel Testimonials Setting'),
                 'fields' =>    array(
+                    'HOTEL_TESIMONIAL_BLOCK_NAV_LINK' => array(
+                        'title' => $this->l('Show link at navigation'),
+                        'hint' => $this->l('Enable, if you want to display a link at navigation menu for the testimonial block at home page.'),
+                        'validation' => 'isBool',
+                        'cast' => 'intval',
+                        'type' => 'bool',
+                        'required' => true
+                    ),
                     'HOTEL_TESIMONIAL_BLOCK_HEADING' => array(
                         'title' => $this->l('Testimonial block title'),
                         'type' => 'textLang',
@@ -287,13 +295,7 @@ class AdminTestimonialsModuleSettingController extends ModuleAdminController
                 if ($_FILES['testimonial_image']['size']) {
                     $testimonial_img_path = _PS_MODULE_DIR_.$this->module->name.'/views/img/hotels_testimonials_img/'.
                     $objTestimonialData->id.'.jpg';
-                    $imageSize = ImageType::getByName(ImageType::getFormatedName('small'));
-                    ImageManager::resize(
-                        $_FILES['testimonial_image']['tmp_name'],
-                        $testimonial_img_path,
-                        $imageSize['width'],
-                        $imageSize['height']
-                    );
+                    ImageManager::resize($_FILES['testimonial_image']['tmp_name'], $testimonial_img_path);
                 }
             }
             if (Tools::getValue("id")) {
@@ -398,7 +400,7 @@ class AdminTestimonialsModuleSettingController extends ModuleAdminController
         parent::setMedia();
         Media::addJsDef(
             array(
-                'filesizeError' => $this->l('File exceeds maximum size.', null, true),
+                'filesizeError' => $this->l('File exceeds maximum size.'),
                 'maxSizeAllowed' => Tools::getMaxUploadSize(),
             )
         );

@@ -49,7 +49,6 @@
   <!-- <tab id="Merchandise_Returns" name="Restituzione prodotto"/> -->
   <tab id="Modules_1" name="Moduli e Servizi"/>
   <tab id="Modules" name="Moduli"/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id="Modules_Themes_Catalog" name="Catalogo Moduli e temi"/>
   <tab id="Monitoring" name="Monitoraggio"/>
   <tab id="Multistore" name="Multi-negozio"/>
@@ -66,8 +65,7 @@
   <tab id="Preferences" name="Preferenze"/>
   <tab id="Price_Rules" name="Regole Prezzi"/>
   <tab id="Products_1" name="Prodotti"/>
-  <tab id="Products" name="Gestisci prodotti di servizio"/>
-  <tab id="Room_Types" name="Gestisci i tipi di camera"/>
+  <tab id="Products" name="Prodotti"/>
   <tab id="Profiles" name="Profili"/>
   <tab id="Quick_Access" name="Accesso veloce"/>
   <tab id="Referrers" name="Affiliati"/>

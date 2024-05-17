@@ -74,15 +74,6 @@ class ProductCore extends ObjectModel
     /** @var int Minimal quantity for add to cart */
     public $minimal_quantity = 1;
 
-    /** @var bool allow order for multiple quantities */
-    public $allow_multiple_quantity;
-
-    /** @var bool max allowed quantities */
-    public $max_quantity;
-
-    /** @var int price calculation method */
-    public $price_calculation_method;
-
     /** @var string available_now */
     public $available_now;
 
@@ -184,16 +175,6 @@ class ProductCore extends ObjectModel
     /** @var bool Product available for order */
     public $available_for_order = true;
 
-    // Room type required to buy
-    public $service_product_type;
-
-    // add product to cart automatically
-    public $auto_add_to_cart = false;
-
-    public $price_addition_type;
-
-    public $show_at_front;
-
     /** @var string Object available order date */
     public $available_date = '0000-00-00';
 
@@ -245,7 +226,6 @@ class ProductCore extends ObjectModel
     public $cache_is_pack;
     public $cache_has_attachments;
     public $is_virtual;
-    public $booking_product;
     public $id_pack_product_attribute;
     public $cache_default_attribute;
 
@@ -301,8 +281,6 @@ class ProductCore extends ObjectModel
             'cache_is_pack' =>                array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
             'cache_has_attachments' =>        array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
             'is_virtual' =>                array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
-            'booking_product' =>                array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
-            'service_product_type' =>        array('type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'),
 
             /* Shop fields */
             'id_category_default' =>        array('type' => self::TYPE_INT, 'shop' => true, 'validate' => 'isUnsignedId'),
@@ -311,9 +289,6 @@ class ProductCore extends ObjectModel
             'online_only' =>                array('type' => self::TYPE_BOOL, 'shop' => true, 'validate' => 'isBool'),
             'ecotax' =>                    array('type' => self::TYPE_FLOAT, 'shop' => true, 'validate' => 'isPrice'),
             'minimal_quantity' =>            array('type' => self::TYPE_INT, 'shop' => true, 'validate' => 'isUnsignedInt'),
-            'allow_multiple_quantity' =>     array('type' => self::TYPE_BOOL, 'shop' => true, 'validate' => 'isBool'),
-            'max_quantity' =>                array('type' => self::TYPE_INT, 'shop' => true, 'validate' => 'isUnsignedInt'),
-            'price_calculation_method' =>    array('type' => self::TYPE_INT, 'shop' => true, 'validate' => 'isUnsignedId'),
             'price' =>                        array('type' => self::TYPE_FLOAT, 'shop' => true, 'validate' => 'isPrice', 'required' => true),
             'wholesale_price' =>            array('type' => self::TYPE_FLOAT, 'shop' => true, 'validate' => 'isPrice'),
             'unity' =>                        array('type' => self::TYPE_STRING, 'shop' => true, 'validate' => 'isString'),
@@ -328,9 +303,6 @@ class ProductCore extends ObjectModel
             'available_for_order' =>        array('type' => self::TYPE_BOOL, 'shop' => true, 'validate' => 'isBool'),
             'available_date' =>            array('type' => self::TYPE_DATE, 'shop' => true, 'validate' => 'isDateFormat'),
             'condition' =>                    array('type' => self::TYPE_STRING, 'shop' => true, 'validate' => 'isGenericName', 'values' => array('new', 'used', 'refurbished'), 'default' => 'new'),
-            'auto_add_to_cart' =>            array('type' => self::TYPE_BOOL, 'shop' => true, 'validate' => 'isBool'),
-            'price_addition_type' =>         array('type' => self::TYPE_INT, 'shop' => true, 'validate' => 'isUnsignedInt'),
-            'show_at_front' =>                array('type' => self::TYPE_BOOL, 'shop' => true, 'validate' => 'isBool'),
             'show_price' =>                array('type' => self::TYPE_BOOL, 'shop' => true, 'validate' => 'isBool'),
             'indexed' =>                    array('type' => self::TYPE_BOOL, 'shop' => true, 'validate' => 'isBool'),
             'visibility' =>                array('type' => self::TYPE_STRING, 'shop' => true, 'validate' => 'isProductVisibility', 'values' => array('both', 'catalog', 'search', 'none'), 'default' => 'both'),
@@ -503,19 +475,6 @@ class ProductCore extends ObjectModel
     const PTYPE_PACK = 1;
     const PTYPE_VIRTUAL = 2;
 
-    const PRICE_DISPALY_COMBINE = 1;
-    const PRICE_DISPALY_INDIVISUAL = 2;
-
-    const SERVICE_PRODUCT_WITH_ROOMTYPE = 1;
-    const SERVICE_PRODUCT_WITHOUT_ROOMTYPE = 2;
-
-    const PRICE_ADDITION_TYPE_WITH_ROOM = 1;
-    const PRICE_ADDITION_TYPE_INDEPENDENT = 2;
-
-    const PRICE_CALCULATION_METHOD_PER_BOOKING = 1;
-    const PRICE_CALCULATION_METHOD_PER_DAY = 2;
-
-
     public function __construct($id_product = null, $full = false, $id_lang = null, $id_shop = null, Context $context = null)
     {
         parent::__construct($id_product, $id_lang, $id_shop);
@@ -529,8 +488,11 @@ class ProductCore extends ObjectModel
             $this->manufacturer_name = Manufacturer::getNameById((int)$this->id_manufacturer);
             $this->supplier_name = Supplier::getNameById((int)$this->id_supplier);
             $address = null;
-            $id_address = Cart::getIdAddressForTaxCalculation($this->id);
-            $this->tax_rate = $this->getTaxesRate(new Address($id_address));
+            if (is_object($context->cart) && $context->cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')} != null) {
+                $address = $context->cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')};
+            }
+
+            $this->tax_rate = $this->getTaxesRate(new Address($address));
 
             $this->new = $this->isNew();
 
@@ -629,6 +591,13 @@ class ProductCore extends ObjectModel
                 $id_address = (int)$cur_cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')};
             }
             $address_infos = Address::getCountryAndState($id_address);
+
+            if (self::$_taxCalculationMethod != PS_TAX_EXC
+                && !empty($address_infos['vat_number'])
+                && $address_infos['id_country'] != Configuration::get('VATNUMBER_COUNTRY')
+                && Configuration::get('VATNUMBER_MANAGEMENT')) {
+                self::$_taxCalculationMethod = PS_TAX_EXC;
+            }
         } else {
             self::$_taxCalculationMethod = Group::getPriceDisplayMethod(Group::getCurrent()->id);
         }
@@ -649,12 +618,12 @@ class ProductCore extends ObjectModel
      * @param int $position
      * return boolean Update result
      */
-    public function updatePosition($way, $position, $id_category = null)
+    public function updatePosition($way, $position)
     {
         if (!$res = Db::getInstance()->executeS('
             SELECT cp.`id_product`, cp.`position`, cp.`id_category`
             FROM `'._DB_PREFIX_.'category_product` cp
-            WHERE cp.`id_category` = '.(int) ($id_category ? $id_category: Tools::getValue('id_category', 1)).'
+            WHERE cp.`id_category` = '.(int)Tools::getValue('id_category', 1).'
             ORDER BY cp.`position` ASC')
             ) {
             return false;
@@ -887,14 +856,6 @@ class ProductCore extends ObjectModel
         ), 'id_product = '.(int)$id_product);
     }
 
-    public static function getProductPriceCalculation($id_product) {
-        return Db::getInstance()->getValue(
-            'SELECT product_shop.`price_calculation_method`
-            FROM `'._DB_PREFIX_.'product` p '.Shop::addSqlAssociation('product', 'p').'
-            WHERE p.`id_product` = '.(int)$id_product
-        );
-    }
-
     /**
      * @see ObjectModel::validateField()
      */
@@ -927,14 +888,6 @@ class ProductCore extends ObjectModel
             $this->redirect_type = '';
         }
         return parent::toggleStatus();
-    }
-
-    public static function isBookingProduct($id_product)
-    {
-        return Db::getInstance()->getValue('
-            SELECT `booking_product` FROM `'._DB_PREFIX_.'product` p
-            WHERE p.`id_product` = '.(int)$id_product
-        );
     }
 
     public function delete()
@@ -976,12 +929,6 @@ class ProductCore extends ObjectModel
             return true;
         }
 
-        if (!$this->booking_product) {
-            if (!$this->deleteServiceInfo()) {
-                return false;
-            }
-        }
-
         Hook::exec('actionProductDelete', array('id_product' => (int)$this->id, 'product' => $this));
         if (!$result ||
             !GroupReduction::deleteProductReduction($this->id) ||
@@ -1003,16 +950,6 @@ class ProductCore extends ObjectModel
             return false;
         }
 
-        return true;
-    }
-
-    public function deleteServiceInfo()
-    {
-        if (!RoomTypeServiceProduct::deleteRoomProductLink($this->id)
-            || !RoomTypeServiceProductPrice::deleteRoomProductPrices($this->id)
-        ) {
-            return false;
-        }
         return true;
     }
 
@@ -1323,156 +1260,6 @@ class ProductCore extends ObjectModel
 				WHERE pl.`id_lang` = '.(int)$id_lang.'
 				'.($front ? ' AND product_shop.`visibility` IN ("both", "catalog")' : '').'
 				ORDER BY pl.`name`';
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
-    }
-
-
-    public function getProductServiceProducts($id_lang, $p, $n, $front = false, $available_for_order = 2, $auto_add_to_cart = 0, $get_total = false, $active = true, $sub_category = false, Context $context = null)
-    {
-        if (!$context) {
-            $context = Context::getContext();
-        }
-
-        // first check if product is booking product
-        if (!$this->booking_product) {
-            return false;
-        }
-
-        // get hotel and room type by id_product
-        $objHotelRoomType = new HotelRoomType();
-        $roomInfo = $objHotelRoomType->getRoomTypeInfoByIdProduct((int)$this->id);
-
-        if ($get_total) {
-            $sql = 'SELECT COUNT(DISTINCT(p.`id_product`)) AS total
-					FROM `'._DB_PREFIX_.'product` p
-					'.Shop::addSqlAssociation('product', 'p').'
-                    INNER JOIN `'._DB_PREFIX_.'htl_room_type_service_product` rsp ON (rsp.`id_product` = p.`id_product`)
-					WHERE
-                    ('.
-                        '(`element_type` = '.RoomTypeServiceProduct::WK_ELEMENT_TYPE_ROOM_TYPE.' AND `id_element` = '.(int)$this->id.')
-                    )
-                    AND p.`service_product_type` = '.(int)self::SERVICE_PRODUCT_WITH_ROOMTYPE. '
-                    AND product_shop.`id_shop` = '.(int)$context->shop->id
-                .($sub_category? ' AND product_shop.`id_category_default` = '.(int)$sub_category : '')
-                .($front ? ' AND product_shop.`show_at_front` = 1':'')
-                .(!is_null($auto_add_to_cart) ? ' AND product_shop.`auto_add_to_cart` = '.$auto_add_to_cart:'')
-                .($available_for_order != 2 ? ' AND p.`available_for_order` = '.(int)$available_for_order:'')
-                .($active ? ' AND product_shop.`active` = 1' : '');
-            return (int)Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue($sql);
-        }
-
-        if ($p < 1) {
-            $p = 1;
-        }
-
-        $nb_days_new_product = Configuration::get('PS_NB_DAYS_NEW_PRODUCT');
-        if (!Validate::isUnsignedInt($nb_days_new_product)) {
-            $nb_days_new_product = 20;
-        }
-
-        $sql = 'SELECT p.*, product_shop.*,
-                    stock.`out_of_stock`, IFNULL(stock.`quantity`, 0) AS quantity, pl.`description`, pl.`description_short`, pl.`available_now`,
-                    pl.`available_later`, pl.`link_rewrite`, pl.`meta_description`, pl.`meta_keywords`, pl.`meta_title`, pl.`name`, image_shop.`id_image` id_image,
-                    il.`legend` as legend, cl.`name` AS category_default,
-                    DATEDIFF(product_shop.`date_add`, DATE_SUB("'.date('Y-m-d').' 00:00:00",
-                    INTERVAL '.(int)$nb_days_new_product.' DAY)) > 0 AS new, product_shop.price AS orderprice
-				FROM `'._DB_PREFIX_.'product` p
-				'.Shop::addSqlAssociation('product', 'p').'
-                INNER JOIN `'._DB_PREFIX_.'htl_room_type_service_product` rsp ON (rsp.`id_product` = p.`id_product`)'
-                .Product::sqlStock('p', 0).'
-				LEFT JOIN `'._DB_PREFIX_.'category_lang` cl
-					ON (product_shop.`id_category_default` = cl.`id_category`
-                    AND cl.`id_lang` = '.(int)$id_lang.Shop::addSqlRestrictionOnLang('cl').')
-				LEFT JOIN `'._DB_PREFIX_.'product_lang` pl
-					ON (p.`id_product` = pl.`id_product`
-					AND pl.`id_lang` = '.(int)$id_lang.Shop::addSqlRestrictionOnLang('pl').')
-				LEFT JOIN `'._DB_PREFIX_.'image_shop` image_shop
-					ON (image_shop.`id_product` = p.`id_product` AND image_shop.cover=1 AND image_shop.id_shop='.(int)$context->shop->id.')
-				LEFT JOIN `'._DB_PREFIX_.'image_lang` il
-					ON (image_shop.`id_image` = il.`id_image`
-					AND il.`id_lang` = '.(int)$id_lang.')
-				WHERE
-                    ('.
-                        '(`element_type` = '.RoomTypeServiceProduct::WK_ELEMENT_TYPE_ROOM_TYPE.' AND `id_element` = '.(int)$this->id.')
-                    )
-                    AND p.`service_product_type` = '.(int)self::SERVICE_PRODUCT_WITH_ROOMTYPE. '
-                    AND product_shop.`id_shop` = '.(int)$context->shop->id
-                    .($sub_category? ' AND product_shop.`id_category_default` = '.(int)$sub_category : '')
-                    .($front ? ' AND product_shop.`show_at_front` = 1':'')
-                    .(!is_null($auto_add_to_cart) ? ' AND product_shop.`auto_add_to_cart` = '.$auto_add_to_cart:'')
-                    .($available_for_order != 2 ? ' AND p.`available_for_order` = '.(int)$available_for_order:'')
-                    .($active ? ' AND product_shop.`active` = 1' : '');
-
-        $sql .= ' GROUP BY p.`id_product`';
-        $sql .= ' ORDER BY rsp.`position` ASC';
-        if ($p && $n) {
-            $sql .= ' LIMIT '.(((int)$p - 1) * (int)$n).','.(int)$n;
-        }
-
-        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
-
-        return $result;
-    }
-
-    public function getAvailableServiceProductsCategories($id_lang, $front = false, $active = true, Context $context = null)
-    {
-        if (!$context) {
-            $context = Context::getContext();
-        }
-
-        // first check if product is booking product
-        if (!$this->booking_product) {
-            return false;
-        }
-
-        // get hotel and room type by id_product
-        $objHotelRoomType = new HotelRoomType();
-        $roomInfo = $objHotelRoomType->getRoomTypeInfoByIdProduct((int)$this->id);
-
-        $sql = 'SELECT cl.*, COUNT(DISTINCT(p.`id_product`)) as num_products
-				FROM `'._DB_PREFIX_.'product` p
-				'.Shop::addSqlAssociation('product', 'p').'
-                INNER JOIN `'._DB_PREFIX_.'htl_room_type_service_product` rsp ON (rsp.`id_product` = p.`id_product`)'
-                .Product::sqlStock('p', 0).'
-				INNER JOIN `'._DB_PREFIX_.'category_lang` cl
-					ON (product_shop.`id_category_default` = cl.`id_category`
-					AND cl.`id_lang` = '.(int)$id_lang.Shop::addSqlRestrictionOnLang('cl').')
-				WHERE
-                    ('.
-                        '(`element_type` = '.RoomTypeServiceProduct::WK_ELEMENT_TYPE_ROOM_TYPE.' AND `id_element` = '.(int)$this->id.')
-                    )
-                    AND p.`service_product_type` = '.(int)self::SERVICE_PRODUCT_WITH_ROOMTYPE. '
-                    AND product_shop.`id_shop` = '.(int)$context->shop->id
-                    .($front ? ' AND product_shop.`auto_add_to_cart` = 0 AND product_shop.`show_at_front` = 1':'')
-                    .($active ? ' AND product_shop.`active` = 1' : '');
-
-
-            $sql .= ' GROUP BY cl.`id_category`';
-
-        $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
-
-        return $result;
-    }
-
-    public function getServiceProducts($active = null, $serviceProductType = null, $idLang = null, $orderBy = 'pl.name', $orderWay = 'ASC')
-    {
-        if (!$idLang) {
-            $idLang = Context::getContext()->language->id;
-        }
-
-        $sql = 'SELECT p.*, pl.*, i.`id_image`, il.`legend` AS legend
-        FROM `'._DB_PREFIX_.'product` p
-        LEFT JOIN `'._DB_PREFIX_.'product_lang` pl ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = '.(int) $idLang.')
-        LEFT JOIN `'._DB_PREFIX_.'image` i ON (i.`id_product` = p.`id_product` AND i.`cover` = 1)
-        LEFT JOIN `'._DB_PREFIX_.'image_lang` il ON (il.`id_image` = i.`id_image` AND il.`id_lang` = '.(int) $idLang.')
-        WHERE p.`booking_product` = 0'.
-        (!is_null($active) ? ' AND p.`active` = '.(int) $active : '').
-        ($serviceProductType ? ' AND p.`service_product_type` = '.(int) $serviceProductType : '');
-
-        if (Validate::isOrderBy($orderBy) && Validate::isOrderBy($orderWay)) {
-            $sql .= ' ORDER BY '.$orderBy.' '.$orderWay;
-        }
-
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
     }
 
@@ -2582,15 +2369,9 @@ class ProductCore extends ObjectModel
 
         $id_address = $context->cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')};
         $ids = Address::getCountryAndState($id_address);
+	$id_country = $ids['id_country'] ? (int) $ids['id_country'] : (int) Configuration::get('PS_COUNTRY_DEFAULT');
 
-        $id_country = null;
-        if (isset($ids['id_country']) && (int) $ids['id_country']) {
-            $id_country = (int) $ids['id_country'];
-        } else {
-            $id_country = (int) Configuration::get('PS_COUNTRY_DEFAULT');
-        }
-
-	    return SpecificPrice::getProductIdByDate(
+        return SpecificPrice::getProductIdByDate(
             $context->shop->id,
             $context->currency->id,
             $id_country,
@@ -2999,7 +2780,7 @@ class ProductCore extends ObjectModel
     public static function getPriceStatic($id_product, $usetax = true, $id_product_attribute = null, $decimals = 6, $divisor = null,
         $only_reduc = false, $usereduc = true, $quantity = 1, $force_associated_tax = false, $id_customer = null, $id_cart = null,
         $id_address = null, &$specific_price_output = null, $with_ecotax = true, $use_group_reduction = true, Context $context = null,
-        $use_customer_price = true, $id_product_roomtype = false)
+        $use_customer_price = true)
     {
         if (!$context) {
             $context = Context::getContext();
@@ -3063,36 +2844,31 @@ class ProductCore extends ObjectModel
         $id_state = 0;
         $zipcode = 0;
 
-        if (!$id_address) {
-            if (!Product::isBookingProduct($id_product)) {
-                if ($id_product_roomtype) {
-                    // if room type is provided with product then we know that the service product price should be calculated accroding to roomt type
-                    $id_address = Cart::getIdAddressForTaxCalculation($id_product_roomtype);
-                }
-            } else {
-                $id_address = Cart::getIdAddressForTaxCalculation($id_product);
-            }
+        if (!$id_address && Validate::isLoadedObject($cur_cart)) {
+            $id_address = $cur_cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')};
         }
 
-        if (!$id_address) {
-            if ($primaryHotel = ConfigurationCore::get('WK_PRIMARY_HOTEL')) {
-                if ($address = HotelBranchInformation::getAddress($primaryHotel)) {
-                    $address_infos['id_country'] = $address['id_country'];
-                    $address_infos['id_state'] = $address['id_state'];
-                    $address_infos['postcode'] = $address['postcode'];
-                }
-            }
-        } elseif ($id_address) {
+        if ($id_address) {
             $address_infos = Address::getCountryAndState($id_address);
-        }
-
-        if (isset($address_infos['id_country']) && $address_infos['id_country']) {
-            $id_country = (int)$address_infos['id_country'];
-            $id_state = (int)$address_infos['id_state'];
-            $zipcode = $address_infos['postcode'];
+            if ($address_infos['id_country']) {
+                $id_country = (int)$address_infos['id_country'];
+                $id_state = (int)$address_infos['id_state'];
+                $zipcode = $address_infos['postcode'];
+            }
+        } elseif (isset($context->customer->geoloc_id_country)) {
+            $id_country = (int)$context->customer->geoloc_id_country;
+            $id_state = (int)$context->customer->id_state;
+            $zipcode = $context->customer->postcode;
         }
 
         if (Tax::excludeTaxeOption()) {
+            $usetax = false;
+        }
+
+        if ($usetax != false
+            && !empty($address_infos['vat_number'])
+            && $address_infos['id_country'] != Configuration::get('VATNUMBER_COUNTRY')
+            && Configuration::get('VATNUMBER_MANAGEMENT')) {
             $usetax = false;
         }
 
@@ -3120,8 +2896,7 @@ class ProductCore extends ObjectModel
             $id_customer,
             $use_customer_price,
             $id_cart,
-            $cart_quantity,
-            $id_product_roomtype
+            $cart_quantity
         );
 
         return $return;
@@ -3155,7 +2930,7 @@ class ProductCore extends ObjectModel
      **/
     public static function priceCalculation($id_shop, $id_product, $id_product_attribute, $id_country, $id_state, $zipcode, $id_currency,
         $id_group, $quantity, $use_tax, $decimals, $only_reduc, $use_reduc, $with_ecotax, &$specific_price, $use_group_reduction,
-        $id_customer = 0, $use_customer_price = true, $id_cart = 0, $real_quantity = 0, $id_product_roomtype = false)
+        $id_customer = 0, $use_customer_price = true, $id_cart = 0, $real_quantity = 0)
     {
         static $address = null;
         static $context = null;
@@ -3183,14 +2958,14 @@ class ProductCore extends ObjectModel
         $cache_id = (int)$id_product.'-'.(int)$id_shop.'-'.(int)$id_currency.'-'.(int)$id_country.'-'.$id_state.'-'.$zipcode.'-'.(int)$id_group.
             '-'.(int)$quantity.'-'.(int)$id_product_attribute.
             '-'.(int)$with_ecotax.'-'.(int)$id_customer.'-'.(int)$use_group_reduction.'-'.(int)$id_cart.'-'.(int)$real_quantity.
-            '-'.($only_reduc?'1':'0').'-'.($use_reduc?'1':'0').'-'.($use_tax?'1':'0').'-'.(int)$decimals.'-'.($id_product_roomtype?(int)$id_product_roomtype:'0');
+            '-'.($only_reduc?'1':'0').'-'.($use_reduc?'1':'0').'-'.($use_tax?'1':'0').'-'.(int)$decimals;
 
         // reference parameter is filled before any returns
         $specific_price = SpecificPrice::getSpecificPrice(
             (int)$id_product,
             $id_shop,
             $id_currency,
-            (int)$context->country->id,
+            $id_country,
             $id_group,
             $quantity,
             $id_product_attribute,
@@ -3246,23 +3021,11 @@ class ProductCore extends ObjectModel
 
         $result = self::$_pricesLevel2[$cache_id_2][(int)$id_product_attribute];
 
-        // get price per room type
-        if ($id_product_roomtype) {
-            $priceForRoomInfo = RoomTypeServiceProductPrice::getProductRoomTypePriceAndTax(
-                $id_product,
-                $id_product_roomtype,
-                RoomTypeServiceProduct::WK_ELEMENT_TYPE_ROOM_TYPE
-            );
-        }
-
-        if (isset($priceForRoomInfo) && isset($priceForRoomInfo['price'])) {
-            $price = (float)$priceForRoomInfo['price'];
-        } elseif (!$specific_price || $specific_price['price'] < 0) {
+        if (!$specific_price || $specific_price['price'] < 0) {
             $price = (float)$result['price'];
         } else {
             $price = (float)$specific_price['price'];
         }
-
         // convert only if the specific price is in the default currency (id_currency = 0)
         if (!$specific_price || !($specific_price['price'] >= 0 && $specific_price['id_currency'])) {
             $price = Tools::convertPrice($price, $id_currency);
@@ -3280,29 +3043,12 @@ class ProductCore extends ObjectModel
             }
         }
 
-        // find and add if any auto_add services are attached
-
-
-        Hook::exec(
-			'actionProductPriceModifier',
-			array(
-				'price' => &$price,
-				'type' => 'pre_tax'
-			)
-		);
-
         // Tax
         $address->id_country = $id_country;
         $address->id_state = $id_state;
         $address->postcode = $zipcode;
 
-        if (isset($priceForRoomInfo) && isset($priceForRoomInfo['id_tax_rules_group'])) {
-            $id_tax_rule_group = $priceForRoomInfo['id_tax_rules_group'];
-        } else {
-            $id_tax_rule_group = Product::getIdTaxRulesGroupByIdProduct((int)$id_product, $context);
-        }
-
-        $tax_manager = TaxManagerFactory::getManager($address, $id_tax_rule_group);
+        $tax_manager = TaxManagerFactory::getManager($address, Product::getIdTaxRulesGroupByIdProduct((int)$id_product, $context));
         $product_tax_calculator = $tax_manager->getTaxCalculator();
 
         // Add Tax
@@ -3332,14 +3078,6 @@ class ProductCore extends ObjectModel
                 $price += $ecotax;
             }
         }
-
-        Hook::exec(
-			'actionProductPriceModifier',
-			array(
-				'price' => &$price,
-				'type' => 'post_tax'
-			)
-		);
 
         // Reduction
         $specific_price_reduction = 0;
@@ -3422,7 +3160,7 @@ class ProductCore extends ObjectModel
         $quantity = $cart_quantity ? $cart_quantity : $quantity;
 
         $id_currency = (int)$context->currency->id;
-        $ids = Address::getCountryAndState(Cart::getIdAddressForTaxCalculation($id_product));
+        $ids = Address::getCountryAndState((int)$context->cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
         $id_country = $ids['id_country'] ? (int)$ids['id_country'] : (int)Configuration::get('PS_COUNTRY_DEFAULT');
         return (bool)SpecificPrice::getSpecificPrice((int)$id_product, $context->shop->id, $id_currency, $id_country, $id_group, $quantity, null, 0, 0, $quantity);
     }
@@ -3480,18 +3218,9 @@ class ProductCore extends ObjectModel
         );
     }
 
-    public function getPriceWithoutReduct($notax = false, $id_product_attribute = false, $decimals = 6, $with_auto_add_services = 0)
+    public function getPriceWithoutReduct($notax = false, $id_product_attribute = false, $decimals = 6)
     {
-        $price = Product::getPriceStatic((int)$this->id, !$notax, $id_product_attribute, $decimals, null, false, false);
-        if ($with_auto_add_services) {
-            if ($services = RoomTypeServiceProduct::getAutoAddServices((int) $this->id, null, null, Product::PRICE_ADDITION_TYPE_WITH_ROOM, !$notax)) {
-                foreach($services as $service) {
-                    $price += $service['price'];
-                }
-            }
-        }
-
-        return $price;
+        return Product::getPriceStatic((int)$this->id, !$notax, $id_product_attribute, $decimals, null, false, false);
     }
 
     /**
@@ -4029,14 +3758,14 @@ class ProductCore extends ObjectModel
     * @param string $query Search query
     * @return array Matching products
     */
-    public static function searchByName($id_lang, $query, Context $context = null, $id_hotel = false)
+    public static function searchByName($id_lang, $query, Context $context = null)
     {
         if (!$context) {
             $context = Context::getContext();
         }
 
         $sql = new DbQuery();
-        $sql->select('p.`id_product`, pl.`name`, p.`ean13`, p.`upc`, p.`active`, p.`reference`, m.`name` AS manufacturer_name, stock.`quantity`, product_shop.advanced_stock_management, p.`customizable`, p.`booking_product`');
+        $sql->select('p.`id_product`, pl.`name`, p.`ean13`, p.`upc`, p.`active`, p.`reference`, m.`name` AS manufacturer_name, stock.`quantity`, product_shop.advanced_stock_management, p.`customizable`');
         $sql->from('product', 'p');
         $sql->join(Shop::addSqlAssociation('product', 'p'));
         $sql->leftJoin('product_lang', 'pl', '
@@ -4044,14 +3773,6 @@ class ProductCore extends ObjectModel
 			AND pl.`id_lang` = '.(int)$id_lang.Shop::addSqlRestrictionOnLang('pl')
         );
         $sql->leftJoin('manufacturer', 'm', 'm.`id_manufacturer` = p.`id_manufacturer`');
-        if ($id_hotel) {
-            $sql->innerJoin(
-                'htl_room_type',
-                'hrt',
-                'p.`id_product` = hrt.`id_product` AND hrt.`id_hotel` = '.(int)$id_hotel
-            );
-
-        }
 
         $where = 'pl.`name` LIKE \'%'.pSQL($query).'%\'
 		OR p.`ean13` LIKE \'%'.pSQL($query).'%\'
@@ -5327,75 +5048,13 @@ class ProductCore extends ObjectModel
     public function getTaxesRate(Address $address = null)
     {
         if (!$address || !$address->id_country) {
-            $address = Address::initialize(Cart::getIdAddressForTaxCalculation($this->id));
+            $address = Address::initialize();
         }
 
         $tax_manager = TaxManagerFactory::getManager($address, $this->id_tax_rules_group);
         $tax_calculator = $tax_manager->getTaxCalculator();
 
         return $tax_calculator->getTotalRate();
-    }
-
-    public function getPositionInCategory()
-    {
-        return Db::getInstance()->getValue(
-            'SELECT position
-            FROM `'._DB_PREFIX_.'category_product`
-            WHERE id_category = '.(int) $this->id_category_default.'
-            AND id_product = '.(int) $this->id
-        );
-    }
-
-    public function setPositionInCategory($position)
-    {
-        if ($position < 0) {
-            die(Tools::displayError('You cannot set a negative position, the minimum for a position is 0.'));
-        }
-
-        $result = Db::getInstance()->executeS(
-            'SELECT `id_product`
-            FROM `'._DB_PREFIX_.'category_product`
-            WHERE `id_category` = '.(int) $this->id_category_default.'
-            ORDER BY `position`'
-        );
-
-        if (($position > 0) && ($position + 1 > count($result))) {
-            die(Tools::displayError('You cannot set a position greater than the total number of room types in the hotel, minus 1 (position numbering starts at 0).'));
-        }
-
-        foreach ($result as &$value) {
-            $value = $value['id_product'];
-        }
-
-        $currentPosition = $this->getPositionInCategory();
-
-        if ($currentPosition && isset($result[$currentPosition])) {
-            $save = $result[$currentPosition];
-            unset($result[$currentPosition]);
-            array_splice($result, (int)$position, 0, $save);
-        }
-
-        $return = true;
-        foreach ($result as $position => $id_product) {
-            $return &= Db::getInstance()->update(
-                'category_product',
-                array('position' => $position),
-                '(`id_category` = '.(int) $this->id_category_default.' AND `id_product` = '.(int) $id_product.')'
-            );
-        }
-
-        return $return;
-    }
-
-    public static function getHighestPositionInCategory($idCategory)
-    {
-        $position = Db::getInstance()->getValue(
-            'SELECT MAX(`position`)
-            FROM `'._DB_PREFIX_.'category_product`
-            WHERE `id_category` = '.(int) $idCategory
-        );
-
-        return (is_numeric($position)) ? $position : -1;
     }
 
     /**
@@ -5646,7 +5305,14 @@ class ProductCore extends ObjectModel
     */
     public function getWsPositionInCategory()
     {
-        return $this->getPositionInCategory();
+        $result = Db::getInstance()->executeS('SELECT position
+			FROM `'._DB_PREFIX_.'category_product`
+			WHERE id_category = '.(int)$this->id_category_default.'
+			AND id_product = '.(int)$this->id);
+        if (count($result) > 0) {
+            return $result[0]['position'];
+        }
+        return '';
     }
 
     /**
@@ -5848,6 +5514,66 @@ class ProductCore extends ObjectModel
         $id_shop = (int)Context::getContext()->shop->id;
         $cache_id = 'Product::getAttributesParams_'.(int)$id_product.'-'.(int)$id_product_attribute.'-'.(int)$id_lang.'-'.(int)$id_shop;
 
+        // if blocklayered module is installed we check if user has set custom attribute name
+        if (Module::isInstalled('blocklayered') && Module::isEnabled('blocklayered')) {
+            $nb_custom_values = Db::getInstance()->executeS('
+			SELECT DISTINCT la.`id_attribute`, la.`url_name` as `name`
+			FROM `'._DB_PREFIX_.'attribute` a
+			LEFT JOIN `'._DB_PREFIX_.'product_attribute_combination` pac
+				ON (a.`id_attribute` = pac.`id_attribute`)
+			LEFT JOIN `'._DB_PREFIX_.'product_attribute` pa
+				ON (pac.`id_product_attribute` = pa.`id_product_attribute`)
+			'.Shop::addSqlAssociation('product_attribute', 'pa').'
+			LEFT JOIN `'._DB_PREFIX_.'layered_indexable_attribute_lang_value` la
+				ON (la.`id_attribute` = a.`id_attribute` AND la.`id_lang` = '.(int)$id_lang.')
+			WHERE la.`url_name` IS NOT NULL AND la.`url_name` != \'\'
+			AND pa.`id_product` = '.(int)$id_product.'
+			AND pac.`id_product_attribute` = '.(int)$id_product_attribute);
+
+            if (!empty($nb_custom_values)) {
+                $tab_id_attribute = array();
+                foreach ($nb_custom_values as $attribute) {
+                    $tab_id_attribute[] = $attribute['id_attribute'];
+
+                    $group = Db::getInstance()->executeS('
+					SELECT a.`id_attribute`, g.`id_attribute_group`, g.`url_name` as `group`
+					FROM `'._DB_PREFIX_.'layered_indexable_attribute_group_lang_value` g
+					LEFT JOIN `'._DB_PREFIX_.'attribute` a
+						ON (a.`id_attribute_group` = g.`id_attribute_group`)
+					WHERE a.`id_attribute` = '.(int)$attribute['id_attribute'].'
+					AND g.`id_lang` = '.(int)$id_lang.'
+					AND g.`url_name` IS NOT NULL AND g.`url_name` != \'\'');
+                    if (empty($group)) {
+                        $group = Db::getInstance()->executeS('
+						SELECT g.`id_attribute_group`, g.`name` as `group`
+						FROM `'._DB_PREFIX_.'attribute_group_lang` g
+						LEFT JOIN `'._DB_PREFIX_.'attribute` a
+							ON (a.`id_attribute_group` = g.`id_attribute_group`)
+						WHERE a.`id_attribute` = '.(int)$attribute['id_attribute'].'
+						AND g.`id_lang` = '.(int)$id_lang.'
+						AND g.`name` IS NOT NULL');
+                    }
+                    $result[] = array_merge($attribute, $group[0]);
+                }
+                $values_not_custom = Db::getInstance()->executeS('
+				SELECT DISTINCT a.`id_attribute`, a.`id_attribute_group`, al.`name`, agl.`name` as `group`
+				FROM `'._DB_PREFIX_.'attribute` a
+				LEFT JOIN `'._DB_PREFIX_.'attribute_lang` al
+					ON (a.`id_attribute` = al.`id_attribute` AND al.`id_lang` = '.(int)$id_lang.')
+				LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl
+					ON (a.`id_attribute_group` = agl.`id_attribute_group` AND agl.`id_lang` = '.(int)$id_lang.')
+				LEFT JOIN `'._DB_PREFIX_.'product_attribute_combination` pac
+					ON (a.`id_attribute` = pac.`id_attribute`)
+				LEFT JOIN `'._DB_PREFIX_.'product_attribute` pa
+					ON (pac.`id_product_attribute` = pa.`id_product_attribute`)
+				'.Shop::addSqlAssociation('product_attribute', 'pa').'
+				WHERE pa.`id_product` = '.(int)$id_product.'
+				AND pac.id_product_attribute = '.(int)$id_product_attribute.'
+				AND a.`id_attribute` NOT IN('.implode(', ', $tab_id_attribute).')');
+                return array_merge($values_not_custom, $result);
+            }
+        }
+
         if (!Cache::isStored($cache_id)) {
             $result = Db::getInstance()->executeS('
 			SELECT a.`id_attribute`, a.`id_attribute_group`, al.`name`, agl.`name` as `group`
@@ -5877,20 +5603,94 @@ class ProductCore extends ObjectModel
      */
     public static function getAttributesInformationsByProduct($id_product)
     {
-        $result = Db::getInstance()->executeS('
-        SELECT DISTINCT a.`id_attribute`, a.`id_attribute_group`, al.`name` as `attribute`, agl.`name` as `group`
-        FROM `'._DB_PREFIX_.'attribute` a
-        LEFT JOIN `'._DB_PREFIX_.'attribute_lang` al
-            ON (a.`id_attribute` = al.`id_attribute` AND al.`id_lang` = '.(int)Context::getContext()->language->id.')
-        LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl
-            ON (a.`id_attribute_group` = agl.`id_attribute_group` AND agl.`id_lang` = '.(int)Context::getContext()->language->id.')
-        LEFT JOIN `'._DB_PREFIX_.'product_attribute_combination` pac
-            ON (a.`id_attribute` = pac.`id_attribute`)
-        LEFT JOIN `'._DB_PREFIX_.'product_attribute` pa
-            ON (pac.`id_product_attribute` = pa.`id_product_attribute`)
-        '.Shop::addSqlAssociation('product_attribute', 'pa').'
-        '.Shop::addSqlAssociation('attribute', 'pac').'
-        WHERE pa.`id_product` = '.(int)$id_product);
+        // if blocklayered module is installed we check if user has set custom attribute name
+        if (Module::isInstalled('blocklayered') && Module::isEnabled('blocklayered')) {
+            $nb_custom_values = Db::getInstance()->executeS('
+			SELECT DISTINCT la.`id_attribute`, la.`url_name` as `attribute`
+			FROM `'._DB_PREFIX_.'attribute` a
+			LEFT JOIN `'._DB_PREFIX_.'product_attribute_combination` pac
+				ON (a.`id_attribute` = pac.`id_attribute`)
+			LEFT JOIN `'._DB_PREFIX_.'product_attribute` pa
+				ON (pac.`id_product_attribute` = pa.`id_product_attribute`)
+			'.Shop::addSqlAssociation('product_attribute', 'pa').'
+			LEFT JOIN `'._DB_PREFIX_.'layered_indexable_attribute_lang_value` la
+				ON (la.`id_attribute` = a.`id_attribute` AND la.`id_lang` = '.(int)Context::getContext()->language->id.')
+			WHERE la.`url_name` IS NOT NULL AND la.`url_name` != \'\'
+			AND pa.`id_product` = '.(int)$id_product);
+
+            if (!empty($nb_custom_values)) {
+                $tab_id_attribute = array();
+                foreach ($nb_custom_values as $attribute) {
+                    $tab_id_attribute[] = $attribute['id_attribute'];
+
+                    $group = Db::getInstance()->executeS('
+					SELECT g.`id_attribute_group`, g.`url_name` as `group`
+					FROM `'._DB_PREFIX_.'layered_indexable_attribute_group_lang_value` g
+					LEFT JOIN `'._DB_PREFIX_.'attribute` a
+						ON (a.`id_attribute_group` = g.`id_attribute_group`)
+					WHERE a.`id_attribute` = '.(int)$attribute['id_attribute'].'
+					AND g.`id_lang` = '.(int)Context::getContext()->language->id.'
+					AND g.`url_name` IS NOT NULL AND g.`url_name` != \'\'');
+                    if (empty($group)) {
+                        $group = Db::getInstance()->executeS('
+						SELECT g.`id_attribute_group`, g.`name` as `group`
+						FROM `'._DB_PREFIX_.'attribute_group_lang` g
+						LEFT JOIN `'._DB_PREFIX_.'attribute` a
+							ON (a.`id_attribute_group` = g.`id_attribute_group`)
+						WHERE a.`id_attribute` = '.(int)$attribute['id_attribute'].'
+						AND g.`id_lang` = '.(int)Context::getContext()->language->id.'
+						AND g.`name` IS NOT NULL');
+                    }
+                    $result[] = array_merge($attribute, $group[0]);
+                }
+                $values_not_custom = Db::getInstance()->executeS('
+				SELECT DISTINCT a.`id_attribute`, a.`id_attribute_group`, al.`name` as `attribute`, agl.`name` as `group`
+				FROM `'._DB_PREFIX_.'attribute` a
+				LEFT JOIN `'._DB_PREFIX_.'attribute_lang` al
+					ON (a.`id_attribute` = al.`id_attribute` AND al.`id_lang` = '.(int)Context::getContext()->language->id.')
+				LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl
+					ON (a.`id_attribute_group` = agl.`id_attribute_group` AND agl.`id_lang` = '.(int)Context::getContext()->language->id.')
+				LEFT JOIN `'._DB_PREFIX_.'product_attribute_combination` pac
+					ON (a.`id_attribute` = pac.`id_attribute`)
+				LEFT JOIN `'._DB_PREFIX_.'product_attribute` pa
+					ON (pac.`id_product_attribute` = pa.`id_product_attribute`)
+				'.Shop::addSqlAssociation('product_attribute', 'pa').'
+				'.Shop::addSqlAssociation('attribute', 'pac').'
+				WHERE pa.`id_product` = '.(int)$id_product.'
+				AND a.`id_attribute` NOT IN('.implode(', ', $tab_id_attribute).')');
+                $result = array_merge($values_not_custom, $result);
+            } else {
+                $result = Db::getInstance()->executeS('
+				SELECT DISTINCT a.`id_attribute`, a.`id_attribute_group`, al.`name` as `attribute`, agl.`name` as `group`
+				FROM `'._DB_PREFIX_.'attribute` a
+				LEFT JOIN `'._DB_PREFIX_.'attribute_lang` al
+					ON (a.`id_attribute` = al.`id_attribute` AND al.`id_lang` = '.(int)Context::getContext()->language->id.')
+				LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl
+					ON (a.`id_attribute_group` = agl.`id_attribute_group` AND agl.`id_lang` = '.(int)Context::getContext()->language->id.')
+				LEFT JOIN `'._DB_PREFIX_.'product_attribute_combination` pac
+					ON (a.`id_attribute` = pac.`id_attribute`)
+				LEFT JOIN `'._DB_PREFIX_.'product_attribute` pa
+					ON (pac.`id_product_attribute` = pa.`id_product_attribute`)
+				'.Shop::addSqlAssociation('product_attribute', 'pa').'
+				'.Shop::addSqlAssociation('attribute', 'pac').'
+				WHERE pa.`id_product` = '.(int)$id_product);
+            }
+        } else {
+            $result = Db::getInstance()->executeS('
+			SELECT DISTINCT a.`id_attribute`, a.`id_attribute_group`, al.`name` as `attribute`, agl.`name` as `group`
+			FROM `'._DB_PREFIX_.'attribute` a
+			LEFT JOIN `'._DB_PREFIX_.'attribute_lang` al
+				ON (a.`id_attribute` = al.`id_attribute` AND al.`id_lang` = '.(int)Context::getContext()->language->id.')
+			LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl
+				ON (a.`id_attribute_group` = agl.`id_attribute_group` AND agl.`id_lang` = '.(int)Context::getContext()->language->id.')
+			LEFT JOIN `'._DB_PREFIX_.'product_attribute_combination` pac
+				ON (a.`id_attribute` = pac.`id_attribute`)
+			LEFT JOIN `'._DB_PREFIX_.'product_attribute` pa
+				ON (pac.`id_product_attribute` = pa.`id_product_attribute`)
+			'.Shop::addSqlAssociation('product_attribute', 'pa').'
+			'.Shop::addSqlAssociation('attribute', 'pac').'
+			WHERE pa.`id_product` = '.(int)$id_product);
+        }
         return $result;
     }
 
@@ -5971,15 +5771,15 @@ class ProductCore extends ObjectModel
                 WHERE `id_product` = '.(int)$this->id
             );
 
-            // save room type info adults, child, hotel info
+            // save room type info adult, child, hotel info
             $postData = trim(file_get_contents('php://input'));
             libxml_use_internal_errors(true);
             $xml = simplexml_load_string(utf8_decode($postData));
 
-            $roomtypeData = json_decode(json_encode($xml), true);
+            $roomtypeData = Tools::jsonDecode(Tools::jsonEncode($xml), true);
 
             // set room  map info for the hotel from request
-            return Db::getInstance()->execute('INSERT INTO `'._DB_PREFIX_.'htl_room_type` (`id_product`, `id_hotel`, `adults`, `children`, `date_add`, `date_upd`) VALUES ('.(int)$this->id.', '.(int) $roomtypeData['room_type']['id_hotel'].', '.(int) $roomtypeData['room_type']['adults'].', '.(int) $roomtypeData['room_type']['children'].', \''.date('Y-m-d h:i:s').'\', \''.date('Y-m-d h:i:s').'\')');
+            return Db::getInstance()->execute('INSERT INTO `'._DB_PREFIX_.'htl_room_type` (`id_product`, `id_hotel`, `adult`, `children`, `date_add`, `date_upd`) VALUES ('.(int)$this->id.', '.(int) $roomtypeData['room_type']['id_hotel'].', '.(int) $roomtypeData['room_type']['adults'].', '.(int) $roomtypeData['room_type']['children'].', \''.date('Y-m-d h:i:s').'\', \''.date('Y-m-d h:i:s').'\')');
         }
 
         return true;
@@ -6408,7 +6208,7 @@ class ProductCore extends ObjectModel
     public function getWsAdults()
     {
         return Db::getInstance()->getValue(
-            'SELECT `adults` FROM `'._DB_PREFIX_.'htl_room_type` WHERE `id_product` = '.(int)$this->id.' ORDER BY `id` ASC'
+            'SELECT `adult` FROM `'._DB_PREFIX_.'htl_room_type` WHERE `id_product` = '.(int)$this->id.' ORDER BY `id` ASC'
         );
     }
 

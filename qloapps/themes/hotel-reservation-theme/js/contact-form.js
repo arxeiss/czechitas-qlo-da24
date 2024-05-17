@@ -50,11 +50,7 @@ $(document).ready(function() {
     showProductSelect($('select[name=id_order]').attr('value'));
 
     //By Webkul JS for Map locations of the hotels on google Map
-    if (typeof hotelLocationArray != 'undefined'
-        && $('#map').length
-        && typeof google == 'object'
-        && typeof google.maps == 'object'
-    ) {
+    if (hotelLocationArray) {
         initMap();
     }
 });
@@ -98,13 +94,7 @@ function initMap() {
         // Allow each marker to have an info window
         google.maps.event.addListener(marker, 'click', (function(marker, i) {
             return function() {
-                var directionsLink = 'https://www.google.com/maps/dir/?api=1&destination='+
-                location.latitude+','+location.longitude;
-                var content = '<div><strong>'+location.hotel_name+'</strong></div>'+
-                location.map_formated_address+
-                '<div class="view-link"><a class="gm-btn-get-directions" href="'+
-                directionsLink+'" target="_blank" tabindex="-1"><span>'+contact_map_get_dirs+'</span></a></div>';
-                infoWindow.setContent(content);
+                infoWindow.setContent(location.map_formated_address);
                 infoWindow.open(map, marker);
             }
         })(marker, i));

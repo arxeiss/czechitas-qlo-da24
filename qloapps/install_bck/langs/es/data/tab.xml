@@ -19,8 +19,7 @@
   <tab id="Administration" name="Administración"/>
   <tab id="Stats" name="Estadísticas"/>
   <tab id="Stock" name="Existencias"/>
-  <tab id="Products" name="Administrar productos de servicio"/>
-  <tab id="Room_Types" name="Administrar tipos de habitaciones"/>
+  <tab id="Products" name="Productos"/>
   <tab id="Categories" name="Categorías"/>
   <tab id="Monitoring" name="Monitoring"/>
   <tab id="Attributes_and_Values" name="Atributos de productos"/>
@@ -59,7 +58,6 @@
   <tab id="Tax_Rules" name="Reglas de tasas"/>
   <tab id="Translations" name="Traducciones"/>
   <tab id="Modules_1" name="Módulos y Servicios"/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id="Modules_Themes_Catalog" name="Catálogo de Módulos y Temas"/>
   <tab id="Positions" name="Posiciones de los módulos"/>
   <tab id="Payment" name="Pago"/>

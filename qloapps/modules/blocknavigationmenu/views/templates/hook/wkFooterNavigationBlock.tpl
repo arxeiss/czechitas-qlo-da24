@@ -32,7 +32,6 @@
 							<a title="{$navigationLink['name']}" href="{$navigationLink['link']}">{$navigationLink['name']}</a>
 						</li>
 					{/foreach}
-					{hook h="displayFooterExploreSectionHook"}
 					</ul>
 				</div>
 			</section>

@@ -18,7 +18,7 @@
 *  @license   https://store.webkul.com/license.html
 */
 
-class CheckoutCustomerDetailsStepCore extends AbstractCheckoutStepCore
+class CheckoutCustomerDetailsStep extends AbstractCheckoutStep
 {
     public function __construct()
     {
@@ -33,35 +33,45 @@ class CheckoutCustomerDetailsStepCore extends AbstractCheckoutStepCore
         if (Tools::getValue('proceed_to_customer_dtl')) {
             $this->step_is_reachable = 1;
             $this->step_is_current = 1;
-            if ($this->context->cookie->__get('customer_details_proceeded')) {
-                $this->step_is_current = 0;
-                $this->step_is_complete = 1;
-            }
-        } elseif (Tools::getValue('proceed_to_payment')) {
-            $guestInfoComplete = true;
-            if ($id_customer_guest_detail = CartCustomerGuestDetail::getCartCustomerGuest($this->context->cart->id)) {
-                $guestInfoComplete = false;
-                $objCustomerGuestDetail = new CartCustomerGuestDetail($id_customer_guest_detail);
-                if ($objCustomerGuestDetail->validateGuestInfo()) {
-                    $guestInfoComplete = true;
+            if ($idAddressDelivery) {
+                if (!Validate::isLoadedObject($objAddress)) {
+                    if ($this->context->cookie->__get('customer_details_proceeded')) {
+                        $this->step_is_current = 0;
+                        $this->step_is_complete = 1;
+                    }
                 }
             }
+        } elseif (Tools::getValue('proceed_to_payment')) {
             $this->step_is_reachable = 1;
             $this->step_is_current = 1;
-            if ($guestInfoComplete) {
-                $this->step_is_current = 0;
-                $this->step_is_complete = 1;
-                $this->context->cookie->__set('customer_details_proceeded', 1);
+            if ($idAddressDelivery) {
+                if (Validate::isLoadedObject($objAddress)) {
+                    $this->step_is_current = 0;
+                    $this->step_is_complete = 1;
+                    $this->context->cookie->__set('customer_details_proceeded', 1);
+                }
             }
         } elseif ($this->context->cookie->__get('customer_details_proceeded')
             || $this->context->cookie->__get('cart_summary_proceeded')
         ) {
+            if ($idAddressDelivery) {
+                if (!Validate::isLoadedObject($objAddress)) {
+                    $this->context->cookie->__set('customer_details_proceeded', 0);
+                    $this->step_is_reachable = 1;
+                    $this->step_is_current = 1;
+                }
+            } else {
+                $this->step_is_reachable = 1;
+                $this->step_is_current = 1;
+                $this->context->cookie->__set('customer_details_proceeded', 0);
+            }
         } elseif ($this->context->customer->logged) {
             $this->step_is_reachable = 1;
             if ($idAddressDelivery) {
                 $this->step_is_complete = 1;
             } else {
                 $this->step_is_complete = 0;
+                $this->step_is_current = 1;
             }
         }
     }

@@ -272,7 +272,7 @@ class AdminEmployeesControllerCore extends AdminController
         $this->fields_form['input'] = array_merge($this->fields_form['input'], array(
             array(
                 'type' => 'switch',
-                'label' => $this->l('Subscribe to QloApps newsletter'),
+                'label' => $this->l('Subscribe to Qloapps newsletter'),
                 'name' => 'optin',
                 'required' => false,
                 'is_bool' => true,
@@ -288,7 +288,7 @@ class AdminEmployeesControllerCore extends AdminController
                         'label' => $this->l('No')
                     )
                 ),
-                'hint' => $this->l('QloApps can provide you with guidance on a regular basis by sending you tips on how to optimize the management of your store which will help you grow your business. If you do not wish to receive these tips, you can disable this option.')
+                'hint' => $this->l('Qloapps can provide you with guidance on a regular basis by sending you tips on how to optimize the management of your store which will help you grow your business. If you do not wish to receive these tips, you can disable this option.')
             ),
             array(
                 'type' => 'default_tab',
@@ -401,16 +401,6 @@ class AdminEmployeesControllerCore extends AdminController
 
         $this->fields_form['submit'] = array(
             'title' => $this->l('Save'),
-        );
-
-        $this->fields_form['buttons'] = array(
-            'save-and-stay' => array(
-                'title' => $this->l('Save and stay'),
-                'name' => 'submitAdd'.$this->table.'AndStay',
-                'type' => 'submit',
-                'class' => 'btn btn-default pull-right',
-                'icon' => 'process-icon-save',
-            )
         );
 
         $this->fields_value['passwd'] = false;
@@ -683,6 +673,6 @@ class AdminEmployeesControllerCore extends AdminController
                 }
             }
         }
-        die(json_encode($this->tabs_list));
+        die(Tools::jsonEncode($this->tabs_list));
     }
 }

@@ -20,8 +20,7 @@
   <tab id="Administration" name="Administrare"/>
   <tab id="Stats" name="Statistici"/>
   <tab id="Stock" name="Stocuri"/>
-  <tab id="Products" name="Gestionați produsele de service"/>
-  <tab id="Room_Types" name="Gestionați tipurile de camere"/>
+  <tab id="Products" name="Produse"/>
   <tab id="Categories" name="Categorii"/>
   <tab id="Monitoring" name="Monitorizare"/>
   <tab id="Attributes_and_Values" name="Atribute de produs"/>
@@ -60,7 +59,6 @@
   <tab id="Tax_Rules" name="Reguli de taxare"/>
   <tab id="Translations" name="Traduceri"/>
   <tab id="Modules_1" name="Module și servicii"/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id="Modules_Themes_Catalog" name="Catalog de teme și module"/>
   <tab id="Positions" name="Poziții"/>
   <tab id="Payment" name="Plată"/>

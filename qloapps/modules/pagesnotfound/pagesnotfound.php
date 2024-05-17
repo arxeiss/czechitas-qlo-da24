@@ -36,7 +36,7 @@ class PagesNotFound extends Module
     {
         $this->name = 'pagesnotfound';
         $this->tab = 'analytics_stats';
-        $this->version = '1.5.2';
+        $this->version = '1.5.1';
         $this->author = 'PrestaShop';
         $this->need_instance = 0;
 
@@ -164,7 +164,7 @@ class PagesNotFound extends Module
 				</tbody>
 			</table>';
         } else {
-            $this->html .= '<div class="alert alert-warning"> '.$this->l('No "Page not found" issue registered or database has been cleared for this time period.').'</div>';
+            $this->html .= '<div class="alert alert-warning"> '.$this->l('No "page not found" issue registered for now.').'</div>';
         }
 
         if (count($pages)) {

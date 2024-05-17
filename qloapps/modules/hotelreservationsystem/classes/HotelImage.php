@@ -22,17 +22,15 @@ class HotelImage extends ObjectModel
 {
     public $id;
     public $id_hotel;
+    public $hotel_image_id;
     public $cover;
-
-    public $image_format = 'jpg';
-
-    protected static $access_rights = 0755;
 
     public static $definition = array(
         'table' => 'htl_image',
         'primary' => 'id',
         'fields' => array(
             'id_hotel' => array('type' => self::TYPE_INT, 'validate' => 'isInt'),
+            'hotel_image_id' => array('type' => self::TYPE_STRING),
             'cover' => array('type' => self::TYPE_BOOL,'validate' => 'isBool')
         ),
     );
@@ -42,13 +40,12 @@ class HotelImage extends ObjectModel
     {
         parent::__construct($id, $id_lang, $id_shop);
 
-        $this->source_index = _PS_HOTEL_IMG_DIR_.'index.php';
-
-        $this->image_dir = _PS_HOTEL_IMG_DIR_.$this->getImgFolder();
+        $this->image_dir = _PS_MODULE_DIR_.'hotelreservationsystem/views/img/hotel_img/';
+        $this->image_name = $this->hotel_image_id;
     }
 
     /**
-     * Deletes current hotel image from the database
+     * Deletes current interior image block from the database
      * @return bool `true` if delete was successful
      */
     public function delete()
@@ -62,59 +59,13 @@ class HotelImage extends ObjectModel
     }
 
     /**
-     * Delete the hotel image from disk and remove the containing folder if empty
-     * Handles both legacy and new image filesystems
-     */
-    public function deleteImage($force_delete = false)
-    {
-        parent::deleteImage();
-        // Can we delete the image folder?
-        if (is_dir($this->image_dir)) {
-            $delete_folder = true;
-            foreach (scandir($this->image_dir) as $file) {
-                if (($file != '.' && $file != '..' && $file != 'index.php')) {
-                    $delete_folder = false;
-                    break;
-                }
-            }
-        }
-
-        if (isset($delete_folder) && $delete_folder) {
-            // delete index image before deleting folder
-            unlink($this->image_dir.'index.php');
-            @rmdir($this->image_dir);
-        }
-
-        return true;
-    }
-
-    /**
-     * [getImagesByHotelId :: To get paginated hotel images data]
-     * @param  [int] $id_hotel [id_hotel to get images of]
-     * @param  [int] $p [page number of the paginated images data]
-     * @param  [int] $n [number of images per page for paginated images data]
+     * [getAllImagesByHotelId :: To get all images data of a hotel by hotel id]
+     * @param  [int] $htl_id [Id of the hotel which images data you want]
      * @return [array|boolean] [if data found returns array containing information of the images of the hotel which id is passed]
      */
-    public function getImagesByHotelId($id_hotel, $p = 1, $n = null)
+    public function getAllImagesByHotelId($htl_id)
     {
-        $p = (int) $p;
-        $n = $n !== null ? (int) $n : $n; // n = null for no pagination
-        if ($p <= 1) {
-            $p = 1;
-        }
-
-        $sql = 'SELECT *
-        FROM `'._DB_PREFIX_.'htl_image`
-        WHERE `id_hotel` = '.(int) $id_hotel.
-        ($n ? ' LIMIT '.(int) (($p - 1) * $n).', '.(int) ($n) : '');
-
-        return Db::getInstance()->executeS($sql);
-    }
-
-    // for backward compatibility, use getImagesByHotelId() instead
-    public function getAllImagesByHotelId($id_hotel)
-    {
-        return $this->getImagesByHotelId($id_hotel);
+        return Db::getInstance()->executeS('SELECT * FROM `'._DB_PREFIX_.'htl_image` WHERE `id_hotel` = '.(int)$htl_id);
     }
 
     /**
@@ -135,48 +86,49 @@ class HotelImage extends ObjectModel
         );
     }
 
-    public function getImageLink($id, $type = null)
+    /**
+     * [validAddHotelMainImage :: To validate the image of the hotel before saving it]
+     * @param  [array] $image [variable having image information of the hotel]
+     * @return [boolean]        [returns true if image is valid]
+     */
+    public static function validateImage($image)
     {
-        return _PS_HOTEL_IMG_.self::getImageHotelId($id).'/'.$id.($type ? '-'.$type : '' ).'.'.$this->image_format;
-    }
-
-    public function getImagePath()
-    {
-        if (!$this->id) {
-            return false;
-        }
-
-        $path = $this->getImgFolder().$this->id;
-        return $path;
-    }
-
-    public function getImgFolder()
-    {
-        if ($this->id) {
-            if ($idHotel = self::getImageHotelId($this->id)) {
-                return $idHotel.'/';
+        if ($image['size'] > 0) {
+            if ($image['tmp_name'] != "") {
+                if (!ImageManager::isCorrectImageFileExt($image['name'])) {
+                    return true;
+                }
             }
+        } else {
+            return true;
         }
-
-        return false;
     }
 
-    public static function getImageHotelId($id)
+    public function uploadHotelImages($images, $idHotel, $destPath)
     {
-        return Db::getInstance()->getValue('
-            SELECT `id_hotel`
-            FROM `'._DB_PREFIX_.'htl_image`
-            WHERE  `id` = '. (int)$id
-        );
-    }
-
-    public function uploadHotelImages($images, $idHotel)
-    {
-        if (isset($images) && $idHotel) {
+        if (isset($images) && $idHotel && $destPath) {
             $objHotelHelper = new HotelHelper();
             $hotelImages  = $images['tmp_name'];
             if (is_array($images['tmp_name'])) {
                 foreach ($hotelImages as $image) {
+                    $randName = $objHotelHelper->generateRandomCode(8);
+                    $imageName = $randName.'.jpg';
+                    if (ImageManager::resize($image, $destPath.$imageName)) {
+                        $objHtlImage = new HotelImage();
+                        $objHtlImage->id_hotel = $idHotel;
+                        if ($coverImgExist = HotelImage::getCover($idHotel)) {
+                            $objHtlImage->cover = 0;
+                        } else {
+                            $objHtlImage->cover = 1;
+                        }
+                        $objHtlImage->hotel_image_id = $randName;
+                        $objHtlImage->save();
+                    }
+                }
+            } else {
+                $randName = $objHotelHelper->generateRandomCode(8);
+                $imageName = $randName.'.jpg';
+                if (ImageManager::resize($hotelImages, $destPath.$imageName)) {
                     $objHtlImage = new HotelImage();
                     $objHtlImage->id_hotel = $idHotel;
                     if ($coverImgExist = HotelImage::getCover($idHotel)) {
@@ -184,124 +136,20 @@ class HotelImage extends ObjectModel
                     } else {
                         $objHtlImage->cover = 1;
                     }
+                    $objHtlImage->hotel_image_id = $randName;
                     if ($objHtlImage->save()) {
-                        if ($path = $objHtlImage->getPathForCreation()) {
-                            if (ImageManager::resize(
-                                $image,
-                                $path.$objHtlImage->id.'.'.$objHtlImage->image_format
-                                )) {
-                                // add hotel images in all required sizes
-                                $imagesTypes = ImageType::getImagesTypes('hotels');
-                                $generate_hight_dpi_images = (bool)Configuration::get('PS_HIGHT_DPI');
-
-                                foreach ($imagesTypes as $imageType) {
-                                    if (!ImageManager::resize(
-                                        $image,
-                                        $path.$objHtlImage->id.'-'.stripslashes($imageType['name']).'.'.$objHtlImage->image_format,
-                                        $imageType['width'],
-                                        $imageType['height']
-                                    )) {
-                                        continue;
-                                    }
-
-                                    if ($generate_hight_dpi_images) {
-                                        if (!ImageManager::resize(
-                                            $image,
-                                            $path.$objHtlImage->id.'-'.stripslashes($imageType['name']).'.'.$objHtlImage->image_format,
-                                            (int)$imageType['width']*2,
-                                            (int)$imageType['height']*2
-                                        )) {
-                                            continue;
-                                        }
-                                    }
-                                }
-
-
-                            }
-                        }
-                    }
-                }
-            } else {
-                $objHtlImage = new HotelImage();
-                $objHtlImage->id_hotel = $idHotel;
-                if ($coverImgExist = HotelImage::getCover($idHotel)) {
-                    $objHtlImage->cover = 0;
-                } else {
-                    $objHtlImage->cover = 1;
-                }
-                if ($objHtlImage->save()) {
-                    if ($path = $objHtlImage->getPathForCreation()) {
-                        if (ImageManager::resize(
-                            $hotelImages,
-                            $path.$objHtlImage->id.'.'.$objHtlImage->image_format
-                        )) {
-                            $imagesTypes = ImageType::getImagesTypes('hotels');
-                            $generate_hight_dpi_images = (bool)Configuration::get('PS_HIGHT_DPI');
-                            foreach ($imagesTypes as $imageType) {
-                                if (!ImageManager::resize(
-                                    $hotelImages,
-                                    $path.$objHtlImage->id.'-'.stripslashes($imageType['name']).'.'.$objHtlImage->image_format,
-                                    $imageType['width'],
-                                    $imageType['height']
-                                )) {
-                                    continue;
-                                }
-
-                                if ($generate_hight_dpi_images) {
-                                    if (!ImageManager::resize(
-                                        $hotelImages,
-                                        $path.$objHtlImage->id.'-'.stripslashes($imageType['name']).'.'.$objHtlImage->image_format,
-                                        (int)$imageType['width']*2,
-                                        (int)$imageType['height']*2
-                                    )) {
-                                        continue;
-                                    }
-                                }
-                            }
-                            $addedImage = array(
-                                'id' => $objHtlImage->id,
-                                'cover' => $objHtlImage->cover,
-                                'image_link' => Context::getContext()->link->getMediaLink($objHtlImage->getImageLink($objHtlImage->id)),
-                            );
-                            return $addedImage;
-                        }
+                        $addedImage = array(
+                            'id_image' => $objHtlImage->id,
+                            'cover' => $objHtlImage->cover,
+                            'image_url' => Context::getContext()->link->getMediaLink(_MODULE_DIR_.'hotelreservationsystem/views/img/hotel_img/'.$randName.'.jpg'),
+                        );
+                        return $addedImage;
                     }
                 }
             }
             return true;
         }
         return false;
-    }
-
-    public function getPathForCreation()
-    {
-        if (!$this->id) {
-            return false;
-        }
-        $path = $this->getImgFolder();
-        $this->createImgFolder();
-        return _PS_HOTEL_IMG_DIR_.$path;
-    }
-
-    public function createImgFolder()
-    {
-        if (!$this->id) {
-            return false;
-        }
-
-        if (!file_exists(_PS_HOTEL_IMG_DIR_.$this->getImgFolder())) {
-            // Apparently sometimes mkdir cannot set the rights, and sometimes chmod can't. Trying both.
-            $success = @mkdir(_PS_HOTEL_IMG_DIR_.$this->getImgFolder(), self::$access_rights, true);
-            $chmod = @chmod(_PS_HOTEL_IMG_DIR_.$this->getImgFolder(), self::$access_rights);
-
-            // Create an index.php file in the new folder
-            if (($success || $chmod)
-                && !file_exists(_PS_HOTEL_IMG_DIR_.$this->getImgFolder().'index.php')
-                && file_exists($this->source_index)) {
-                return @copy($this->source_index, _PS_HOTEL_IMG_DIR_.$this->getImgFolder().'index.php');
-            }
-        }
-        return true;
     }
 
     public function getAllImages()

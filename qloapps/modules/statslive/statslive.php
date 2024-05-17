@@ -36,7 +36,7 @@ class StatsLive extends Module
     {
         $this->name = 'statslive';
         $this->tab = 'analytics_stats';
-        $this->version = '1.3.2';
+        $this->version = '1.3.1';
         $this->author = 'PrestaShop';
         $this->need_instance = 0;
 
@@ -89,7 +89,6 @@ class StatsLive extends Module
 					ORDER BY u.firstname, u.lastname';
         }
         $results = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
-		$this->updatePageTypeAlias($results);
 
         return array($results, Db::getInstance()->NumRows());
     }
@@ -131,19 +130,9 @@ class StatsLive extends Module
         }
 
         $results = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
-		$this->updatePageTypeAlias($results);
 
         return array($results, Db::getInstance()->NumRows());
     }
-
-	public function updatePageTypeAlias(&$result)
-	{
-		if (count($result)) {
-			foreach ($result as &$customer) {
-				$customer['page'] = Page::getPageTypeAlias($customer['page']);
-			}
-		}
-	}
 
     public function hookAdminStatsModules($params)
     {
@@ -155,8 +144,10 @@ class StatsLive extends Module
 			$("#calendar").remove();
 		</script>';
         if (!Configuration::get('PS_STATSDATA_CUSTOMER_PAGESVIEWS')) {
-			$link = $this->context->link->getAdminLink('AdminModules').'&configure=statsdata';
-			$this->html .= '<div class="alert alert-info text-left">'.$this->l('You must enable the "Save page views for each customer" option from ').'<u><a href="'.$link.'" target="_blank">Data mining for statistics</a></u>'.$this->l(' module in order to see the pages that your visitors are currently viewing.').'</div>';
+            $this->html .= '
+				<div class="alert alert-info">'.
+                $this->l('You must activate the "Save page views for each customer" option in the "Data mining for statistics" (StatsData) module in order to see the pages that your visitors are currently viewing.').'
+				</div>';
         }
         $this->html .= '
 			<h4> '.$this->l('Current online customers').'</h4>';
@@ -204,7 +195,7 @@ class StatsLive extends Module
 							<th class="center"><span class="title_box active">'.$this->l('IP').'</span></th>
 							<th class="center"><span class="title_box active">'.$this->l('Last activity').'</span></th>
 							<th class="center"><span class="title_box active">'.$this->l('Current page').'</span></th>
-							<th class="center"><span class="title_box active">'.$this->l('Referer').'</span></th>
+							<th class="center"><span class="title_box active">'.$this->l('Referrer').'</span></th>
 						</tr>
 					</thead>
 					<tbody>';

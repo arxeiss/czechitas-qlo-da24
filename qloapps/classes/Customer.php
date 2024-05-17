@@ -465,21 +465,6 @@ class CustomerCore extends ObjectModel
         return Cache::retrieve($cache_id);
     }
 
-    public static function getCustomerIdAddress($id_customer, $use_cache = true)
-    {
-        $cache_id = 'Customer::getCustomerIdAddress'.(int)$id_customer;
-        if (!$use_cache || !Cache::isStored($cache_id)) {
-            $sql = 'SELECT id_address
-					FROM `'._DB_PREFIX_.'address` a
-					WHERE `id_customer` = '.(int)$id_customer.' AND a.`deleted` = 0';
-
-            $result = Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue($sql);
-            Cache::store($cache_id, $result);
-            return $result;
-        }
-        return Cache::retrieve($cache_id);
-    }
-
     /**
      * Count the number of addresses for a customer
      *
@@ -528,16 +513,14 @@ class CustomerCore extends ObjectModel
      * @return array|false|mysqli_result|null|PDOStatement|resource Corresponding customers
      * @throws PrestaShopDatabaseException
      */
-    public static function searchByName($query, $limit = null, $skip_deleted = false)
+    public static function searchByName($query, $limit = null)
     {
         $sql_base = 'SELECT *
-        FROM `'._DB_PREFIX_.'customer`';
-        $where_deleted = $skip_deleted ? ' AND `deleted` = 0' : '';
-
-        $sql = '('.$sql_base.' WHERE `email` LIKE \'%'.pSQL($query).'%\' '.$where_deleted.Shop::addSqlRestriction(Shop::SHARE_CUSTOMER).')';
-        $sql .= ' UNION ('.$sql_base.' WHERE `id_customer` = '.(int)$query.' '.$where_deleted.Shop::addSqlRestriction(Shop::SHARE_CUSTOMER).')';
-        $sql .= ' UNION ('.$sql_base.' WHERE `lastname` LIKE \'%'.pSQL($query).'%\' '.$where_deleted.Shop::addSqlRestriction(Shop::SHARE_CUSTOMER).')';
-        $sql .= ' UNION ('.$sql_base.' WHERE `firstname` LIKE \'%'.pSQL($query).'%\' '.$where_deleted.Shop::addSqlRestriction(Shop::SHARE_CUSTOMER).')';
+				FROM `'._DB_PREFIX_.'customer`';
+        $sql = '('.$sql_base.' WHERE `email` LIKE \'%'.pSQL($query).'%\' '.Shop::addSqlRestriction(Shop::SHARE_CUSTOMER).')';
+        $sql .= ' UNION ('.$sql_base.' WHERE `id_customer` = '.(int)$query.' '.Shop::addSqlRestriction(Shop::SHARE_CUSTOMER).')';
+        $sql .= ' UNION ('.$sql_base.' WHERE `lastname` LIKE \'%'.pSQL($query).'%\' '.Shop::addSqlRestriction(Shop::SHARE_CUSTOMER).')';
+        $sql .= ' UNION ('.$sql_base.' WHERE `firstname` LIKE \'%'.pSQL($query).'%\' '.Shop::addSqlRestriction(Shop::SHARE_CUSTOMER).')';
 
         if ($limit) {
             $sql .= ' LIMIT 0, '.(int)$limit;
@@ -587,7 +570,7 @@ class CustomerCore extends ObjectModel
 		WHERE c.`id_customer` = '.(int)$this->id);
 
         $result['last_visit'] = $result2['last_visit'];
-        $result['age'] = (isset($result3['age']) && $result3['age'] != date('Y') ? $result3['age'] : '--');
+        $result['age'] = ($result3['age'] != date('Y') ? $result3['age'] : '--');
         return $result;
     }
 
@@ -745,7 +728,6 @@ class CustomerCore extends ObjectModel
         if (!$cart) {
             $cart = Context::getContext()->cart;
         }
-
         if (!$cart || !$cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')}) {
             $id_address = (int)Db::getInstance()->getValue('
 				SELECT `id_address`
@@ -756,13 +738,8 @@ class CustomerCore extends ObjectModel
         } else {
             $id_address = $cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')};
         }
-
         $ids = Address::getCountryAndState($id_address);
-        if (isset($ids['id_country']) && (int) $ids['id_country']) {
-            return (int) $ids['id_country'];
-        }
-
-        return (int) Configuration::get('PS_COUNTRY_DEFAULT');
+        return (int)$ids['id_country'] ? $ids['id_country'] : Configuration::get('PS_COUNTRY_DEFAULT');
     }
 
     public function toggleStatus()
@@ -798,7 +775,6 @@ class CustomerCore extends ObjectModel
         $this->passwd = Tools::encrypt($password);
         $this->cleanGroups();
         $this->addGroups(array(Configuration::get('PS_CUSTOMER_GROUP'))); // add default customer group
-        $this->id_default_group = (int) Configuration::get('PS_CUSTOMER_GROUP');
         if ($this->update()) {
             $vars = array(
                 '{firstname}' => $this->firstname,

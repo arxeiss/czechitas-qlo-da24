@@ -20,8 +20,7 @@
   <tab id="Administration" name="Adminisztráció"/>
   <tab id="Stats" name="Statisztika"/>
   <tab id="Stock" name="Készlet"/>
-  <tab id="Products" name="Szolgáltatási termékek kezelése"/>
-  <tab id="Room_Types" name="Szobatípusok kezelése"/>
+  <tab id="Products" name="Termék"/>
   <tab id="Categories" name="Kategóriák"/>
   <tab id="Monitoring" name="Monitoring"/>
   <tab id="Attributes_and_Values" name="Product Attributes"/>
@@ -60,7 +59,6 @@
   <tab id="Tax_Rules" name="Adószabályok"/>
   <tab id="Translations" name="Translations"/>
   <tab id="Modules_1" name="Modules and Services"/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id="Modules_Themes_Catalog" name="Modules &amp; Themes Catalog"/>
   <tab id="Positions" name="Positions"/>
   <tab id="Payment" name="Fizetés"/>

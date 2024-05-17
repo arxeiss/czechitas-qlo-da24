@@ -11,9 +11,6 @@
 	<configuration id="PS_ONE_PHONE_AT_LEAST" name="PS_ONE_PHONE_AT_LEAST">
 		<value>1</value>
 	</configuration>
-	<configuration id="PS_CART_FOLLOWING" name="PS_CART_FOLLOWING">
-		<value>1</value>
-	</configuration>
 	<configuration id="PS_CARRIER_DEFAULT" name="PS_CARRIER_DEFAULT">
 		<value>1</value>
 	</configuration>
@@ -59,9 +56,6 @@
 	<configuration id="PS_PRODUCTS_PER_PAGE" name="PS_PRODUCTS_PER_PAGE">
 		<value>12</value>
 	</configuration>
-	<configuration id="PS_HOTEL_IMAGES_PER_PAGE" name="PS_HOTEL_IMAGES_PER_PAGE">
-		<value>9</value>
-	</configuration>
 	<configuration id="PS_PURCHASE_MINIMUM" name="PS_PURCHASE_MINIMUM">
 		<value>0</value>
 	</configuration>
@@ -94,9 +88,6 @@
 	</configuration>
 	<configuration id="PS_NB_DAYS_NEW_PRODUCT" name="PS_NB_DAYS_NEW_PRODUCT">
 		<value>20</value>
-	</configuration>
-	<configuration id="PS_KPI_BEST_SELLING_ROOM_TYPE_NB_DAYS" name="PS_KPI_BEST_SELLING_ROOM_TYPE_NB_DAYS">
-		<value>30</value>
 	</configuration>
 	<configuration id="PS_SSL_ENABLED" name="PS_SSL_ENABLED">
 		<value>0</value>
@@ -221,9 +212,6 @@
 	<configuration id="PS_CONDITIONS_CMS_ID" name="PS_CONDITIONS_CMS_ID">
 		<value>3</value>
 	</configuration>
-	<configuration id="PS_ORDER_LIST_PRICE_DISPLAY_CURRENCY" name="PS_ORDER_LIST_PRICE_DISPLAY_CURRENCY">
-		<value>1</value>
-	</configuration>
 	<configuration id="TRACKING_DIRECT_TRAFFIC" name="TRACKING_DIRECT_TRAFFIC">
 		<value>0</value>
 	</configuration>
@@ -335,12 +323,6 @@
 	<configuration id="PS_GUEST_CHECKOUT_ENABLED" name="PS_GUEST_CHECKOUT_ENABLED">
 		<value>0</value>
 	</configuration>
-    <configuration id="PS_OVERBOOKING_ORDER_ACTION" name="PS_OVERBOOKING_ORDER_ACTION">
-		<value>1</value>
-	</configuration>
-    <configuration id="PS_MAX_OVERBOOKING_PER_HOTEL_PER_DAY" name="PS_MAX_OVERBOOKING_PER_HOTEL_PER_DAY">
-		<value>0</value>
-	</configuration>
 	<configuration id="PS_ORDER_CONF_MAIL_TO_CUSTOMER" name="PS_ORDER_CONF_MAIL_TO_CUSTOMER">
 		<value>1</value>
 	</configuration>
@@ -389,13 +371,13 @@
 	<configuration id="PS_BACKUP_DROP_TABLE" name="PS_BACKUP_DROP_TABLE">
 		<value>1</value>
 	</configuration>
-	<configuration id="PS_OS_AWAITING_PAYMENT" name="PS_OS_AWAITING_PAYMENT">
+	<configuration id="PS_OS_CHEQUE" name="PS_OS_CHEQUE">
 		<value>1</value>
 	</configuration>
-	<configuration id="PS_OS_PAYMENT_ACCEPTED" name="PS_OS_PAYMENT_ACCEPTED">
+	<configuration id="PS_OS_PAYMENT" name="PS_OS_PAYMENT">
 		<value>2</value>
 	</configuration>
-	<configuration id="PS_OS_PROCESSING" name="PS_OS_PROCESSING">
+	<configuration id="PS_OS_PREPARATION" name="PS_OS_PREPARATION">
 		<value>3</value>
 	</configuration>
 	<configuration id="PS_OS_CANCELED" name="PS_OS_CANCELED">
@@ -410,50 +392,29 @@
 	<configuration id="PS_OS_OUTOFSTOCK" name="PS_OS_OUTOFSTOCK">
 		<value>7</value>
 	</configuration>
-	<configuration id="PS_OS_OUTOFSTOCK_PAID" name="PS_OS_OUTOFSTOCK_PAID">
-		<value>7</value>
-	</configuration>
-	<configuration id="PS_OS_OVERBOOKING_PAID" name="PS_OS_OVERBOOKING_PAID">
-		<value>7</value>
-	</configuration>
-	<configuration id="PS_OS_PARTIAL_PAYMENT_ACCEPTED" name="PS_OS_PARTIAL_PAYMENT_ACCEPTED">
+	<configuration id="PS_OS_BANKWIRE" name="PS_OS_BANKWIRE">
 		<value>8</value>
 	</configuration>
-	<!-- <configuration id="PS_OS_BANKWIRE" name="PS_OS_BANKWIRE">
-		<value>8</value>
-	</configuration> -->
-	<!-- <configuration id="PS_OS_PAYPAL" name="PS_OS_PAYPAL">
-		<value>9</value>
-	</configuration> -->
-	<configuration id="PS_OS_AWAITING_REMOTE_PAYMENT" name="PS_OS_AWAITING_REMOTE_PAYMENT">
+	<configuration id="PS_OS_PAYPAL" name="PS_OS_PAYPAL">
 		<value>9</value>
 	</configuration>
 	<configuration id="PS_OS_WS_PAYMENT" name="PS_OS_WS_PAYMENT">
 		<value>10</value>
 	</configuration>
-	<configuration id="PS_OS_REMOTE_PAYMENT_ACCEPTED" name="PS_OS_REMOTE_PAYMENT_ACCEPTED">
-		<value>10</value>
+	<configuration id="PS_OS_OUTOFSTOCK_PAID" name="PS_OS_OUTOFSTOCK_PAID">
+		<value>7</value>
 	</configuration>
 	<configuration id="PS_OS_OUTOFSTOCK_UNPAID" name="PS_OS_OUTOFSTOCK_UNPAID">
 		<value>11</value>
 	</configuration>
-	<configuration id="PS_OS_OVERBOOKING_UNPAID" name="PS_OS_OVERBOOKING_UNPAID">
-		<value>11</value>
-	</configuration>
-    <configuration id="PS_OS_OVERBOOKING_PARTIAL_PAID" name="PS_OS_OVERBOOKING_PARTIAL_PAID">
+	<configuration id="PS_OS_AWAITING_REMOTE_PAYMENT" name="PS_OS_AWAITING_REMOTE_PAYMENT">
 		<value>12</value>
 	</configuration>
-	<!-- <configuration id="PS_OS_AWAITING_PARTIAL_PAYMENT" name="PS_OS_AWAITING_PARTIAL_PAYMENT">
+	<configuration id="PS_OS_AWAITING_PARTIAL_PAYMENT" name="PS_OS_AWAITING_PARTIAL_PAYMENT">
 		<value>13</value>
-	</configuration> -->
-	<configuration id="PS_ORS_PENDING" name="PS_ORS_PENDING">
-		<value>1</value>
 	</configuration>
-	<configuration id="PS_ORS_DENIED" name="PS_ORS_DENIED">
-		<value>2</value>
-	</configuration>
-	<configuration id="PS_ORS_REFUNDED" name="PS_ORS_REFUNDED">
-		<value>3</value>
+	<configuration id="PS_OS_PARTIAL_PAYMENT" name="PS_OS_PARTIAL_PAYMENT">
+		<value>14</value>
 	</configuration>
 	<configuration id="PS_LEGACY_IMAGES" name="PS_LEGACY_IMAGES">
 		<value>0</value>
@@ -472,9 +433,6 @@
 	</configuration>
 	<configuration id="PS_COOKIE_LIFETIME_BO" name="PS_COOKIE_LIFETIME_BO">
 		<value>480</value>
-	</configuration>
-	<configuration id="PS_COOKIE_SAMESITE" name="PS_COOKIE_SAMESITE">
-		<value>Lax</value>
 	</configuration>
 	<configuration id="PS_RESTRICT_DELIVERED_COUNTRIES" name="PS_RESTRICT_DELIVERED_COUNTRIES">
 		<value>0</value>
@@ -647,71 +605,29 @@
 	<configuration id="BLOCKTAGS_NBR" name="BLOCKTAGS_NBR">
 		<value>10</value>
 	</configuration>
-	<configuration id="HOTEL_CHECKUP_DESCRIPTIONS_LT" name="HOTEL_CHECKUP_DESCRIPTIONS_LT">
+	<configuration id="CHECKUP_DESCRIPTIONS_LT" name="CHECKUP_DESCRIPTIONS_LT">
 		<value>100</value>
 	</configuration>
-	<configuration id="HOTEL_CHECKUP_DESCRIPTIONS_GT" name="HOTEL_CHECKUP_DESCRIPTIONS_GT">
+	<configuration id="CHECKUP_DESCRIPTIONS_GT" name="CHECKUP_DESCRIPTIONS_GT">
 		<value>400</value>
 	</configuration>
-	<configuration id="HOTEL_CHECKUP_IMAGES_LT" name="HOTEL_CHECKUP_IMAGES_LT">
+	<configuration id="CHECKUP_IMAGES_LT" name="CHECKUP_IMAGES_LT">
 		<value>1</value>
 	</configuration>
-	<configuration id="HOTEL_CHECKUP_IMAGES_GT" name="HOTEL_CHECKUP_IMAGES_GT">
+	<configuration id="CHECKUP_IMAGES_GT" name="CHECKUP_IMAGES_GT">
 		<value>2</value>
 	</configuration>
-	<configuration id="HOTEL_CHECKUP_ORDERS_LT" name="HOTEL_CHECKUP_ORDERS_LT">
+	<configuration id="CHECKUP_SALES_LT" name="CHECKUP_SALES_LT">
 		<value>1</value>
 	</configuration>
-	<configuration id="HOTEL_CHECKUP_ORDERS_GT" name="HOTEL_CHECKUP_ORDERS_GT">
+	<configuration id="CHECKUP_SALES_GT" name="CHECKUP_SALES_GT">
 		<value>2</value>
 	</configuration>
-	<configuration id="HOTEL_CHECKUP_TOTAL_ROOMS_LT" name="HOTEL_CHECKUP_TOTAL_ROOMS_LT">
+	<configuration id="CHECKUP_STOCK_LT" name="CHECKUP_STOCK_LT">
 		<value>1</value>
 	</configuration>
-	<configuration id="HOTEL_CHECKUP_TOTAL_ROOMS_GT" name="HOTEL_CHECKUP_TOTAL_ROOMS_GT">
+	<configuration id="CHECKUP_STOCK_GT" name="CHECKUP_STOCK_GT">
 		<value>3</value>
-	</configuration>
-	<configuration id="ROOM_TYPE_CHECKUP_DESCRIPTIONS_LT" name="ROOM_TYPE_CHECKUP_DESCRIPTIONS_LT">
-		<value>100</value>
-	</configuration>
-	<configuration id="ROOM_TYPE_CHECKUP_DESCRIPTIONS_GT" name="ROOM_TYPE_CHECKUP_DESCRIPTIONS_GT">
-		<value>400</value>
-	</configuration>
-	<configuration id="ROOM_TYPE_CHECKUP_IMAGES_LT" name="ROOM_TYPE_CHECKUP_IMAGES_LT">
-		<value>1</value>
-	</configuration>
-	<configuration id="ROOM_TYPE_CHECKUP_IMAGES_GT" name="ROOM_TYPE_CHECKUP_IMAGES_GT">
-		<value>2</value>
-	</configuration>
-	<configuration id="ROOM_TYPE_CHECKUP_ORDERS_LT" name="ROOM_TYPE_CHECKUP_ORDERS_LT">
-		<value>1</value>
-	</configuration>
-	<configuration id="ROOM_TYPE_CHECKUP_ORDERS_GT" name="ROOM_TYPE_CHECKUP_ORDERS_GT">
-		<value>2</value>
-	</configuration>
-	<configuration id="ROOM_TYPE_CHECKUP_TOTAL_ROOMS_LT" name="ROOM_TYPE_CHECKUP_TOTAL_ROOMS_LT">
-		<value>1</value>
-	</configuration>
-	<configuration id="ROOM_TYPE_CHECKUP_TOTAL_ROOMS_GT" name="ROOM_TYPE_CHECKUP_TOTAL_ROOMS_GT">
-		<value>3</value>
-	</configuration>
-	<configuration id="SERVICE_CHECKUP_DESCRIPTIONS_SHORT_LT" name="SERVICE_CHECKUP_DESCRIPTIONS_SHORT_LT">
-		<value>50</value>
-	</configuration>
-	<configuration id="SERVICE_CHECKUP_DESCRIPTIONS_SHORT_GT" name="SERVICE_CHECKUP_DESCRIPTIONS_GT">
-		<value>150</value>
-	</configuration>
-	<configuration id="SERVICE_CHECKUP_IMAGES_LT" name="SERVICE_CHECKUP_IMAGES_LT">
-		<value>1</value>
-	</configuration>
-	<configuration id="SERVICE_CHECKUP_IMAGES_GT" name="SERVICE_CHECKUP_IMAGES_GT">
-		<value>2</value>
-	</configuration>
-	<configuration id="SERVICE_CHECKUP_ORDERS_LT" name="SERVICE_CHECKUP_ORDERS_LT">
-		<value>1</value>
-	</configuration>
-	<configuration id="SERVICE_CHECKUP_ORDERS_GT" name="SERVICE_CHECKUP_ORDERS_GT">
-		<value>2</value>
 	</configuration>
 	<configuration id="FOOTER_CMS" name="FOOTER_CMS">
 		<value>0_3|0_4</value>
@@ -724,6 +640,9 @@
 	</configuration>
 	<configuration id="BLOCKADVERT_LINK" name="BLOCKADVERT_LINK">
 		<value>http://www.qloapps.com</value>
+	</configuration>
+	<configuration id="BLOCKSTORE_IMG" name="BLOCKSTORE_IMG">
+		<value>store.jpg</value>
 	</configuration>
 	<configuration id="BLOCKADVERT_IMG_EXT" name="BLOCKADVERT_IMG_EXT">
 		<value>jpg</value>
@@ -739,6 +658,26 @@
 	</configuration>
 	<configuration id="blocksocial_twitter" name="BLOCKSOCIAL_TWITTER">
 		<value>http://www.twitter.com/qloapps</value>
+	</configuration>
+	<configuration id="blockcontactinfos_company" name="BLOCKCONTACTINFOS_COMPANY">
+		<value>Your company</value>
+	</configuration>
+	<configuration id="blockcontactinfos_address" name="BLOCKCONTACTINFOS_ADDRESS">
+		<value>Address line 1
+City
+Country</value>
+	</configuration>
+	<configuration id="blockcontactinfos_phone" name="BLOCKCONTACTINFOS_PHONE">
+		<value>0123-456-789</value>
+	</configuration>
+	<configuration id="blockcontactinfos_email" name="BLOCKCONTACTINFOS_EMAIL">
+		<value>pub@qloapps.com</value>
+	</configuration>
+	<configuration id="blockcontact_telnumber" name="BLOCKCONTACT_TELNUMBER">
+		<value>0123-456-789</value>
+	</configuration>
+	<configuration id="blockcontact_email" name="BLOCKCONTACT_EMAIL">
+		<value>pub@qloapps.com</value>
 	</configuration>
 	<configuration id="SUPPLIER_DISPLAY_TEXT" name="SUPPLIER_DISPLAY_TEXT">
 		<value>1</value>
@@ -760,6 +699,18 @@
 	</configuration>
 	<configuration id="BLOCKREINSURANCE_NBBLOCKS" name="BLOCKREINSURANCE_NBBLOCKS">
 		<value>5</value>
+	</configuration>
+	<configuration id="HOMESLIDER_WIDTH" name="HOMESLIDER_WIDTH">
+		<value>535</value>
+	</configuration>
+	<configuration id="HOMESLIDER_SPEED" name="HOMESLIDER_SPEED">
+		<value>1300</value>
+	</configuration>
+	<configuration id="HOMESLIDER_PAUSE" name="HOMESLIDER_PAUSE">
+		<value>7700</value>
+	</configuration>
+	<configuration id="HOMESLIDER_LOOP" name="HOMESLIDER_LOOP">
+		<value>1</value>
 	</configuration>
 	<configuration id="PS_BASE_DISTANCE_UNIT" name="PS_BASE_DISTANCE_UNIT">
 		<value>m</value>
@@ -796,12 +747,6 @@
 	</configuration>
 	<configuration id="PS_HOME_CATEGORY" name="PS_HOME_CATEGORY">
 		<value>2</value>
-	</configuration>
-	<configuration id="PS_LOCATIONS_CATEGORY" name="PS_LOCATIONS_CATEGORY">
-		<value>3</value>
-	</configuration>
-	<configuration id="PS_SERVICE_CATEGORY" name="PS_SERVICE_CATEGORY">
-		<value>4</value>
 	</configuration>
 	<configuration id="PS_CONFIGURATION_AGREMENT" name="PS_CONFIGURATION_AGREMENT">
 		<value>0</value>
@@ -887,32 +832,11 @@
 	<configuration id="PS_LOG_EMAILS" name="PS_LOG_EMAILS">
 		<value>1</value>
 	</configuration>
-	<configuration id="PS_CUSTOMER_BIRTHDATE" name="PS_CUSTOMER_BIRTHDATE">
-		<value>1</value>
-	</configuration>
 	<configuration id="PS_CUSTOMER_NWSL" name="PS_CUSTOMER_NWSL">
 		<value>1</value>
 	</configuration>
 	<configuration id="PS_CUSTOMER_OPTIN" name="PS_CUSTOMER_OPTIN">
 		<value>1</value>
-	</configuration>
-	<configuration id="PS_KPI_FREQUENT_CUSTOMER_NB_ORDERS" name="PS_KPI_FREQUENT_CUSTOMER_NB_ORDERS">
-		<value>5</value>
-	</configuration>
-	<configuration id="PS_KPI_REVPAC_NB_DAYS" name="PS_KPI_REVPAC_NB_DAYS">
-		<value>30</value>
-	</configuration>
-	<configuration id="PS_KPI_CONVERSION_RATE_NB_DAYS" name="PS_KPI_CONVERSION_RATE_NB_DAYS">
-		<value>30</value>
-	</configuration>
-    <configuration id="PS_ORDER_KPI_AVG_ORDER_VALUE_NB_DAYS" name="PS_ORDER_KPI_AVG_ORDER_VALUE_NB_DAYS">
-		<value>30</value>
-	</configuration>
-    <configuration id="PS_ORDER_KPI_PER_VISITOR_PROFIT_NB_DAYS" name="PS_ORDER_KPI_PER_VISITOR_PROFIT_NB_DAYS">
-		<value>30</value>
-	</configuration>
-	<configuration id="PS_KPI_NEW_CUSTOMERS_NB_DAYS" name="PS_KPI_NEW_CUSTOMERS_NB_DAYS">
-		<value>30</value>
 	</configuration>
 	<configuration id="PS_PACK_STOCK_TYPE" name="PS_PACK_STOCK_TYPE">
 		<value>0</value>
@@ -930,15 +854,6 @@
       <value>2</value>
     </configuration>
     <configuration id="PS_ADVANCED_PAYMENT_API" name="PS_ADVANCED_PAYMENT_API">
-      <value>0</value>
-    </configuration>
-	<configuration id="PS_SERVICE_PRODUCT_CATEGORY_FILTER" name="PS_SERVICE_PRODUCT_CATEGORY_FILTER">
-      <value>1</value>
-    </configuration>
-	<configuration id="PS_BACKDATE_ORDER_SUPERADMIN" name="PS_BACKDATE_ORDER_SUPERADMIN">
-      <value>1</value>
-    </configuration>
-	<configuration id="PS_BACKDATE_ORDER_EMPLOYEES" name="PS_BACKDATE_ORDER_EMPLOYEES">
       <value>0</value>
     </configuration>
   </entities>

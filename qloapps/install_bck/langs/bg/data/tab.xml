@@ -20,8 +20,7 @@
   <tab id="Administration" name="Администрация"/>
   <tab id="Stats" name="Статистика"/>
   <tab id="Stock" name="Стока"/>
-  <tab id="Products" name="Управление на сервизни продукти"/>
-  <tab id="Room_Types" name="Управление на типове стаи"/>
+  <tab id="Products" name="Продукти"/>
   <tab id="Categories" name="Категории"/>
   <tab id="Monitoring" name="Мониторинг"/>
   <tab id="Attributes_and_Values" name="Атрибути на продукт"/>
@@ -60,7 +59,6 @@
   <tab id="Tax_Rules" name="Данъчни правила"/>
   <tab id="Translations" name="Преводи"/>
   <tab id="Modules_1" name="Модули и услуги"/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id="Modules_Themes_Catalog" name="Каталог с модули и теми"/>
   <tab id="Positions" name="Разположение"/>
   <tab id="Payment" name="Плащане"/>

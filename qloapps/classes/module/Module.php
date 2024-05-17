@@ -42,7 +42,7 @@ abstract class ModuleCore
     /** @var array filled with known compliant PS versions */
     public $ps_versions_compliancy = array();
 
-    /** @var array filled with known compliant QloApps versions */
+    /** @var array filled with known compliant Qloapps versions */
     public $qloapps_versions_compliancy = array();
 
     /** @var array filled with modules needed for install */
@@ -171,23 +171,17 @@ abstract class ModuleCore
 
     const CACHE_FILE_TAB_MODULES_LIST = '/config/xml/tab_modules_list.xml';
 
-    // const CACHE_FILE_ALL_COUNTRY_MODULES_LIST     = '/config/xml/modules_native_addons.xml';
+    const CACHE_FILE_ALL_COUNTRY_MODULES_LIST     = '/config/xml/modules_native_addons.xml';
     const CACHE_FILE_DEFAULT_COUNTRY_MODULES_LIST = '/config/xml/default_country_modules_list.xml';
 
     const CACHE_FILE_CUSTOMER_MODULES_LIST = '/config/xml/customer_modules_list.xml';
 
     const CACHE_FILE_MUST_HAVE_MODULES_LIST = '/config/xml/must_have_modules_list.xml';
 
-    const CACHE_FILE_ADDONS_MODULES_LIST = '/config/xml/addons_modules_list.xml';
-
     const CACHE_FILE_TRUSTED_MODULES_LIST = '/config/xml/trusted_modules_list.xml';
     const CACHE_FILE_UNTRUSTED_MODULES_LIST = '/config/xml/untrusted_modules_list.xml';
 
     public static $hosted_modules_blacklist = array('autoupgrade');
-
-    const OVERRIDE_TYPE_CORE = 1;
-    const OVERRIDE_TYPE_MODULE = 2;
-    const OVERRIDE_TYPE_MODULE_CONTROLLER = 3;
 
     /**
      * Set the flag to indicate we are doing an import
@@ -257,7 +251,7 @@ abstract class ModuleCore
             $this->ps_versions_compliancy['max'] .= '.999.999';
         }
 
-        // for QloApps version compliancy
+        // for Qloapps version compliancy
         if (isset($this->qloapps_versions_compliancy) && !isset($this->qloapps_versions_compliancy['min'])) {
             $this->qloapps_versions_compliancy['min'] = '0.9.0.0';
         }
@@ -349,7 +343,7 @@ abstract class ModuleCore
 
         // Check PS version compliancy
         if (!$this->checkCompliancy()) {
-            $this->_errors[] = Tools::displayError('The version of your module is not compliant with your QloApps version.');
+            $this->_errors[] = Tools::displayError('The version of your module is not compliant with your Qloapps version.');
             return false;
         }
 
@@ -1265,16 +1259,6 @@ abstract class ModuleCore
         return Translate::getModuleTranslation((string)$xml_module->name, Module::configXmlStringFormat($xml_module->displayName), (string)$xml_module->name);
     }
 
-    public static function getModuleInstallVersion($module)
-    {
-        return Db::getInstance()->getRow('
-		SELECT m.`name`, m.`version`, mp.`interest`, module_shop.`enable_device`
-		FROM `'._DB_PREFIX_.'module` m
-		'.Shop::addSqlAssociation('module', 'm', false).'
-		LEFT JOIN `'._DB_PREFIX_.'module_preference` mp ON (mp.`module` = m.`name` AND mp.`id_employee` = '.(int)$id_employee.')
-        WHERE m.`name` = "'.pSQL($module).'"');
-    }
-
     protected static function useTooMuchMemory()
     {
         $memory_limit = Tools::getMemoryLimit();
@@ -1313,7 +1297,7 @@ abstract class ModuleCore
         $result = Db::getInstance()->executeS('
 		SELECT m.name, m.version, mp.interest, module_shop.enable_device
 		FROM `'._DB_PREFIX_.'module` m
-		'.Shop::addSqlAssociation('module', 'm', false).'
+		'.Shop::addSqlAssociation('module', 'm').'
 		LEFT JOIN `'._DB_PREFIX_.'module_preference` mp ON (mp.`module` = m.`name` AND mp.`id_employee` = '.(int)$id_employee.')');
         foreach ($result as $row) {
             $modules_installed[$row['name']] = $row;
@@ -1380,22 +1364,7 @@ abstract class ModuleCore
 
                     $item->active = 0;
                     $item->onclick_option = false;
-                    $item->url = false;
-                    $item->trusted = Module::isModuleTrusted($item->name, false);
-                    $item->is_native = false;
-
-                    if (defined('_PS_HOST_MODE_') && in_array($item->name, self::$hosted_modules_blacklist)) {
-                        continue;
-                    } elseif (isset($modules_installed[$item->name])) {
-                        $item->installed = true;
-                        $item->database_version = $modules_installed[$item->name]['version'];
-                        $item->interest = $modules_installed[$item->name]['interest'];
-                        $item->enable_device = $modules_installed[$item->name]['enable_device'];
-                    } else {
-                        $item->installed = false;
-                        $item->database_version = 0;
-                        $item->interest = 0;
-                    }
+                    $item->trusted = Module::isModuleTrusted($item->name);
 
                     $module_list[] = $item;
 
@@ -1448,7 +1417,7 @@ abstract class ModuleCore
                     $item->is_configurable = $tmp_module->is_configurable = method_exists($tmp_module, 'getContent') ? 1 : 0;
                     $item->need_instance = isset($tmp_module->need_instance) ? $tmp_module->need_instance : 0;
                     $item->active = $tmp_module->active;
-                    $item->trusted = Module::isModuleTrusted($tmp_module->name, false);
+                    $item->trusted = Module::isModuleTrusted($tmp_module->name);
                     $item->currencies = isset($tmp_module->currencies) ? $tmp_module->currencies : null;
                     $item->currencies_mode = isset($tmp_module->currencies_mode) ? $tmp_module->currencies_mode : null;
                     $item->confirmUninstall = isset($tmp_module->confirmUninstall) ? html_entity_decode($tmp_module->confirmUninstall) : null;
@@ -1460,7 +1429,6 @@ abstract class ModuleCore
                     $item->badges = isset($tmp_module->badges) ? (array)$tmp_module->badges : null;
                     $item->url = isset($tmp_module->url) ? $tmp_module->url : null;
                     $item->onclick_option  = method_exists($module, 'onclickOption') ? true : false;
-                    $item->is_native = false;
 
                     if ($item->onclick_option) {
                         $href = Context::getContext()->link->getAdminLink('Module', true).'&module_name='.$tmp_module->name.'&tab_module='.$tmp_module->tab;
@@ -1470,19 +1438,6 @@ abstract class ModuleCore
                         foreach ($option_tab as $opt) {
                             $item->onclick_option_content[$opt] = $tmp_module->onclickOption($opt, $href);
                         }
-                    }
-
-                    if (defined('_PS_HOST_MODE_') && in_array($item->name, self::$hosted_modules_blacklist)) {
-                        continue;
-                    } elseif (isset($modules_installed[$item->name])) {
-                        $item->installed = true;
-                        $item->database_version = $modules_installed[$item->name]['version'];
-                        $item->interest = $modules_installed[$item->name]['interest'];
-                        $item->enable_device = $modules_installed[$item->name]['enable_device'];
-                    } else {
-                        $item->installed = false;
-                        $item->database_version = 0;
-                        $item->interest = 0;
                     }
 
                     $module_list[] = $item;
@@ -1518,43 +1473,21 @@ abstract class ModuleCore
                 }
             }
         }
-
-        $files_list = array(
-            array('type' => 'addonsModules', 'file' => _PS_ROOT_DIR_.self::CACHE_FILE_ADDONS_MODULES_LIST, 'loggedOnAddons' => 0),
-            array('type' => 'addonsNative', 'file' => _PS_ROOT_DIR_.self::CACHE_FILE_DEFAULT_COUNTRY_MODULES_LIST, 'loggedOnAddons' => 0),
-        );
-        foreach ($files_list as $f) {
-            if (file_exists($f['file']) && ($f['loggedOnAddons'] == 0 || $logged_on_addons)) {
-                if (Module::useTooMuchMemory()) {
-                    $errors[] = Tools::displayError('All modules cannot be loaded due to memory limit restrictions, please increase your memory_limit value on your server configuration');
-                    break;
-                }
-
-                $file = $f['file'];
-                $content = Tools::file_get_contents($file);
-                $xml = @simplexml_load_string($content, null, LIBXML_NOCDATA);
-                if ($xml && isset($xml->module)) {
-                    foreach ($xml->module as $modaddons) {
-                        $flag_found = 0;
-
-                        foreach ($module_list as $k => &$m) {
-                            if (Tools::strtolower($m->name) == Tools::strtolower($modaddons->name) && !isset($m->available_on_addons)) {
-                                $flag_found = 1;
-                                if ($m->version != $modaddons->version && version_compare($m->version, $modaddons->version) === -1) {
-                                    $module_list[$k]->version_addons = strip_tags((string)$modaddons->version);
-                                }
-                                $module_list[$k]->url = isset($modaddons->url) ? strip_tags((string)$modaddons->url) : null;
-
-                                if ($f['type'] == 'addonsNative') {
-                                    $module_list[$k]->is_native = true;
-                                }
-                            }
-                        }
-                    }
-                }
+        //INFO:: addons module are removed from the module lists
+        foreach ($module_list as $key => &$module) {
+            if (defined('_PS_HOST_MODE_') && in_array($module->name, self::$hosted_modules_blacklist)) {
+                unset($module_list[$key]);
+            } elseif (isset($modules_installed[$module->name])) {
+                $module->installed = true;
+                $module->database_version = $modules_installed[$module->name]['version'];
+                $module->interest = $modules_installed[$module->name]['interest'];
+                $module->enable_device = $modules_installed[$module->name]['enable_device'];
+            } else {
+                $module->installed = false;
+                $module->database_version = 0;
+                $module->interest = 0;
             }
         }
-
         usort($module_list, function ($a, $b) { return strnatcasecmp($a->displayName, $b->displayName); });
         if ($errors) {
             if (!isset(Context::getContext()->controller) && !Context::getContext()->controller->controller_name) {
@@ -1596,96 +1529,6 @@ abstract class ModuleCore
         return $module_list;
     }
 
-    public static function getInstalledModulesOnDisk($use_config = false, $logged_on_addons = false, $id_employee = false)
-    {
-        $modules = self::getModulesOnDisk($use_config, $logged_on_addons, $id_employee);
-        return array_filter($modules, function($m) {
-            return $m->installed;
-        });
-    }
-
-    public static function getSuggestedModules()
-    {
-        $files_list = array(
-            array('type' => 'addonsMustHave', 'file' => _PS_ROOT_DIR_.Module::CACHE_FILE_MUST_HAVE_MODULES_LIST, 'loggedOnAddons' => 0),
-            array('type' => 'addonsNative', 'file' => _PS_ROOT_DIR_.Module::CACHE_FILE_DEFAULT_COUNTRY_MODULES_LIST, 'loggedOnAddons' => 0),
-        );
-        $modulesOnDisk = Module::getModulesDirOnDisk();
-        $module_list = array();
-        foreach ($files_list as $f) {
-            $file = $f['file'];
-            $content = Tools::file_get_contents($file);
-            $xml = @simplexml_load_string($content, null, LIBXML_NOCDATA);
-            if ($xml && isset($xml->module)) {
-                foreach ($xml->module as $modaddons) {
-                    $item = new stdClass();
-                    $item->id = 0;
-                    $item->warning = '';
-                    $item->type = strip_tags((string)$f['type']);
-                    $item->name = strip_tags((string)$modaddons->name);
-                    $item->version = strip_tags((string)$modaddons->version);
-                    $item->tab = strip_tags((string)$modaddons->tab);
-                    $item->displayName = strip_tags((string)$modaddons->displayName);
-                    $item->description = stripslashes(strip_tags((string)$modaddons->description));
-                    $item->description_full = stripslashes(strip_tags((string)$modaddons->description_full));
-                    $item->author = strip_tags((string)$modaddons->author);
-                    $item->limited_countries = array();
-                    $item->parent_class = '';
-                    $item->onclick_option = false;
-                    $item->is_configurable = 0;
-                    $item->need_instance = 0;
-                    $item->not_on_disk = 1;
-                    $item->available_on_addons = 1;
-                    $item->trusted = Module::isModuleTrusted($item->name, false);
-                    $item->active = 0;
-                    $item->description_full = stripslashes($modaddons->description_full);
-                    $item->additional_description = isset($modaddons->additional_description) ? stripslashes($modaddons->additional_description) : null;
-                    $item->compatibility = isset($modaddons->compatibility) ? (array)$modaddons->compatibility : null;
-                    $item->nb_rates = isset($modaddons->nb_rates) ? (array)$modaddons->nb_rates : null;
-                    $item->avg_rate = isset($modaddons->avg_rate) ? (array)$modaddons->avg_rate : null;
-                    $item->badges = isset($modaddons->badges) ? (array)$modaddons->badges : null;
-                    $item->url = isset($modaddons->url) ? $modaddons->url : null;
-                    $item->is_native = false;
-
-                    if (!in_array($modaddons->name, $modulesOnDisk)) {
-                        if (isset($modaddons->img)) {
-                            if (!file_exists(_PS_TMP_IMG_DIR_.md5((int)$modaddons->id.'-'.$modaddons->name).'.jpg')) {
-                                if (!file_put_contents(_PS_TMP_IMG_DIR_.md5((int)$modaddons->id.'-'.$modaddons->name).'.jpg', Tools::file_get_contents($modaddons->img))) {
-                                    copy(_PS_IMG_DIR_.'404.gif', _PS_TMP_IMG_DIR_.md5((int)$modaddons->id.'-'.$modaddons->name).'.jpg');
-                                }
-                            }
-
-                            if (file_exists(_PS_TMP_IMG_DIR_.md5((int)$modaddons->id.'-'.$modaddons->name).'.jpg')) {
-                                $item->image = '../img/tmp/'.md5((int)$modaddons->id.'-'.$modaddons->name).'.jpg';
-                            }
-                        }
-                    }
-
-
-                    if ($item->type == 'addonsMustHave') {
-                        $item->addons_buy_url = strip_tags((string)$modaddons->url);
-                        $prices = (array)$modaddons->price;
-                        $id_default_currency = Configuration::get('PS_CURRENCY_DEFAULT');
-
-                        foreach ($prices as $currency => $price) {
-                            if ($id_currency = Currency::getIdByIsoCode($currency)) {
-                                $item->price = (float)$price;
-                                $item->id_currency = (int)$id_currency;
-
-                                if ($id_default_currency == $id_currency) {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    $module_list[$modaddons->id.'-'.$item->name] = $item;
-                }
-            }
-        }
-        $module_list = array_values($module_list);
-        return $module_list;
-    }
 
     /**
      * Return non native module
@@ -1705,7 +1548,7 @@ abstract class ModuleCore
         $arr_native_modules = array();
         if (is_array($native_modules)) {
             foreach ($native_modules as $native_modules_type) {
-                if (in_array($native_modules_type['type'], array('native', 'disk', 'partner'))) {
+                if (in_array($native_modules_type['type'], array('native', 'partner'))) {
                     $arr_native_modules[] = '""';
                     foreach ($native_modules_type->module as $module) {
                         $arr_native_modules[] = '"'.pSQL($module['name']).'"';
@@ -1767,74 +1610,6 @@ abstract class ModuleCore
         return Db::getInstance()->executeS($sql);
     }
 
-    public static function refreshModuleList($force_reload_cache = false)
-    {
-        $status = false;
-
-        if (!Tools::isFresh(Module::CACHE_FILE_MODULES_LIST, _TIME_1_DAY_) || $force_reload_cache) {
-            $xml_modules_list = _QLO_API_DOMAIN_.'/xml/'.str_replace('.', '', _QLOAPPS_VERSION_).'.xml';
-            if (Tools::refresh(Module::CACHE_FILE_MODULES_LIST, 'https://'.$xml_modules_list)) {
-                $status = 'refresh';
-            } elseif (Tools::refresh(Module::CACHE_FILE_MODULES_LIST, 'http://'.$xml_modules_list)) {
-                $status = 'refresh';
-            } else {
-                $status = 'error';
-            }
-        } else {
-            $status = 'cache';
-        }
-
-        if ($status != 'error') {
-            if (!Tools::isFresh(Module::CACHE_FILE_DEFAULT_COUNTRY_MODULES_LIST, _TIME_1_DAY_) || $force_reload_cache) {
-                if (file_put_contents(_PS_ROOT_DIR_.Module::CACHE_FILE_DEFAULT_COUNTRY_MODULES_LIST, Tools::addonsRequest('native'))) {
-                    $status = 'refresh';
-                } else {
-                    $status = 'error';
-                }
-            } else {
-                $status = 'cache';
-            }
-        }
-
-        if ($status != 'error') {
-            if (!Tools::isFresh(Module::CACHE_FILE_MUST_HAVE_MODULES_LIST, _TIME_1_DAY_) || $force_reload_cache) {
-                if (file_put_contents(_PS_ROOT_DIR_.Module::CACHE_FILE_MUST_HAVE_MODULES_LIST, Tools::addonsRequest('must-have'))) {
-                    $status = 'refresh';
-                } else {
-                    $status = 'error';
-                }
-            } else {
-                $status = 'cache';
-            }
-        }
-
-        if ($status != 'error') {
-            if (!Tools::isFresh(Module::CACHE_FILE_ADDONS_MODULES_LIST, _TIME_1_DAY_) || $force_reload_cache) {
-                if (file_put_contents(_PS_ROOT_DIR_.Module::CACHE_FILE_ADDONS_MODULES_LIST, Tools::addonsRequest('addons-modules'))) {
-                    $status = 'refresh';
-                } else {
-                    $status = 'error';
-                }
-            } else {
-                $status = 'cache';
-            }
-        }
-
-        if ($status != 'error') {
-            if (!Tools::isFresh(Module::CACHE_FILE_TAB_MODULES_LIST, _TIME_1_WEEK_)) {
-                if (Tools::refresh(Module::CACHE_FILE_TAB_MODULES_LIST, _QLO_TAB_MODULE_LIST_URL_)) {
-                    $status = 'refresh';
-                } else {
-                    $status = 'error';
-                }
-            } else {
-                $status = 'cache';
-            }
-        }
-
-        return $status;
-    }
-
     /**
      * Return if the module is provided by addons.prestashop.com or not
      *
@@ -1842,7 +1617,7 @@ abstract class ModuleCore
      * @param string $key The key provided by addons
      * @return int
      */
-    final public static function isModuleTrusted($module_name, $check_api = true)
+    final public static function isModuleTrusted($module_name)
     {
         static $trusted_modules_list_content = null;
         static $modules_list_content = null;
@@ -1856,7 +1631,7 @@ abstract class ModuleCore
         // we use the file, otherwise we regenerate it
         if (!(file_exists(_PS_ROOT_DIR_.self::CACHE_FILE_TRUSTED_MODULES_LIST)
             && filesize(_PS_ROOT_DIR_.self::CACHE_FILE_TRUSTED_MODULES_LIST) > 0
-            && ((time() - filemtime(_PS_ROOT_DIR_.self::CACHE_FILE_TRUSTED_MODULES_LIST)) < _TIME_1_DAY_)
+            && ((time() - filemtime(_PS_ROOT_DIR_.self::CACHE_FILE_TRUSTED_MODULES_LIST)) < 86400)
             )) {
             self::generateTrustedXml();
         }
@@ -1880,6 +1655,8 @@ abstract class ModuleCore
             $untrusted_modules_list_content = Tools::file_get_contents(_PS_ROOT_DIR_.self::CACHE_FILE_UNTRUSTED_MODULES_LIST);
         }
 
+        $objModule = Module::getInstanceByName($module_name);
+
         // If the module is trusted, which includes both partner modules and modules bought on Addons
 
         if (stripos($trusted_modules_list_content, $module_name) !== false) {
@@ -1892,6 +1669,9 @@ abstract class ModuleCore
             }
             // The module seems to be trusted, but it does not seem to be dedicated to this country
             return 2;
+        // Check if module is from webkul then it will be considered as trusted module
+        } elseif (isset($objModule->author) && (strtolower($objModule->author) == 'webkul')) {
+            return 1;
         } elseif (stripos($untrusted_modules_list_content, $module_name) !== false) {
             // If the module is already in the untrusted list, then return 0 (untrusted)
             return 0;
@@ -1899,11 +1679,10 @@ abstract class ModuleCore
             // If the module isn't in one of the xml files
             // It might have been uploaded recenlty so we check
             // Addons API and clear XML files to be regenerated next time
-            if ($check_api) {
-                Tools::deleteFile(_PS_ROOT_DIR_.self::CACHE_FILE_TRUSTED_MODULES_LIST);
-                Tools::deleteFile(_PS_ROOT_DIR_.self::CACHE_FILE_UNTRUSTED_MODULES_LIST);
-                return (int)Module::checkModuleFromAddonsApi($module_name);
-            }
+            Tools::deleteFile(_PS_ROOT_DIR_.self::CACHE_FILE_TRUSTED_MODULES_LIST);
+            Tools::deleteFile(_PS_ROOT_DIR_.self::CACHE_FILE_UNTRUSTED_MODULES_LIST);
+
+            return (int)Module::checkModuleFromAddonsApi($module_name);
         }
     }
 
@@ -1917,15 +1696,10 @@ abstract class ModuleCore
         $trusted   = array();
         $untrusted = array();
 
-        // before generating list first check if file exists and are updated
-        Module::refreshModuleList();
-
         $trusted_modules_xml = array(
-            // _PS_ROOT_DIR_.self::CACHE_FILE_ALL_COUNTRY_MODULES_LIST,
-            _PS_ROOT_DIR_.self::CACHE_FILE_DEFAULT_COUNTRY_MODULES_LIST,
-            _PS_ROOT_DIR_.self::CACHE_FILE_MUST_HAVE_MODULES_LIST,
-            _PS_ROOT_DIR_.self::CACHE_FILE_ADDONS_MODULES_LIST,
-        );
+                                    _PS_ROOT_DIR_.self::CACHE_FILE_ALL_COUNTRY_MODULES_LIST,
+                                    _PS_ROOT_DIR_.self::CACHE_FILE_MUST_HAVE_MODULES_LIST,
+                                );
 
         if (file_exists(_PS_ROOT_DIR_.self::CACHE_FILE_CUSTOMER_MODULES_LIST)) {
             $trusted_modules_xml[] = _PS_ROOT_DIR_.self::CACHE_FILE_CUSTOMER_MODULES_LIST;
@@ -2010,12 +1784,12 @@ abstract class ModuleCore
 
         if (!is_object($obj)) {
             return false;
-        // } elseif ($obj->module_key === '') {
-        //     return false;
+        } elseif ($obj->module_key === '') {
+            return false;
         } else {
             $params = array(
                 'module_name' => $obj->name,
-                // 'module_key' => $obj->module_key,
+                'module_key' => $obj->module_key,
             );
             $xml = Tools::addonsRequest('check_module', $params);
             return (bool)(strpos($xml, 'success') !== false);
@@ -2069,6 +1843,9 @@ abstract class ModuleCore
     public static function getPaymentModules()
     {
         $context = Context::getContext();
+        if (isset($context->cart)) {
+            $billing = new Address((int)$context->cart->id_address_invoice);
+        }
 
         $use_groups = Group::isFeatureActive();
 
@@ -2098,6 +1875,7 @@ abstract class ModuleCore
 		LEFT JOIN `'._DB_PREFIX_.'hook_module` hm ON hm.`id_module` = m.`id_module`
 		LEFT JOIN `'._DB_PREFIX_.'hook` h ON hm.`id_hook` = h.`id_hook`
 		WHERE h.`name` = \''.pSQL($hook_payment).'\'
+		'.(isset($billing) && $frontend ? 'AND mc.id_country = '.(int)$billing->id_country : '').'
 		AND (SELECT COUNT(*) FROM '._DB_PREFIX_.'module_shop ms WHERE ms.id_module = m.id_module AND ms.id_shop IN('.implode(', ', $list).')) = '.count($list).'
 		AND hm.id_shop IN('.implode(', ', $list).')
 		'.((count($groups) && $frontend && $use_groups) ? 'AND (mg.`id_group` IN ('.implode(', ', $groups).'))' : '').'
@@ -2124,13 +1902,13 @@ abstract class ModuleCore
      * @param bool|string $specific filename to use in translation key
      * @return string Translation
      */
-    public function l($string, $specific = false, $addslashes = false)
+    public function l($string, $specific = false)
     {
         if (self::$_generate_config_xml_mode) {
             return $string;
         }
 
-        return Translate::getModuleTranslation($this, $string, ($specific) ? $specific : $this->name, null, $addslashes);
+        return Translate::getModuleTranslation($this, $string, ($specific) ? $specific : $this->name);
     }
 
     /*
@@ -2873,34 +2651,6 @@ abstract class ModuleCore
         return true;
     }
 
-    public function getOverrides()
-    {
-        if (!is_dir($this->getLocalPath().'override')) {
-            return array();
-        }
-
-        $overrides = array();
-        foreach (Tools::scandir($this->getLocalPath().'override', 'php', '', true) as $file) {
-            $class = basename($file, '.php');
-            $classInfo = array('class' => $class, 'file' => $file, 'type' => null);
-            if (PrestaShopAutoload::getInstance()->getClassPath($class.'Core')) {
-                $classInfo['type'] = self::OVERRIDE_TYPE_CORE;
-            } elseif (Module::getModuleIdByName($class)) {
-                $classInfo['type'] = self::OVERRIDE_TYPE_MODULE;
-            } elseif (preg_match('#^modules/([a-zA-Z0-9_-]+)/controllers/(admin|front)/([0-9a-zA-Z-_]+).php#', $file, $matches)) {
-                $classInfo['type'] = self::OVERRIDE_TYPE_MODULE_CONTROLLER;
-                $classInfo['module'] = $matches[1];
-                $classInfo['controller_type'] = $matches[2];
-            }
-
-            if ($classInfo['type']) {
-                $overrides[] = $classInfo;
-            }
-        }
-
-        return $overrides;
-    }
-
     /**
      * Install overrides files for the module
      *
@@ -2913,9 +2663,10 @@ abstract class ModuleCore
         }
 
         $result = true;
-        if ($overrideClassInfos = $this->getOverrides()) {
-            foreach ($overrideClassInfos as $classInfo) {
-                $result &= $this->addOverride($classInfo);
+        foreach (Tools::scandir($this->getLocalPath().'override', 'php', '', true) as $file) {
+            $class = basename($file, '.php');
+            if (PrestaShopAutoload::getInstance()->getClassPath($class.'Core') || Module::getModuleIdByName($class)) {
+                $result &= $this->addOverride($class);
             }
         }
 
@@ -2934,9 +2685,10 @@ abstract class ModuleCore
         }
 
         $result = true;
-        if ($overrideClassInfos = $this->getOverrides()) {
-            foreach ($overrideClassInfos as $classInfo) {
-                $result &= $this->removeOverride($classInfo);
+        foreach (Tools::scandir($this->getLocalPath().'override', 'php', '', true) as $file) {
+            $class = basename($file, '.php');
+            if (PrestaShopAutoload::getInstance()->getClassPath($class.'Core') || Module::getModuleIdByName($class)) {
+                $result &= $this->removeOverride($class);
             }
         }
 
@@ -2949,50 +2701,28 @@ abstract class ModuleCore
      * @param string $classname
      * @return bool
      */
-    public function addOverride($classInfo)
+    public function addOverride($classname)
     {
-        $classname = $classInfo['class'];
-
-        $parentClassFilePath = '';
-        $overrideClassName = $classname;
-        if ($classInfo['type'] == self::OVERRIDE_TYPE_CORE) {
-            $parentClassFilePath = PrestaShopAutoload::getInstance()->getClassPath($classname.'Core');
-        } elseif ($classInfo['type'] == self::OVERRIDE_TYPE_MODULE) {
-            $parentClassFilePath = 'modules/'.$classname.'/'.$classname.'.php';
-
-            // require module main file
-            require_once _PS_ROOT_DIR_.'/'.$parentClassFilePath;
-            $overrideClassName = Tools::ucfirst($classname).'Override';
-        } elseif ($classInfo['type'] == self::OVERRIDE_TYPE_MODULE_CONTROLLER) {
-            $parentClassFilePath = $classInfo['file'];
-
-            // require module controller file
-            require_once _PS_ROOT_DIR_.'/'.$parentClassFilePath;
-            if ($classInfo['controller_type'] == 'admin') {
-                $overrideClassName = $classname.((strpos($classname, 'Controller') === false) ? 'Controller' : '').'Override';
-            } else {
-                $overrideClassName = Tools::ucfirst($classInfo['module']).Tools::ucfirst($classInfo['class']).'ModuleFrontControllerOverride';
-            }
+        $orig_path = $path = PrestaShopAutoload::getInstance()->getClassPath($classname.'Core');
+        if (!$path) {
+            $path = 'modules'.DIRECTORY_SEPARATOR.$classname.DIRECTORY_SEPARATOR.$classname.'.php';
         }
+        $path_override = $this->getLocalPath().'override'.DIRECTORY_SEPARATOR.$path;
 
-        // the file in module which contains override information (methods, properties and constants)
-        $moduleClassFilePath = $this->getLocalPath().'override/'.$parentClassFilePath;
-
-        if (!file_exists($moduleClassFilePath)) {
+        if (!file_exists($path_override)) {
             return false;
         } else {
-            // save $moduleClassFilePath file with consistent newline character, "\n"
-            file_put_contents($moduleClassFilePath, preg_replace('#(\r\n|\r)#ism', "\n", file_get_contents($moduleClassFilePath)));
+            file_put_contents($path_override, preg_replace('#(\r\n|\r)#ism', "\n", file_get_contents($path_override)));
         }
 
-        $patternEscapeCommon = '#(^\s*?\/\/.*?\n|\/\*(?!\n\s+\* module:.*?\* date:.*?\* version:.*?\*\/).*?\*\/)#ism';
-
-        $overrideClassFilePath = _PS_ROOT_DIR_.'/override/'.$parentClassFilePath;
-        // Case 1: Check if there is already an override file, if so, merge override information otherwise just copy it
-        if (file_exists($overrideClassFilePath)) {
+        $pattern_escape_com = '#(^\s*?\/\/.*?\n|\/\*(?!\n\s+\* module:.*?\* date:.*?\* version:.*?\*\/).*?\*\/)#ism';
+        // Check if there is already an override file, if not, we just need to copy the file
+        if ($file = PrestaShopAutoload::getInstance()->getClassPath($classname)) {
             // Check if override file is writable
-            if (!is_writable(dirname($overrideClassFilePath)) || !is_writable($overrideClassFilePath)) {
-                throw new Exception(sprintf(Tools::displayError('file (%s) not writable'), $overrideClassFilePath));
+            $override_path = _PS_ROOT_DIR_.'/'.$file;
+
+            if ((!file_exists($override_path) && !is_writable(dirname($override_path))) || (file_exists($override_path) && !is_writable($override_path))) {
+                throw new Exception(sprintf(Tools::displayError('file (%s) not writable'), $override_path));
             }
 
             // Get a uniq id for the class, because you can override a class (or remove the override) twice in the same session and we need to avoid redeclaration
@@ -3001,149 +2731,117 @@ abstract class ModuleCore
             } while (class_exists($classname.'OverrideOriginal_remove', false));
 
             // Make a reflection of the override class and the module override class
-            $overrideClassFileArray = file($overrideClassFilePath);
-            $overrideClassFileArray = array_diff($overrideClassFileArray, array("\n")); // remove empty lines from array
+            $override_file = file($override_path);
+            $override_file = array_diff($override_file, array("\n"));
+            eval(preg_replace(array('#^\s*<\?(?:php)?#', '#class\s+'.$classname.'\s+extends\s+([a-z0-9_]+)(\s+implements\s+([a-z0-9_]+))?#i'), array(' ', 'class '.$classname.'OverrideOriginal'.$uniq), implode('', $override_file)));
+            $override_class = new ReflectionClass($classname.'OverrideOriginal'.$uniq);
 
-            eval(
-                preg_replace(
-                    array(
-                        '#^\s*<\?(?:php)?#',
-                        '#class\s+'.$overrideClassName.'\s+extends\s+([a-z0-9_]+)(\s+implements\s+([a-z0-9_]+))?#i'
-                    ),
-                    array(
-                        ' ',
-                        'class '.$overrideClassName.'OverrideOriginal'.$uniq
-                    ),
-                    implode('', $overrideClassFileArray)
-                )
-            );
-            $reflectionClassOverride = new ReflectionClass($overrideClassName.'OverrideOriginal'.$uniq);
+            $module_file = file($path_override);
+            $module_file = array_diff($module_file, array("\n"));
+            eval(preg_replace(array('#^\s*<\?(?:php)?#', '#class\s+'.$classname.'(\s+extends\s+([a-z0-9_]+)(\s+implements\s+([a-z0-9_]+))?)?#i'), array(' ', 'class '.$classname.'Override'.$uniq), implode('', $module_file)));
+            $module_class = new ReflectionClass($classname.'Override'.$uniq);
 
-            $moduleClassFileArray = file($moduleClassFilePath);
-            $moduleClassFileArray = array_diff($moduleClassFileArray, array("\n")); // remove empty lines from array
-
-            eval(
-                preg_replace(
-                    array(
-                        '#^\s*<\?(?:php)?#',
-                        '#class\s+'.$overrideClassName.'(\s+extends\s+([a-z0-9_]+)(\s+implements\s+([a-z0-9_]+))?)?#i'
-                    ),
-                    array(
-                        ' ',
-                        'class '.$overrideClassName.'Override'.$uniq
-                    ),
-                    implode('', $moduleClassFileArray)
-                )
-            );
-            $reflectionClassModule = new ReflectionClass($overrideClassName.'Override'.$uniq);
-
-            $moduleClassFileArray = $this->getCommentedClass($moduleClassFileArray, $reflectionClassModule, $reflectionClassOverride, $overrideClassFileArray);
-
-            // Insert the methods from module override in override
-            $generatedCodeToCopy = array_slice($moduleClassFileArray, $reflectionClassModule->getStartLine() + 1, $reflectionClassModule->getEndLine() - $reflectionClassModule->getStartLine() - 2);
-
-            // Merge code with that in destination override file
-            array_splice($overrideClassFileArray, $reflectionClassOverride->getEndLine() - 1, 0, $generatedCodeToCopy);
-            $code = implode('', $overrideClassFileArray);
-
-            file_put_contents($overrideClassFilePath, preg_replace($patternEscapeCommon, '', $code));
-        } else {
-            // Case 2: Override file does not exist just copy override information (methods, properties and constants)
-            $baseDirectoryPath = dirname($overrideClassFilePath);
-
-            // Check if directory exists, if not, create
-            if (!is_dir($baseDirectoryPath)) {
-                $oldumask = umask(0000);
-                @mkdir($baseDirectoryPath, 0777, true); // create subdirectories if needed
-                umask($oldumask);
-            }
-
-            if (!is_writable($baseDirectoryPath)) {
-                throw new Exception(sprintf(Tools::displayError('directory (%s) not writable'), $baseDirectoryPath));
-            }
-
-            $moduleClassFileArray = file($moduleClassFilePath); // read file as array
-            $moduleClassFileArray = array_diff($moduleClassFileArray, array("\n")); // remove empty lines from array
-
-            do {
-                $uniq = uniqid();
-            } while (class_exists($classname.'OverrideOriginal_remove', false));
-
-            eval(
-                preg_replace(
-                    array(
-                        '#^\s*<\?(?:php)?#',
-                        '#class\s+'.$overrideClassName.'(\s+extends\s+([a-z0-9_]+)(\s+implements\s+([a-z0-9_]+))?)?#i'
-                    ),
-                    array(
-                        ' ',
-                        'class '.$overrideClassName.'Override'.$uniq
-                    ),
-                    implode('', $moduleClassFileArray)
-                )
-            );
-            $reflectionClassModule = new ReflectionClass($overrideClassName.'Override'.$uniq);
-
-            $moduleClassFileArray = $this->getCommentedClass($moduleClassFileArray, $reflectionClassModule);
-
-            file_put_contents($overrideClassFilePath, preg_replace($patternEscapeCommon, '', $moduleClassFileArray));
-
-            // Re-generate the class index
-            Tools::generateIndex();
-        }
-
-        return true;
-    }
-
-    private function getCommentedClass($moduleClassFileArray, $reflectionClassModule, $reflectionClassOverride = null, $overrideClassFileArray = null)
-    {
-        // Check if none of the methods already exists in the override class
-        foreach ($reflectionClassModule->getMethods() as $method) {
-            if ($reflectionClassOverride) {
-                if ($reflectionClassOverride->hasMethod($method->getName())) {
-                    $overrideMethodInfo = $reflectionClassOverride->getMethod($method->getName());
-                    if (preg_match('/module: (.*)/ism', $overrideClassFileArray[$overrideMethodInfo->getStartLine() - 5], $name) && preg_match('/date: (.*)/ism', $overrideClassFileArray[$overrideMethodInfo->getStartLine() - 4], $date) && preg_match('/version: ([0-9.]+)/ism', $overrideClassFileArray[$overrideMethodInfo->getStartLine() - 3], $version)) {
+            // Check if none of the methods already exists in the override class
+            foreach ($module_class->getMethods() as $method) {
+                if ($override_class->hasMethod($method->getName())) {
+                    $method_override = $override_class->getMethod($method->getName());
+                    if (preg_match('/module: (.*)/ism', $override_file[$method_override->getStartLine() - 5], $name) && preg_match('/date: (.*)/ism', $override_file[$method_override->getStartLine() - 4], $date) && preg_match('/version: ([0-9.]+)/ism', $override_file[$method_override->getStartLine() - 3], $version)) {
                         throw new Exception(sprintf(Tools::displayError('The method %1$s in the class %2$s is already overridden by the module %3$s version %4$s at %5$s.'), $method->getName(), $classname, $name[1], $version[1], $date[1]));
                     }
                     throw new Exception(sprintf(Tools::displayError('The method %1$s in the class %2$s is already overridden.'), $method->getName(), $classname));
                 }
+
+                $module_file = preg_replace('/((:?public|private|protected)\s+(static\s+)?function\s+(?:\b'.$method->getName().'\b))/ism', "/*\n    * module: ".$this->name."\n    * date: ".date('Y-m-d H:i:s')."\n    * version: ".$this->version."\n    */\n    $1", $module_file);
+                if ($module_file === null) {
+                    throw new Exception(sprintf(Tools::displayError('Failed to override method %1$s in class %2$s.'), $method->getName(), $classname));
+                }
             }
 
-            $moduleClassFileArray = preg_replace('/((:?public|private|protected)\s+(static\s+)?function\s+(?:\b'.$method->getName().'\b))/ism', "/*\n    * module: ".$this->name."\n    * date: ".date('Y-m-d H:i:s')."\n    * version: ".$this->version."\n    */\n    $1", $moduleClassFileArray);
-            if ($moduleClassFileArray === null) {
-                throw new Exception(sprintf(Tools::displayError('Failed to override method %1$s in class %2$s.'), $method->getName(), $classname));
-            }
-        }
-
-        // Check if none of the properties already exists in the override class
-        foreach ($reflectionClassModule->getProperties() as $property) {
-            if ($reflectionClassOverride) {
-                if ($reflectionClassOverride->hasProperty($property->getName())) {
+            // Check if none of the properties already exists in the override class
+            foreach ($module_class->getProperties() as $property) {
+                if ($override_class->hasProperty($property->getName())) {
                     throw new Exception(sprintf(Tools::displayError('The property %1$s in the class %2$s is already defined.'), $property->getName(), $classname));
                 }
-            }
 
-            $moduleClassFileArray = preg_replace('/((?:public|private|protected)\s)\s*(static\s)?\s*(\$\b'.$property->getName().'\b)/ism', "/*\n    * module: ".$this->name."\n    * date: ".date('Y-m-d H:i:s')."\n    * version: ".$this->version."\n    */\n    $1$2$3", $moduleClassFileArray);
-            if ($moduleClassFileArray === null) {
-                throw new Exception(sprintf(Tools::displayError('Failed to override property %1$s in class %2$s.'), $property->getName(), $classname));
-            }
-        }
-
-        // Check if none of the constants already exists in the override class
-        foreach ($reflectionClassModule->getConstants() as $constant => $value) {
-            if ($reflectionClassOverride) {
-                if ($reflectionClassOverride->hasConstant($constant)) {
-                    throw new Exception(sprintf(Tools::displayError('The constant %1$s in the class %2$s is already defined.'), $constant, $classname));
+                $module_file = preg_replace('/((?:public|private|protected)\s)\s*(static\s)?\s*(\$\b'.$property->getName().'\b)/ism', "/*\n    * module: ".$this->name."\n    * date: ".date('Y-m-d H:i:s')."\n    * version: ".$this->version."\n    */\n    $1$2$3", $module_file);
+                if ($module_file === null) {
+                    throw new Exception(sprintf(Tools::displayError('Failed to override property %1$s in class %2$s.'), $property->getName(), $classname));
                 }
             }
 
-            $moduleClassFileArray = preg_replace('/(const\s)\s*(\b'.$constant.'\b)/ism', "/*\n    * module: ".$this->name."\n    * date: ".date('Y-m-d H:i:s')."\n    * version: ".$this->version."\n    */\n    $1$2", $moduleClassFileArray);
-            if ($moduleClassFileArray === null) {
-                throw new Exception(sprintf(Tools::displayError('Failed to override constant %1$s in class %2$s.'), $constant, $classname));
-            }
-        }
+            foreach ($module_class->getConstants() as $constant => $value) {
+                if ($override_class->hasConstant($constant)) {
+                    throw new Exception(sprintf(Tools::displayError('The constant %1$s in the class %2$s is already defined.'), $constant, $classname));
+                }
 
-        return $moduleClassFileArray;
+                $module_file = preg_replace('/(const\s)\s*(\b'.$constant.'\b)/ism', "/*\n    * module: ".$this->name."\n    * date: ".date('Y-m-d H:i:s')."\n    * version: ".$this->version."\n    */\n    $1$2", $module_file);
+                if ($module_file === null) {
+                    throw new Exception(sprintf(Tools::displayError('Failed to override constant %1$s in class %2$s.'), $constant, $classname));
+                }
+            }
+
+            // Insert the methods from module override in override
+            $copy_from = array_slice($module_file, $module_class->getStartLine() + 1, $module_class->getEndLine() - $module_class->getStartLine() - 2);
+            array_splice($override_file, $override_class->getEndLine() - 1, 0, $copy_from);
+            $code = implode('', $override_file);
+
+            file_put_contents($override_path, preg_replace($pattern_escape_com, '', $code));
+        } else {
+            $override_src = $path_override;
+
+            $override_dest = _PS_ROOT_DIR_.DIRECTORY_SEPARATOR.'override'.DIRECTORY_SEPARATOR.$path;
+            $dir_name = dirname($override_dest);
+
+            if (!$orig_path && !is_dir($dir_name)) {
+                $oldumask = umask(0000);
+                @mkdir($dir_name, 0777);
+                umask($oldumask);
+            }
+
+            if (!is_writable($dir_name)) {
+                throw new Exception(sprintf(Tools::displayError('directory (%s) not writable'), $dir_name));
+            }
+            $module_file = file($override_src);
+            $module_file = array_diff($module_file, array("\n"));
+
+            if ($orig_path) {
+                do {
+                    $uniq = uniqid();
+                } while (class_exists($classname.'OverrideOriginal_remove', false));
+                eval(preg_replace(array('#^\s*<\?(?:php)?#', '#class\s+'.$classname.'(\s+extends\s+([a-z0-9_]+)(\s+implements\s+([a-z0-9_]+))?)?#i'), array(' ', 'class '.$classname.'Override'.$uniq), implode('', $module_file)));
+                $module_class = new ReflectionClass($classname.'Override'.$uniq);
+
+                // For each method found in the override, prepend a comment with the module name and version
+                foreach ($module_class->getMethods() as $method) {
+                    $module_file = preg_replace('/((:?public|private|protected)\s+(static\s+)?function\s+(?:\b'.$method->getName().'\b))/ism', "/*\n    * module: ".$this->name."\n    * date: ".date('Y-m-d H:i:s')."\n    * version: ".$this->version."\n    */\n    $1", $module_file);
+                    if ($module_file === null) {
+                        throw new Exception(sprintf(Tools::displayError('Failed to override method %1$s in class %2$s.'), $method->getName(), $classname));
+                    }
+                }
+
+                // Same loop for properties
+                foreach ($module_class->getProperties() as $property) {
+                    $module_file = preg_replace('/((?:public|private|protected)\s)\s*(static\s)?\s*(\$\b'.$property->getName().'\b)/ism', "/*\n    * module: ".$this->name."\n    * date: ".date('Y-m-d H:i:s')."\n    * version: ".$this->version."\n    */\n    $1$2$3", $module_file);
+                    if ($module_file === null) {
+                        throw new Exception(sprintf(Tools::displayError('Failed to override property %1$s in class %2$s.'), $property->getName(), $classname));
+                    }
+                }
+
+                // Same loop for constants
+                foreach ($module_class->getConstants() as $constant => $value) {
+                    $module_file = preg_replace('/(const\s)\s*(\b'.$constant.'\b)/ism', "/*\n    * module: ".$this->name."\n    * date: ".date('Y-m-d H:i:s')."\n    * version: ".$this->version."\n    */\n    $1$2", $module_file);
+                    if ($module_file === null) {
+                        throw new Exception(sprintf(Tools::displayError('Failed to override constant %1$s in class %2$s.'), $constant, $classname));
+                    }
+                }
+            }
+
+            file_put_contents($override_dest, preg_replace($pattern_escape_com, '', $module_file));
+
+            // Re-generate the class index
+            Tools::generateIndex();
+        }
+        return true;
     }
 
     /**
@@ -3152,210 +2850,149 @@ abstract class ModuleCore
      * @param string $classname
      * @return bool
      */
-    public function removeOverride($classInfo)
+    public function removeOverride($classname)
     {
-        $classname = $classInfo['class'];
+        $orig_path = $path = PrestaShopAutoload::getInstance()->getClassPath($classname.'Core');
 
-        $parentClassFilePath = '';
-        $overrideClassName = $classname;
-        if ($classInfo['type'] == self::OVERRIDE_TYPE_CORE) {
-            $parentClassFilePath = PrestaShopAutoload::getInstance()->getClassPath($classname.'Core');
-        } elseif ($classInfo['type'] == self::OVERRIDE_TYPE_MODULE) {
-            $parentClassFilePath = 'modules/'.$classname.'/'.$classname.'.php';
-
-            require_once _PS_ROOT_DIR_.'/'.$parentClassFilePath;
-            $overrideClassName = Tools::ucfirst($classname).'Override';
-        } elseif ($classInfo['type'] == self::OVERRIDE_TYPE_MODULE_CONTROLLER) {
-            $parentClassFilePath = $classInfo['file'];
-
-            require_once _PS_ROOT_DIR_.'/'.$parentClassFilePath;
-            if ($classInfo['controller_type'] == 'admin') {
-                $overrideClassName = $classname.((strpos($classname, 'Controller') === false) ? 'Controller' : '').'Override';
-            } else {
-                $overrideClassName = Tools::ucfirst($classInfo['module']).Tools::ucfirst($classInfo['class']).'ModuleFrontControllerOverride';
-            }
-        }
-
-        $overrideClassFilePath = _PS_ROOT_DIR_.'/override/'.$parentClassFilePath;
-
-        // if override file does not exist return true
-        if (!file_exists($overrideClassFilePath)) {
+        if ($orig_path && !$file = PrestaShopAutoload::getInstance()->getClassPath($classname)) {
             return true;
+        } elseif (!$orig_path && Module::getModuleIdByName($classname)) {
+            $path = 'modules'.DIRECTORY_SEPARATOR.$classname.DIRECTORY_SEPARATOR.$classname.'.php';
         }
 
-        if (!is_file($overrideClassFilePath) || !is_writable($overrideClassFilePath)) {
+        // Check if override file is writable
+        if ($orig_path) {
+            $override_path = _PS_ROOT_DIR_.'/'.$file;
+        } else {
+            $override_path = _PS_OVERRIDE_DIR_.$path;
+        }
+
+        if (!is_file($override_path) || !is_writable($override_path)) {
             return false;
         }
 
-        // save $overrideClassFilePath file with consistent newline character, "\n"
-        file_put_contents($overrideClassFilePath, preg_replace('#(\r\n|\r)#ism', "\n", file_get_contents($overrideClassFilePath)));
+        file_put_contents($override_path, preg_replace('#(\r\n|\r)#ism', "\n", file_get_contents($override_path)));
 
-        // Get a uniq id for the class, because you can override a class (or remove the override) twice in the same session and we need to avoid redeclaration
-        do {
-            $uniq = uniqid();
-        } while (class_exists($classname.'OverrideOriginal_remove', false));
+        if ($orig_path) {
+            // Get a uniq id for the class, because you can override a class (or remove the override) twice in the same session and we need to avoid redeclaration
+            do {
+                $uniq = uniqid();
+            } while (class_exists($classname.'OverrideOriginal_remove', false));
 
-        // Make a reflection of the override class and the module override class
-        $overrideClassFileArray = file($overrideClassFilePath);
-        $moduleClassFileArray = array_diff($moduleClassFileArray, array("\n")); // remove empty lines from array
+            // Make a reflection of the override class and the module override class
+            $override_file = file($override_path);
 
-        eval(
-            preg_replace(
-                array(
-                    '#^\s*<\?(?:php)?#',
-                    '#class\s+'.$overrideClassName.'\s+extends\s+([a-z0-9_]+)(\s+implements\s+([a-z0-9_]+))?#i'
-                ),
-                array(
-                    ' ',
-                    'class '.$overrideClassName.'Original_remove'.$uniq
-                ),
-                implode('', $overrideClassFileArray)
-            )
-        );
-        $reflectionClassOverride = new ReflectionClass($overrideClassName.'Original_remove'.$uniq);
+            eval(preg_replace(array('#^\s*<\?(?:php)?#', '#class\s+'.$classname.'\s+extends\s+([a-z0-9_]+)(\s+implements\s+([a-z0-9_]+))?#i'), array(' ', 'class '.$classname.'OverrideOriginal_remove'.$uniq), implode('', $override_file)));
+            $override_class = new ReflectionClass($classname.'OverrideOriginal_remove'.$uniq);
 
-        $moduleClassFileArray = file($this->getLocalPath().'override/'.$parentClassFilePath);
-        eval(
-            preg_replace(
-                array(
-                    '#^\s*<\?(?:php)?#',
-                    '#class\s+'.$overrideClassName.'(\s+extends\s+([a-z0-9_]+)(\s+implements\s+([a-z0-9_]+))?)?#i'
-                ),
-                array(
-                    ' ',
-                    'class '.$overrideClassName.'Override_remove'.$uniq
-                ),
-                implode('', $moduleClassFileArray)
-            )
-        );
-        $reflectionClassModule = new ReflectionClass($overrideClassName.'Override_remove'.$uniq);
+            $module_file = file($this->getLocalPath().'override/'.$path);
+            eval(preg_replace(array('#^\s*<\?(?:php)?#', '#class\s+'.$classname.'(\s+extends\s+([a-z0-9_]+)(\s+implements\s+([a-z0-9_]+))?)?#i'), array(' ', 'class '.$classname.'Override_remove'.$uniq), implode('', $module_file)));
+            $module_class = new ReflectionClass($classname.'Override_remove'.$uniq);
 
-        // Remove methods from override file
-        foreach ($reflectionClassModule->getMethods() as $method) {
-            if (!$reflectionClassOverride->hasMethod($method->getName())) {
-                continue;
-            }
+            // Remove methods from override file
+            foreach ($module_class->getMethods() as $method) {
+                if (!$override_class->hasMethod($method->getName())) {
+                    continue;
+                }
 
-            $method = $reflectionClassOverride->getMethod($method->getName());
-            $length = $method->getEndLine() - $method->getStartLine() + 1;
+                $method = $override_class->getMethod($method->getName());
+                $length = $method->getEndLine() - $method->getStartLine() + 1;
 
-            $moduleMethodInfo = $reflectionClassModule->getMethod($method->getName());
+                $module_method = $module_class->getMethod($method->getName());
+                $module_length = $module_method->getEndLine() - $module_method->getStartLine() + 1;
 
-            $overrideClassFileArrayOriginal = $overrideClassFileArray;
+                $override_file_orig = $override_file;
 
-            $overrideFileContent = preg_replace('/\s/', '', implode('', array_splice($overrideClassFileArray, $method->getStartLine() - 1, $length, array_pad(array(), $length, '#--remove--#'))));
-            $moduleFileContent = preg_replace('/\s/', '', implode('', array_splice($moduleClassFileArray, $moduleMethodInfo->getStartLine() - 1, $length, array_pad(array(), $length, '#--remove--#'))));
+                $orig_content = preg_replace('/\s/', '', implode('', array_splice($override_file, $method->getStartLine() - 1, $length, array_pad(array(), $length, '#--remove--#'))));
+                $module_content = preg_replace('/\s/', '', implode('', array_splice($module_file, $module_method->getStartLine() - 1, $length, array_pad(array(), $length, '#--remove--#'))));
 
-            $replace = true;
-            if (preg_match('/\* module: ('.$this->name.')/ism', $overrideClassFileArray[$method->getStartLine() - 5])) {
-                $overrideClassFileArray[$method->getStartLine() - 6] = $overrideClassFileArray[$method->getStartLine() - 5] = $overrideClassFileArray[$method->getStartLine() - 4] = $overrideClassFileArray[$method->getStartLine() - 3] = $overrideClassFileArray[$method->getStartLine() - 2] = '#--remove--#';
-                $replace = false;
-            }
+                $replace = true;
+                if (preg_match('/\* module: ('.$this->name.')/ism', $override_file[$method->getStartLine() - 5])) {
+                    $override_file[$method->getStartLine() - 6] = $override_file[$method->getStartLine() - 5] = $override_file[$method->getStartLine() - 4] = $override_file[$method->getStartLine() - 3] = $override_file[$method->getStartLine() - 2] = '#--remove--#';
+                    $replace = false;
+                }
 
-            if (md5($moduleFileContent) != md5($overrideFileContent) && $replace) {
-                $overrideClassFileArray = $overrideClassFileArrayOriginal;
-            }
-        }
-
-        // Remove properties from override file
-        foreach ($reflectionClassModule->getProperties() as $property) {
-            if (!$reflectionClassOverride->hasProperty($property->getName())) {
-                continue;
-            }
-
-            // Replace the declaration line by #--remove--#
-            foreach ($overrideClassFileArray as $lineNumber => &$line_content) {
-                if (preg_match('/(public|private|protected)\s+(static\s+)?(\$)?'.$property->getName().'/i', $line_content)) {
-                    if (preg_match('/\* module: ('.$this->name.')/ism', $overrideClassFileArray[$lineNumber - 4])) {
-                        $overrideClassFileArray[$lineNumber - 5] = $overrideClassFileArray[$lineNumber - 4] = $overrideClassFileArray[$lineNumber - 3] = $overrideClassFileArray[$lineNumber - 2] = $overrideClassFileArray[$lineNumber - 1] = '#--remove--#';
-                    }
-                    $line_content = '#--remove--#';
-                    break;
+                if (md5($module_content) != md5($orig_content) && $replace) {
+                    $override_file = $override_file_orig;
                 }
             }
-        }
 
-        // Remove constants from override file
-        foreach ($reflectionClassModule->getConstants() as $constant => $value) {
-            if (!$reflectionClassOverride->hasConstant($constant)) {
-                continue;
-            }
+            // Remove properties from override file
+            foreach ($module_class->getProperties() as $property) {
+                if (!$override_class->hasProperty($property->getName())) {
+                    continue;
+                }
 
-            // Replace the declaration line by #--remove--#
-            foreach ($overrideClassFileArray as $lineNumber => &$line_content) {
-                if (preg_match('/(const)\s+(static\s+)?(\$)?'.$constant.'/i', $line_content)) {
-                    if (preg_match('/\* module: ('.$this->name.')/ism', $overrideClassFileArray[$lineNumber - 4])) {
-                        $overrideClassFileArray[$lineNumber - 5] = $overrideClassFileArray[$lineNumber - 4] = $overrideClassFileArray[$lineNumber - 3] = $overrideClassFileArray[$lineNumber - 2] = $overrideClassFileArray[$lineNumber - 1] = '#--remove--#';
+                // Replace the declaration line by #--remove--#
+                foreach ($override_file as $line_number => &$line_content) {
+                    if (preg_match('/(public|private|protected)\s+(static\s+)?(\$)?'.$property->getName().'/i', $line_content)) {
+                        if (preg_match('/\* module: ('.$this->name.')/ism', $override_file[$line_number - 4])) {
+                            $override_file[$line_number - 5] = $override_file[$line_number - 4] = $override_file[$line_number - 3] = $override_file[$line_number - 2] = $override_file[$line_number - 1] = '#--remove--#';
+                        }
+                        $line_content = '#--remove--#';
+                        break;
                     }
-                    $line_content = '#--remove--#';
-                    break;
                 }
             }
-        }
 
-        $count = count($overrideClassFileArray);
-        for ($i = 0; $i < $count; ++$i) {
-            if (preg_match('/(^\s*\/\/.*)/i', $overrideClassFileArray[$i])) {
-                $overrideClassFileArray[$i] = '#--remove--#';
-            } elseif (preg_match('/(^\s*\/\*)/i', $overrideClassFileArray[$i])) {
-                if (!preg_match('/(^\s*\* module:)/i', $overrideClassFileArray[$i + 1])
-                    && !preg_match('/(^\s*\* date:)/i', $overrideClassFileArray[$i + 2])
-                    && !preg_match('/(^\s*\* version:)/i', $overrideClassFileArray[$i + 3])
-                    && !preg_match('/(^\s*\*\/)/i', $overrideClassFileArray[$i + 4])) {
-                    for (; $overrideClassFileArray[$i] && !preg_match('/(.*?\*\/)/i', $overrideClassFileArray[$i]); ++$i) {
-                        $overrideClassFileArray[$i] = '#--remove--#';
+            // Remove properties from override file
+            foreach ($module_class->getConstants() as $constant => $value) {
+                if (!$override_class->hasConstant($constant)) {
+                    continue;
+                }
+
+                // Replace the declaration line by #--remove--#
+                foreach ($override_file as $line_number => &$line_content) {
+                    if (preg_match('/(const)\s+(static\s+)?(\$)?'.$constant.'/i', $line_content)) {
+                        if (preg_match('/\* module: ('.$this->name.')/ism', $override_file[$line_number - 4])) {
+                            $override_file[$line_number - 5] = $override_file[$line_number - 4] = $override_file[$line_number - 3] = $override_file[$line_number - 2] = $override_file[$line_number - 1] = '#--remove--#';
+                        }
+                        $line_content = '#--remove--#';
+                        break;
                     }
-                    $overrideClassFileArray[$i] = '#--remove--#';
                 }
             }
-        }
 
-        // Rewrite nice code
-        $code = '';
-        foreach ($overrideClassFileArray as $line) {
-            if ($line == '#--remove--#') {
-                continue;
+            $count = count($override_file);
+            for ($i = 0; $i < $count; ++$i) {
+                if (preg_match('/(^\s*\/\/.*)/i', $override_file[$i])) {
+                    $override_file[$i] = '#--remove--#';
+                } elseif (preg_match('/(^\s*\/\*)/i', $override_file[$i])) {
+                    if (!preg_match('/(^\s*\* module:)/i', $override_file[$i + 1])
+                        && !preg_match('/(^\s*\* date:)/i', $override_file[$i + 2])
+                        && !preg_match('/(^\s*\* version:)/i', $override_file[$i + 3])
+                        && !preg_match('/(^\s*\*\/)/i', $override_file[$i + 4])) {
+                        for (; $override_file[$i] && !preg_match('/(.*?\*\/)/i', $override_file[$i]); ++$i) {
+                            $override_file[$i] = '#--remove--#';
+                        }
+                        $override_file[$i] = '#--remove--#';
+                    }
+                }
             }
 
-            $code .= $line;
-        }
+            // Rewrite nice code
+            $code = '';
+            foreach ($override_file as $line) {
+                if ($line == '#--remove--#') {
+                    continue;
+                }
 
-        // set regex for empty class to decide if override class must be deleted
-        $emptyClassRegex = '/<\?(?:php)?\s+(?:abstract|interface)?\s*?class\s+'.$overrideClassName.'\s+extends\s+'.$classname.(($classInfo['type'] == self::OVERRIDE_TYPE_CORE) ? 'Core' : '').'\s*?[{]\s*?[}]/ism';
-        if ($classInfo['type'] == self::OVERRIDE_TYPE_MODULE_CONTROLLER) {
-            $emptyClassRegex = '/<\?(?:php)?\s+(?:abstract|interface)?\s*?class\s+'.$overrideClassName.'\s+extends\s+'.substr($overrideClassName, 0, -8).'\s*?[{]\s*?[}]/ism';
-        }
-
-        $toDelete = preg_match($emptyClassRegex, $code);
-
-        if (!isset($toDelete) || $toDelete) {
-            unlink($overrideClassFilePath);
-            if ($classInfo['type'] == self::OVERRIDE_TYPE_MODULE_CONTROLLER) {
-                $this->cleanModulesOverrideDir($overrideClassFilePath);
+                $code .= $line;
             }
+
+            $to_delete = preg_match('/<\?(?:php)?\s+(?:abstract|interface)?\s*?class\s+'.$classname.'\s+extends\s+'.$classname.'Core\s*?[{]\s*?[}]/ism', $code);
+        }
+
+        if (!isset($to_delete) || $to_delete) {
+            unlink($override_path);
         } else {
-            file_put_contents($overrideClassFilePath, $code);
+            file_put_contents($override_path, $code);
         }
 
         // Re-generate the class index
         Tools::generateIndex();
 
         return true;
-    }
-
-    private function cleanModulesOverrideDir($dir)
-    {
-        if (rtrim($dir, '/') == _PS_ROOT_DIR_.'/override/modules') {
-            return;
-        }
-
-        $files = Tools::scandir($dir, '');
-        $diffResult = array_diff($files, array('.', '..', 'index.php'));
-
-        if (!count($diffResult)) {
-            Tools::deleteDirectory($dir);
-            $this->cleanModulesOverrideDir(dirname($dir));
-        }
     }
 
     /**

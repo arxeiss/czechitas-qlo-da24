@@ -189,7 +189,7 @@ class PrestaShopBackupCore
     {
         if (!$this->psBackupAll) {
             $ignore_insert_table = array(_DB_PREFIX_.'connections', _DB_PREFIX_.'connections_page', _DB_PREFIX_
-                .'connections_source', _DB_PREFIX_.'guest');
+                .'connections_source', _DB_PREFIX_.'guest', _DB_PREFIX_.'statssearch');
         } else {
             $ignore_insert_table = array();
         }
@@ -218,8 +218,7 @@ class PrestaShopBackupCore
         $this->id = realpath($backupfile);
 
         fwrite($fp, '/* Backup for '.Tools::getHttpHost(false, false).__PS_BASE_URI__."\n *  at ".date($date)."\n */\n");
-        fwrite($fp, "\n".'SET NAMES \'utf8\';');
-        fwrite($fp, "\n".'SET SQL_MODE=\'ALLOW_INVALID_DATES\';'."\n\n");
+        fwrite($fp, "\n".'SET NAMES \'utf8\';'."\n\n");
 
         // Find all tables
         $tables = Db::getInstance()->executeS('SHOW TABLES');

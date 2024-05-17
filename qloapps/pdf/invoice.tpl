@@ -63,17 +63,6 @@
 	</tr>
 
 	<tr>
-		<td colspan="12" height="20">&nbsp;</td>
-	</tr>
-
-	<!-- Product -->
-	<tr>
-		<td colspan="12">
-			{$service_product_tab}
-		</td>
-	</tr>
-
-	<tr>
 		<td colspan="12" height="10">&nbsp;</td>
 	</tr>
 

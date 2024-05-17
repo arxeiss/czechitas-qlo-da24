@@ -221,12 +221,10 @@ class ContactControllerCore extends FrontController
         $this->addJS(_PS_JS_DIR_.'validate.js');
 
         // GOOGLE MAP
-        if (($PS_API_KEY = Configuration::get('PS_API_KEY')) && Configuration::get('WK_GOOGLE_ACTIVE_MAP')) {
-            $this->addJS(
-                'https://maps.googleapis.com/maps/api/js?key='.$PS_API_KEY.
-                '&libraries=places&language='.$this->context->language->iso_code.'&region='.$this->context->country->iso_code
-            );
-        }
+        $language = $this->context->language;
+        $country = $this->context->country;
+        $PS_API_KEY = Configuration::get('PS_API_KEY');
+        $this->addJs("https://maps.googleapis.com/maps/api/js?key=$PS_API_KEY&libraries=places&language=$language->iso_code&region=$country->iso_code");
     }
 
     /**
@@ -273,11 +271,11 @@ class ContactControllerCore extends FrontController
                 if (isset($hotel['id_cover_img'])
                     && $hotel['id_cover_img']
                     && Validate::isLoadedObject(
-                        $objHotelImage = new HotelImage($hotel['id_cover_img'])
+                        $objHtlImg = new HotelImage($hotel['id_cover_img'])
                     )
                 ) {
                     // by webkul to get media link.
-                    $htlImgLink = $this->context->link->getMediaLink($objHotelImage->getImageLink($hotel['id_cover_img'], ImageType::getFormatedName('medium')));
+                    $htlImgLink = $this->context->link->getMediaLink(_MODULE_DIR_.'hotelreservationsystem/views/img/hotel_img/'.$objHtlImg->hotel_image_id.'.jpg');
 
                     if ((bool)Tools::file_get_contents($htlImgLink)) {
                         $hotel['image_url'] = $htlImgLink;
@@ -289,8 +287,7 @@ class ContactControllerCore extends FrontController
                 }
             }
         }
-
-	    $contactKey = md5(uniqid(microtime(), true));
+	$contactKey = md5(uniqid(microtime(), true));
         $this->context->cookie->__set('contactFormKey', $contactKey);
         $this->context->smarty->assign(
             array(
@@ -300,15 +297,15 @@ class ContactControllerCore extends FrontController
                 'gblHtlAddress' => $gblHtlAddress,
                 'contacts' => Contact::getContacts($this->context->language->id),
                 'message' => html_entity_decode(Tools::getValue('message')),
-	            'contactKey' => $contactKey,
+	        'contactKey' => $contactKey,
             )
         );
 
         //By webkul to send hotels Map Informations for google Map.
-        if (Configuration::get('PS_API_KEY') && Configuration::get('WK_GOOGLE_ACTIVE_MAP')) {
+        if (Configuration::get('WK_GOOGLE_ACTIVE_MAP')) {
             $hotelLocationArray = $objHotelInfo->getMapFormatHotelsInfo(Configuration::get('WK_MAP_HOTEL_ACTIVE_ONLY'));
             if ($hotelLocationArray) {
-                $this->context->smarty->assign('hotelLocationArray', json_encode($hotelLocationArray));
+                $this->context->smarty->assign('hotelLocationArray', Tools::jsonEncode($hotelLocationArray));
             }
         }
         //End

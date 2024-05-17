@@ -43,19 +43,17 @@ class AdminCartsControllerCore extends AdminController
         $this->_orderWay = 'DESC';
         $this->context = Context::getContext();
 
-        $this->_select = 'CONCAT(c.`firstname`, \' \', c.`lastname`) `customer`, a.id_cart total,
-        TIME_TO_SEC(TIMEDIFF(\''.pSQL(date('Y-m-d H:i:00', time())).'\', a.`date_add`)) AS `time_diff`,
-        IFNULL(GROUP_CONCAT(DISTINCT o.`id_order`), 0) AS `ids_order`,
-        IF (IFNULL(o.id_order, \''.$this->l('Non ordered cart').'\') = \''.$this->l('Non ordered cart').'\', IF(TIME_TO_SEC(TIMEDIFF(\''.pSQL(date('Y-m-d H:i:00', time())).'\', a.`date_add`)) > 86400, \''.$this->l('Abandoned cart').'\', \''.$this->l('Non ordered cart').'\'), GROUP_CONCAT(DISTINCT o.`id_order`)) AS filter_ids_order,
-		IF(o.id_order, 1, 0) badge_success, IF(o.id_order, 0, 1) badge_danger, IF(co.id_guest, 1, 0) id_guest';
+        $this->_select = 'CONCAT(LEFT(c.`firstname`, 1), \'. \', c.`lastname`) `customer`, a.id_cart total,
+		IF (IFNULL(o.id_order, \''.$this->l('Non ordered').'\') = \''.$this->l('Non ordered').'\', IF(TIME_TO_SEC(TIMEDIFF(\''.pSQL(date('Y-m-d H:i:00', time())).'\', a.`date_add`)) > 86400, \''.$this->l('Abandoned cart').'\', \''.$this->l('Non ordered').'\'), o.id_order) AS status, IF(o.id_order, 1, 0) badge_success, IF(o.id_order, 0, 1) badge_danger, IF(co.id_guest, 1, 0) id_guest';
         $this->_join = 'LEFT JOIN '._DB_PREFIX_.'customer c ON (c.id_customer = a.id_customer)
 		LEFT JOIN '._DB_PREFIX_.'currency cu ON (cu.id_currency = a.id_currency)
 		LEFT JOIN '._DB_PREFIX_.'orders o ON (o.id_cart = a.id_cart)
 		LEFT JOIN `'._DB_PREFIX_.'connections` co ON (a.id_guest = co.id_guest AND TIME_TO_SEC(TIMEDIFF(\''.pSQL(date('Y-m-d H:i:00', time())).'\', co.`date_add`)) < 1800)';
-        $this->_group = ' GROUP BY a.`id_cart`';
 
-        if (Tools::getValue('action') == 'filterOnlyAbandonedCarts') {
-            $this->_filterHaving = ' AND `ids_order` = 0 AND `time_diff` > 86400';
+        if (Tools::getValue('action') && Tools::getValue('action') == 'filterOnlyAbandonedCarts') {
+            $this->_having = 'status = \''.$this->l('Abandoned cart').'\'';
+        } else {
+            $this->_use_found_rows = false;
         }
 
         $this->fields_list = array(
@@ -64,12 +62,11 @@ class AdminCartsControllerCore extends AdminController
                 'align' => 'text-center',
                 'class' => 'fixed-width-xs'
             ),
-            'ids_order' => array(
+            'status' => array(
                 'title' => $this->l('Order ID'),
                 'align' => 'text-center',
-                'havingFilter' => true,
-                'filter_key' => 'filter_ids_order',
-                'callback' => 'getOrderColumn',
+                'badge_danger' => true,
+                'havingFilter' => true
             ),
             'customer' => array(
                 'title' => $this->l('Customer'),
@@ -117,30 +114,6 @@ class AdminCartsControllerCore extends AdminController
         }
 
         parent::__construct();
-
-        $this->list_no_link = true;
-    }
-
-    public function getOrderColumn($idsOrder, $tr)
-    {
-        $smartyVars = array();
-        if ($idsOrder) {
-            $idsOrder = explode(',', $idsOrder);
-            $smartyVars['type'] = 'orders';
-            $smartyVars['ids_order'] = $idsOrder;
-        } else {
-            if ($tr['time_diff'] > 86400) {
-                $smartyVars['type'] = 'abandoned';
-            } else {
-                $smartyVars['type'] = 'non_orderd';
-            }
-        }
-        $smartyVars['link'] = $this->context->link;
-
-        $tpl = $this->createTemplate('_orders.tpl');
-        $tpl->assign($smartyVars);
-
-        return $tpl->fetch();
     }
 
     public function initPageHeaderToolbar()
@@ -161,20 +134,23 @@ class AdminCartsControllerCore extends AdminController
         $time = time();
         $kpis = array();
 
-        $daysForConversionRate = Configuration::get('PS_KPI_CONVERSION_RATE_NB_DAYS');
-
+        /* The data generation is located in AdminStatsControllerCore */
         $helper = new HelperKpi();
         $helper->id = 'box-conversion-rate';
         $helper->icon = 'icon-sort-by-attributes-alt';
         //$helper->chart = true;
         $helper->color = 'color1';
         $helper->title = $this->l('Conversion Rate', null, null, false);
-        $helper->subtitle = $daysForConversionRate.' '.$this->l('days', null, null, false);
+        $helper->subtitle = $this->l('30 days', null, null, false);
+        if (ConfigurationKPI::get('CONVERSION_RATE') !== false) {
+            $helper->value = ConfigurationKPI::get('CONVERSION_RATE');
+        }
         if (ConfigurationKPI::get('CONVERSION_RATE_CHART') !== false) {
             $helper->data = ConfigurationKPI::get('CONVERSION_RATE_CHART');
         }
         $helper->source = $this->context->link->getAdminLink('AdminStats').'&ajax=1&action=getKpi&kpi=conversion_rate';
-        $kpis[] = $helper;
+        $helper->refresh = (bool)(ConfigurationKPI::get('CONVERSION_RATE_EXPIRE') < $time);
+        $kpis[] = $helper->generate();
 
         $helper = new HelperKpi();
         $helper->id = 'box-carts';
@@ -185,32 +161,39 @@ class AdminCartsControllerCore extends AdminController
         $date_to = date(Context::getContext()->language->date_format_lite, strtotime('-1 day'));
         $helper->subtitle = sprintf($this->l('From %s to %s', null, null, false), $date_from, $date_to);
         $helper->href = $this->context->link->getAdminLink('AdminCarts').'&action=filterOnlyAbandonedCarts';
+        if (ConfigurationKPI::get('ABANDONED_CARTS') !== false) {
+            $helper->value = ConfigurationKPI::get('ABANDONED_CARTS');
+        }
         $helper->source = $this->context->link->getAdminLink('AdminStats').'&ajax=1&action=getKpi&kpi=abandoned_cart';
-        $kpis[] = $helper;
+        $helper->refresh = (bool)(ConfigurationKPI::get('ABANDONED_CARTS_EXPIRE') < $time);
+        $kpis[] = $helper->generate();
 
-        $daysForAvgOrderVal = Configuration::get('PS_ORDER_KPI_AVG_ORDER_VALUE_NB_DAYS');
         $helper = new HelperKpi();
         $helper->id = 'box-average-order';
         $helper->icon = 'icon-money';
         $helper->color = 'color3';
         $helper->title = $this->l('Average Order Value', null, null, false);
-        $helper->subtitle = $daysForAvgOrderVal.' '.$this->l('days', null, null, false);
-        $helper->source = $this->context->link->getAdminLink('AdminStats').'&ajax=1&action=getKpi&kpi=average_order_value';
-        $kpis[] = $helper;
+        $helper->subtitle = $this->l('30 days', null, null, false);
+        if (ConfigurationKPI::get('AVG_ORDER_VALUE') !== false) {
+            $helper->value = sprintf($this->l('%s tax excl.'), ConfigurationKPI::get('AVG_ORDER_VALUE'));
+        }
+        if (ConfigurationKPI::get('AVG_ORDER_VALUE_EXPIRE') < $time) {
+            $helper->source = $this->context->link->getAdminLink('AdminStats').'&ajax=1&action=getKpi&kpi=average_order_value';
+        }
+        $kpis[] = $helper->generate();
 
-        $daysForProfitPerVisitor = Configuration::get('PS_ORDER_KPI_PER_VISITOR_PROFIT_NB_DAYS');
         $helper = new HelperKpi();
         $helper->id = 'box-net-profit-visitor';
         $helper->icon = 'icon-user';
         $helper->color = 'color4';
         $helper->title = $this->l('Net Profit per Visitor', null, null, false);
-        $helper->subtitle = $daysForProfitPerVisitor.' '.$this->l('days', null, null, false);
-        $helper->source = $this->context->link->getAdminLink('AdminStats').'&ajax=1&action=getKpi&kpi=netprofit_visit';
-        $kpis[] = $helper;
-
-        Hook::exec('action'.$this->controller_name.'KPIListingModifier', array(
-            'kpis' => &$kpis,
-        ));
+        $helper->subtitle = $this->l('30 days', null, null, false);
+        if (ConfigurationKPI::get('NETPROFIT_VISITOR') !== false) {
+            $helper->value = ConfigurationKPI::get('NETPROFIT_VISITOR');
+        }
+        $helper->source = $this->context->link->getAdminLink('AdminStats').'&ajax=1&action=getKpi&kpi=netprofit_visitor';
+        $helper->refresh = (bool)(ConfigurationKPI::get('NETPROFIT_VISITOR_EXPIRE') < $time);
+        $kpis[] = $helper->generate();
 
         $helper = new HelperKpiRow();
         $helper->kpis = $kpis;
@@ -235,14 +218,12 @@ class AdminCartsControllerCore extends AdminController
         Product::addCustomizationPrice($products, $customized_datas);
         $summary = $cart->getSummaryDetails();
 
-        /* Display orders information */
-        $cartOrders = Order::getAllOrdersByCartId($cart->id);
-        if ($cartOrders) {
-            $objOrder = new Order($cartOrders[0]['id_order']);
-            if (Validate::isLoadedObject($objOrder)) {
-                $tax_calculation_method = $objOrder->getTaxCalculationMethod();
-                $id_shop = (int)$objOrder->id_shop;
-            }
+        /* Display order information */
+        $id_order = (int)Order::getOrderByCartId($cart->id);
+        $order = new Order($id_order);
+        if (Validate::isLoadedObject($order)) {
+            $tax_calculation_method = $order->getTaxCalculationMethod();
+            $id_shop = (int)$order->id_shop;
         } else {
             $id_shop = (int)$cart->id_shop;
             $tax_calculation_method = Group::getPriceDisplayMethod(Group::getCurrent()->id);
@@ -279,9 +260,7 @@ class AdminCartsControllerCore extends AdminController
 
             $product['qty_in_stock'] = StockAvailable::getQuantityAvailableByProduct($product['id_product'], isset($product['id_product_attribute']) ? $product['id_product_attribute'] : null, (int)$id_shop);
 
-            if (isset($image['id_image'])) {
-                $image_product = new Image($image['id_image']);
-            }
+            $image_product = new Image($image['id_image']);
             $product['image'] = (isset($image['id_image']) ? ImageManager::thumbnail(_PS_IMG_DIR_.'p/'.$image_product->getExistingImgPath().'.jpg', 'product_mini_'.(int)$product['id_product'].(isset($product['id_product_attribute']) ? '_'.(int)$product['id_product_attribute'] : '').'.jpg', 45, 'jpg') : '--');
         }
 
@@ -294,23 +273,38 @@ class AdminCartsControllerCore extends AdminController
         $helper->value = Tools::displayPrice($total_price, $currency);
         $kpi = $helper->generate();
         // by webkul to show rooms available in the cart
-        $cartHtlData = array();
-        $objHotelCartBookingData = new HotelCartBookingData();
-        $objHotelRoomType = new HotelRoomType();
-        if ($cartHtlData = $objHotelCartBookingData->getCartFormatedBookinInfoByIdCart((int) $cart->id)) {
-            foreach ($cartHtlData as $key => $value) {
-                $cartHtlData[$key]['room_type_info'] = $objHotelRoomType->getRoomTypeInfoByIdProduct($value['id_product']);
+        $cart_id = $cart->id;
+        $cart_detail_data = array();
+        $cart_detail_data_obj = new HotelCartBookingData();
+        $cart_detail_data = $cart_detail_data_obj->getCartCurrentDataByCartId((int) $cart_id);
+        if ($cart_detail_data) {
+            foreach ($cart_detail_data as $key => $value) {
+                $product_image_id = Product::getCover($value['id_product']);
+                $obj_product = new Product((int) $value['id_product'], Configuration::get('PS_LANG_DEFAULT'));
+                $link_rewrite = $obj_product->link_rewrite[Configuration::get('PS_LANG_DEFAULT')];
+
+                if ($product_image_id) {
+                    $cart_detail_data[$key]['image_link'] = $this->context->link->getImageLink($link_rewrite, $product_image_id['id_image'], 'small_default');
+                } else {
+                    $cart_detail_data[$key]['image_link'] = $this->context->link->getImageLink($link_rewrite, $this->context->language->iso_code."-default", 'small_default');
+                }
+
+                $cart_detail_data[$key]['room_type'] = $obj_product->name;
+                $obj_room_info = new HotelRoomInformation((int) $value['id_room']);
+                $cart_detail_data[$key]['room_num'] = $obj_room_info->room_num;
+                $obj_date_time_from = new DateTime($value['date_from']);
+                $cart_detail_data[$key]['date_from'] = $obj_date_time_from->format('d-M Y');
+                $obj_date_time_to = new DateTime($value['date_to']);
+                $cart_detail_data[$key]['date_to'] = $obj_date_time_to->format('d-M Y');
             }
-        } else {
-            $cartHtlData = array();
         }
         //end
         $this->tpl_view_vars = array(
-            'cart_htl_data' => $cartHtlData,//by webkul hotel rooms in order data
+            'cart_detail_data' => $cart_detail_data,//by webkul hotel rooms in order data
             'kpi' => $kpi,
             'products' => $products,
             'discounts' => $cart->getCartRules(),
-            'cart_orders' => $cartOrders,
+            'order' => $order,
             'cart' => $cart,
             'currency' => $currency,
             'customer' => $customer,
@@ -333,11 +327,6 @@ class AdminCartsControllerCore extends AdminController
     public function ajaxPreProcess()
     {
         if ($this->tabAccess['edit'] === '1') {
-            // prevent cart creation when kpi visibility or kpi view is updated.
-            // @todo: move the below cart creation process required function.
-            if (in_array(Tools::getValue('action'), array('changeKpiVisibility', 'saveKpiView'))) {
-                return;
-            }
             $id_customer = (int)Tools::getValue('id_customer');
             $customer = new Customer((int)$id_customer);
             $this->context->customer = $customer;
@@ -347,13 +336,11 @@ class AdminCartsControllerCore extends AdminController
             }
             $this->context->cart = new Cart((int)$id_cart);
 
-            CartRule::autoRemoveFromCart($this->context);
-            CartRule::autoAddToCart($this->context);
-
             if (!$this->context->cart->id) {
                 $this->context->cart->recyclable = 0;
                 $this->context->cart->gift = 0;
             }
+
             /*if (!$this->context->cart->id_customer)
                 $this->context->cart->id_customer = $id_customer;*/
             if (Validate::isLoadedObject($this->context->cart) && $this->context->cart->OrderExists()) {
@@ -416,10 +403,10 @@ class AdminCartsControllerCore extends AdminController
                 $errors[] = Tools::displayError('Invalid combination');
             }
             if (count($errors)) {
-                die(json_encode($errors));
+                die(Tools::jsonEncode($errors));
             }
             if ($this->context->cart->deleteProduct($id_product, $id_product_attribute, (int)Tools::getValue('id_customization'))) {
-                echo json_encode($this->ajaxReturnVars());
+                echo Tools::jsonEncode($this->ajaxReturnVars());
             }
         }
     }
@@ -533,7 +520,7 @@ class AdminCartsControllerCore extends AdminController
                 }
             }
 
-            echo json_encode(array_merge($this->ajaxReturnVars(), array('errors' => $errors)));
+            echo Tools::jsonEncode(array_merge($this->ajaxReturnVars(), array('errors' => $errors)));
         }
     }
 
@@ -554,7 +541,7 @@ class AdminCartsControllerCore extends AdminController
                 $this->context->cart->gift_message = $gift_message;
             }
             $this->context->cart->save();
-            echo json_encode($this->ajaxReturnVars());
+            echo Tools::jsonEncode($this->ajaxReturnVars());
         }
     }
 
@@ -576,7 +563,7 @@ class AdminCartsControllerCore extends AdminController
             } elseif (Validate::isLoadedObject($message)) {
                 $message->delete();
             }
-            echo json_encode($this->ajaxReturnVars());
+            echo Tools::jsonEncode($this->ajaxReturnVars());
         }
     }
 
@@ -595,19 +582,18 @@ class AdminCartsControllerCore extends AdminController
             $id_cart = Tools::getValue('id_cart');//get cart id from url
             $cart_detail_data = array();
             $cart_detail_data_obj = new HotelCartBookingData();
-            $cart_detail_data_obj->updateIdCurrencyByIdCart($id_cart, $currency->id);
+            $update_htl_cart_currency = $cart_detail_data_obj->updateIdCurrencyByIdCart($id_cart, $currency->id);
             $cart_detail_data = $cart_detail_data_obj->getCartFormatedBookinInfoByIdCart((int) $id_cart);
             $this->context->smarty->assign(array(
                 'cart_detail_data' => $cart_detail_data,
-                'currency' => new Currency((int)$this->context->cart->id_currency),
             ));
 
-            $tpl_path = 'default/template/controllers/orders/_current_cart_details_data.tpl';
+            $tpl_path = 'default/template/controllers/orders/current_cart_details_data.tpl';
             $cart_dtl_tpl = $this->context->smarty->fetch(_PS_BO_ALL_THEMES_DIR_.$tpl_path);
 
             $result = $this->ajaxReturnVars();
             $result['cart_detail_html'] = $cart_dtl_tpl;//tpl is added to the returned array
-            $this->ajaxDie(json_encode($result));
+            echo Tools::jsonEncode($result);
         }
     }
     public function ajaxProcessUpdateLang()
@@ -618,7 +604,7 @@ class AdminCartsControllerCore extends AdminController
                 $this->context->cart->id_lang = (int)$lang->id;
                 $this->context->cart->save();
             }
-            echo json_encode($this->ajaxReturnVars());
+            echo Tools::jsonEncode($this->ajaxReturnVars());
         }
     }
 
@@ -637,7 +623,7 @@ class AdminCartsControllerCore extends AdminController
                 $errors[] = Tools::displayError('The order cannot be renewed.');
             } else {
                 $this->context->cart = $new_cart['cart'];
-                echo json_encode($this->ajaxReturnVars());
+                echo Tools::jsonEncode($this->ajaxReturnVars());
             }
         }
     }
@@ -646,7 +632,7 @@ class AdminCartsControllerCore extends AdminController
     {
         if ($this->tabAccess['edit'] === '1') {
             if ($this->context->cart->removeCartRule((int)Tools::getValue('id_cart_rule'))) {
-                echo json_encode($this->ajaxReturnVars());
+                echo Tools::jsonEncode($this->ajaxReturnVars());
             }
         }
     }
@@ -677,7 +663,7 @@ class AdminCartsControllerCore extends AdminController
                 $this->context->cart->addCartRule((int)$cart_rule->id);
             }
 
-            echo json_encode($this->ajaxReturnVars());
+            echo Tools::jsonEncode($this->ajaxReturnVars());
         }
     }
 
@@ -695,14 +681,14 @@ class AdminCartsControllerCore extends AdminController
                     $errors[] = Tools::displayError('Can\'t add the voucher.');
                 }
             }
-            echo json_encode(array_merge($this->ajaxReturnVars(), array('errors' => $errors)));
+            echo Tools::jsonEncode(array_merge($this->ajaxReturnVars(), array('errors' => $errors)));
         }
     }
 
     public function ajaxProcessUpdateAddress()
     {
         if ($this->tabAccess['edit'] === '1') {
-            echo json_encode(array('addresses' => $this->context->customer->getAddresses((int)$this->context->cart->id_lang)));
+            echo Tools::jsonEncode(array('addresses' => $this->context->customer->getAddresses((int)$this->context->cart->id_lang)));
         }
     }
 
@@ -723,7 +709,7 @@ class AdminCartsControllerCore extends AdminController
                 /*$this->context->cart->id_address_invoice = (int)$address_invoice->id;*/
             $this->context->cart->save();
 
-            echo json_encode($this->ajaxReturnVars());
+            echo Tools::jsonEncode($this->ajaxReturnVars());
         }
     }
 
@@ -839,7 +825,7 @@ class AdminCartsControllerCore extends AdminController
             $to_return = array_merge($this->ajaxReturnVars(), array('found' => false));
         }
 
-        echo json_encode($to_return);
+        echo Tools::jsonEncode($to_return);
     }
 
     public function ajaxReturnVars()
@@ -861,15 +847,6 @@ class AdminCartsControllerCore extends AdminController
             }
         }
 
-        $cart_detail_data_obj = new HotelCartBookingData();
-        $cart_detail_data = $cart_detail_data_obj->getCartFormatedBookinInfoByIdCart((int) $id_cart);
-        $is_backdate_order = false;
-        $currentDate = strtotime(date('Y-m-d'));
-        foreach ($cart_detail_data as $cartRoom) {
-            if (strtotime($cartRoom['date_from']) < $currentDate) {
-                $is_backdate_order = true;
-            }
-        }
         $addresses = $this->context->customer->getAddresses((int)$this->context->cart->id_lang);
 
         foreach ($addresses as &$data) {
@@ -879,8 +856,6 @@ class AdminCartsControllerCore extends AdminController
 
         return array(
             'summary' => $this->getCartSummary(),
-            'cart_detail_data' => $cart_detail_data,
-            'is_backdate_order' => $is_backdate_order,
             'delivery_option_list' => $this->getDeliveryOptionList(),
             'cart' => $this->context->cart,
             'currency' => new Currency($this->context->cart->id_currency),
@@ -904,237 +879,32 @@ class AdminCartsControllerCore extends AdminController
 
     public function displayAjaxGetSummary()
     {
-        echo json_encode($this->ajaxReturnVars());
+        echo Tools::jsonEncode($this->ajaxReturnVars());
     }
 
     public function ajaxProcessUpdateProductPrice()
     {
-        $params = Tools::getValue('params');
-        $id_booking_data = (int) $params['id_booking_data'];
-        $id_cart = (int) $params['id_cart'];
-        $id_product = (int) $params['id_product'];
-        $id_room = (int) $params['id_room'];
-        $date_from = $params['date_from'];
-        $date_to = $params['date_to'];
-        $price = (float) $params['price'];
-
-        $this->context->cart = new Cart($id_cart);
-
-        $date_from = date('Y-m-d', strtotime($date_from));
-        $date_to = date('Y-m-d', strtotime($date_to));
-
         if ($this->tabAccess['edit'] === '1') {
-            HotelRoomTypeFeaturePricing::deleteByIdCart($id_cart, $id_product, $id_room, $date_from, $date_to);
-            $feature_price_name = array();
-            foreach (Language::getIDs(true) as $id_lang) {
-                $feature_price_name[$id_lang] = 'Auto-generated';
-            }
-
-            $hrt_feature_price = new HotelRoomTypeFeaturePricing();
-            $hrt_feature_price->id_product = $id_product;
-            $hrt_feature_price->id_cart = $id_cart;
-            $hrt_feature_price->id_guest = (int) $this->context->cookie->id_guest;
-            $hrt_feature_price->id_room = $id_room;
-            $hrt_feature_price->feature_price_name = $feature_price_name;
-            $hrt_feature_price->date_selection_type = HotelRoomTypeFeaturePricing::DATE_SELECTION_TYPE_RANGE;
-            $hrt_feature_price->date_from = $date_from;
-            $hrt_feature_price->date_to = $date_to;
-            $hrt_feature_price->is_special_days_exists = 0;
-            $hrt_feature_price->special_days = json_encode(false);
-            $hrt_feature_price->impact_way = HotelRoomTypeFeaturePricing::IMPACT_WAY_FIX_PRICE;
-            $hrt_feature_price->impact_type = HotelRoomTypeFeaturePricing::IMPACT_TYPE_FIXED_PRICE;
-            $hrt_feature_price->impact_value = $price;
-            $hrt_feature_price->active = 1;
-            $hrt_feature_price->groupBox = array_column(Group::getGroups($this->context->language->id), 'id_group');
-            $hrt_feature_price->add();
-
-            $objHotelCartBookingData = new HotelCartBookingData();
-            $bookingsInfo = $objHotelCartBookingData->getCartFormatedBookinInfoByIdCart($id_cart);
-            foreach ($bookingsInfo as &$bookingInfo) {
-                if ($bookingInfo['id'] == $id_booking_data) {
-                    $amt_with_qty = $bookingInfo['amt_with_qty'];
-                    $bookingInfo['amt_with_qty'] = Tools::displayPrice($amt_with_qty);
-                    $bookingInfo['total_price'] = Tools::displayPrice($amt_with_qty + $bookingInfo['demand_price'] + $bookingInfo['additional_service_price']);
-                    $response = array(
-                        'curr_booking_info' => $bookingInfo,
-                        'cart_info' => $this->ajaxReturnVars(),
-                    );
-
-                    die(json_encode($response));
-                }
-            }
+            SpecificPrice::deleteByIdCart((int)$this->context->cart->id, (int)Tools::getValue('id_product'), (int)Tools::getValue('id_product_attribute'));
+            $specific_price = new SpecificPrice();
+            $specific_price->id_cart = (int)$this->context->cart->id;
+            $specific_price->id_shop = 0;
+            $specific_price->id_shop_group = 0;
+            $specific_price->id_currency = 0;
+            $specific_price->id_country = 0;
+            $specific_price->id_group = 0;
+            $specific_price->id_customer = (int)$this->context->customer->id;
+            $specific_price->id_product = (int)Tools::getValue('id_product');
+            $specific_price->id_product_attribute = (int)Tools::getValue('id_product_attribute');
+            $specific_price->price = (float)Tools::getValue('price');
+            $specific_price->from_quantity = 1;
+            $specific_price->reduction = 0;
+            $specific_price->reduction_type = 'amount';
+            $specific_price->from = '0000-00-00 00:00:00';
+            $specific_price->to = '0000-00-00 00:00:00';
+            $specific_price->add();
+            echo Tools::jsonEncode($this->ajaxReturnVars());
         }
-    }
-
-    public function ajaxProcessupdateRoomOccupancy()
-    {
-        $params = Tools::getValue('params');
-        $idBookingData = (int) $params['id_booking_data'];
-        $idCart = (int) $params['id_cart'];
-        $occupancy =  $params['occupancy'];
-
-        $this->context->cart = new Cart($idCart);
-
-        if ($this->tabAccess['edit'] === '1') {
-            // validate occupancy is correct
-            $hasError = false;
-            if (is_array($occupancy)) {
-                if (!$occupancy['adults'] || !Validate::isUnsignedInt($occupancy['adults'])) {
-                    $hasError = true;
-                }
-                if (!Validate::isUnsignedInt($occupancy['children'])) {
-                    $hasError = true;
-                }
-                if ($occupancy['children']) {
-                    if (!isset($occupancy['child_ages']) || $occupancy['children'] != count($occupancy['child_ages'])) {
-                        $hasError = true;
-                    } else {
-                        foreach($occupancy['child_ages'] as $age) {
-                            if (!Validate::isUnsignedInt($occupancy['adults'])) {
-                                $hasError = true;
-                            }
-                        }
-                    }
-                }
-            } else {
-                $hasError = true;
-            }
-
-            if (!$hasError) {
-                $objHotelCartBookingData = new HotelCartBookingData($idBookingData);
-                $objRoomType = new HotelRoomType();
-                if ($roomTypeInfo = $objRoomType->getRoomTypeInfoByIdProduct($objHotelCartBookingData->id_product)) {
-                    if ($occupancy['adults'] > $roomTypeInfo['max_adults']) {
-                        $hasError = true;
-                    }
-                    if ($occupancy['children'] > $roomTypeInfo['max_children']) {
-                        $hasError = true;
-                    }
-                    if ($occupancy['adults'] + $occupancy['children'] > $roomTypeInfo['max_guests']) {
-                        $hasError = true;
-                    }
-                    if (!$hasError) {
-                        $objHotelCartBookingData->adults = $occupancy['adults'];
-                        $objHotelCartBookingData->children = $occupancy['children'];
-                        $objHotelCartBookingData->child_ages = json_encode($occupancy['child_ages']);
-                        $objHotelCartBookingData->save();
-                    }
-                }
-            }
-            $objHotelCartBookingData = new HotelCartBookingData();
-            $bookingsInfo = $objHotelCartBookingData->getCartFormatedBookinInfoByIdCart($idCart);
-            foreach ($bookingsInfo as &$bookingInfo) {
-                if ($bookingInfo['id'] == $idBookingData) {
-                    $amtWithQty = $bookingInfo['amt_with_qty'];
-                    $bookingInfo['amt_with_qty'] = Tools::displayPrice($amtWithQty);
-                    $bookingInfo['total_price'] = Tools::displayPrice($amtWithQty + $bookingInfo['demand_price']);
-                    $response = array(
-                        'curr_booking_info' => $bookingInfo,
-                        'cart_info' => $this->ajaxReturnVars(),
-                    );
-
-                    die(json_encode($response));
-                }
-            }
-        }
-    }
-
-    // Process to get extra demands of any room while order creation process form.tpl
-    public function ajaxProcessGetRoomTypeCartDemands()
-    {
-        $response = array('status' => false);
-        if ($idProduct = Tools::getValue('id_product')) {
-            if (($dateFrom = Tools::getValue('date_from'))
-                && ($dateTo = Tools::getValue('date_to'))
-                && ($idRoom = Tools::getValue('id_room'))
-                && ($idCart = Tools::getValue('id_cart'))
-            ) {
-                $objCartBookingData = new HotelCartBookingData();
-                if ($selectedRoomDemands = $objCartBookingData->getCartExtraDemands(
-                    $idCart,
-                    $idProduct,
-                    $idRoom,
-                    $dateFrom,
-                    $dateTo
-                )) {
-                    // get room type additional demands
-                    $objRoomDemands = new HotelRoomTypeDemand();
-                    if ($roomTypeDemands = $objRoomDemands->getRoomTypeDemands($idProduct)) {
-                        foreach ($roomTypeDemands as &$demand) {
-                            // if demand has advance options then set demand price as first advance option price.
-                            if (isset($demand['adv_option']) && $demand['adv_option']) {
-                                $demand['price'] = current($demand['adv_option'])['price'];
-                            }
-                        }
-                        foreach ($selectedRoomDemands as &$selectedDemand) {
-                            $objRoom = new HotelRoomInformation($selectedDemand['id_room']);
-                            $selectedDemand['room_num'] = $objRoom->room_num;
-                            if (isset($selectedDemand['extra_demands']) && $selectedDemand['extra_demands']) {
-                                $extraDmd = array();
-                                foreach ($selectedDemand['extra_demands'] as $sDemand) {
-                                    $selectedDemand['selected_global_demands'][] = $sDemand['id_global_demand'];
-                                    $extraDmd[$sDemand['id_global_demand'].'-'.$sDemand['id_option']] = $sDemand;
-                                }
-                                $selectedDemand['extra_demands'] = $extraDmd;
-                            }
-                        }
-                        $this->context->smarty->assign('roomTypeDemands', $roomTypeDemands);
-                        $this->context->smarty->assign('selectedRoomDemands', $selectedRoomDemands);
-                    }
-                }
-                $objRoomTypeServiceProduct = new RoomTypeServiceProduct();
-                $objRoomTypeServiceProductCartDetail = new RoomTypeServiceProductCartDetail();
-                $roomTypeServiceProducts = $objRoomTypeServiceProduct->getServiceProductsData($idProduct, 1, 0, false, 2, null);
-                if ($selectedRoomServiceProduct =  $objCartBookingData->getRoomRowByIdProductIdRoomInDateRange(
-                    $idCart,
-                    $idProduct,
-                    $dateFrom,
-                    $dateTo,
-                    $idRoom
-                )) {
-                    $selectedRoomServiceProduct['selected_service'] = $objRoomTypeServiceProductCartDetail->getRoomServiceProducts(
-                        $selectedRoomServiceProduct['id'],
-                        0,
-                        null,
-                        null
-                    );
-                }
-                $this->context->smarty->assign(array(
-                    'roomTypeServiceProducts' => $roomTypeServiceProducts,
-                    'selectedRoomServiceProduct' => $selectedRoomServiceProduct
-                ));
-                $htlCartBoookingata =  $objCartBookingData->getRoomRowByIdProductIdRoomInDateRange(
-                    $idCart,
-                    $idProduct,
-                    $dateFrom,
-                    $dateTo,
-                    $idRoom
-                );
-            }
-        }
-        $response['status'] = true;
-        $response['html_exta_demands'] = $this->context->smarty->fetch(
-            _PS_ADMIN_DIR_.'/themes/default/template/controllers/orders/_cart_booking_demands.tpl'
-        );
-        $this->ajaxDie(json_encode($response));
-    }
-
-    // Process when admin changes extra demands of any room while order creation process form.tpl
-    public function ajaxProcessChangeRoomDemands()
-    {
-        $response = array('status' => false);
-        if ($idCartBooking = Tools::getValue('id_cart_booking')) {
-            if (Validate::isLoadedObject($objCartbookingCata = new HotelCartBookingData($idCartBooking))) {
-                $roomDemands = Tools::getValue('room_demands');
-                $roomDemands = json_decode($roomDemands, true);
-                $roomDemands = json_encode($roomDemands);
-                $objCartbookingCata->extra_demands = $roomDemands;
-                if ($objCartbookingCata->save()) {
-                    $response['status'] = true;
-                }
-            }
-        }
-        $this->ajaxDie(json_encode($response));
     }
 
     public static function getOrderTotalUsingTaxCalculationMethod($id_cart)
@@ -1187,7 +957,7 @@ class AdminCartsControllerCore extends AdminController
         $skip_list = array();
 
         foreach ($this->_list as $row) {
-            if (isset($row['ids_order']) && $row['ids_order'] != '0') {
+            if (isset($row['id_order']) && is_numeric($row['id_order'])) {
                 $skip_list[] = $row['id_cart'];
             }
         }

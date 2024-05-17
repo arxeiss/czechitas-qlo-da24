@@ -50,74 +50,6 @@ class HotelRoomTypeDemand extends ObjectModel
         ),
     );
 
-    public static function duplicateRoomTypeDemands($idProductOld, $idProductNew)
-    {
-        $idLang = Context::getContext()->language->id;
-        $roomTypeDemands = Db::getInstance()->executeS(
-            'SELECT * FROM `'._DB_PREFIX_.'htl_room_type_demand` rd
-            LEFT JOIN `'._DB_PREFIX_.'htl_room_type_global_demand` rgd
-            ON (rd.`id_global_demand` = rgd.`id_global_demand`)
-            LEFT JOIN `'._DB_PREFIX_.'htl_room_type_global_demand_lang` rgdl
-            ON (rgd.`id_global_demand` = rgdl.`id_global_demand` AND rgdl.`id_lang` = '.(int)$idLang.')
-            WHERE rd.`id_product`='.(int)$idProductOld
-        );
-
-        if (is_array($roomTypeDemands) && count($roomTypeDemands)) {
-            $globalDemandOption = new HotelRoomTypeGlobalDemandAdvanceOption();
-            foreach ($roomTypeDemands as $roomTypeDemand) {
-                $idGlobalDemand = $roomTypeDemand['id_global_demand'];
-                $objGlobalDemand = new HotelRoomTypeGlobalDemand($idGlobalDemand);
-                $hotelRoomTypeDemandPrice = new HotelRoomTypeDemandPrice();
-
-                $objHRTDemand = new self();
-                $objHRTDemand->id_product = $idProductNew;
-                $objHRTDemand->id_global_demand = $idGlobalDemand;
-                if (!$objHRTDemand->save()) {
-                    return false;
-                }
-
-                $demandPrice = $roomTypeDemand['price'];
-                if (Validate::isPrice($demandPrice)) {
-                    if ($objGlobalDemand->price != $demandPrice) {
-                        $objHRTDemandPrice = new HotelRoomTypeDemandPrice();
-                        $objHRTDemandPrice->id_product = $idProductNew;
-                        $objHRTDemandPrice->id_global_demand = $idGlobalDemand;
-                        $objHRTDemandPrice->id_option = 0;
-                        $objHRTDemandPrice->price = $demandPrice;
-                        if (!$objHRTDemandPrice->save()) {
-                            return false;
-                        }
-                    }
-                }
-
-                $advOptions = $globalDemandOption->getGlobalDemandAdvanceOptions($idGlobalDemand, $idLang);
-                if (is_array($advOptions) && count($advOptions)) {
-                    foreach ($advOptions as $option) {
-                        $objAdvOption = new HotelRoomTypeGlobalDemandAdvanceOption($option['id'], $idLang);
-                        $oldOptionPrice = $hotelRoomTypeDemandPrice->getRoomTypeDemandPrice(
-                            $idProductOld,
-                            $objAdvOption->id_global_demand,
-                            $option['id']
-                        );
-                        if (Validate::isPrice($oldOptionPrice)) {
-                            if ($oldOptionPrice != $objAdvOption->price) {
-                                $objHRTDemandPrice = new HotelRoomTypeDemandPrice();
-                                $objHRTDemandPrice->id_product = $idProductNew;
-                                $objHRTDemandPrice->id_global_demand = $idGlobalDemand;
-                                $objHRTDemandPrice->id_option = $option['id'];
-                                $objHRTDemandPrice->price = $oldOptionPrice;
-                                if (!$objHRTDemandPrice->save()) {
-                                    return false;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
     public function getRoomTypeDemands($idProduct, $idLang = 0, $useTax = null)
     {
         if (!$idLang) {
@@ -148,24 +80,12 @@ class HotelRoomTypeDemand extends ObjectModel
             foreach ($roomTypeDemands as &$demand) {
                 $idGlobalDemand = $demand['id_global_demand'];
                 $roomTypeDemandInfo[$idGlobalDemand]['name'] = $demand['name'];
-                $roomTypeDemandInfo[$idGlobalDemand]['price_calc_method'] = $demand['price_calc_method'];
 
                 $roomTypeDemandInfo[$idGlobalDemand]['price'] = HotelRoomTypeDemand::getPriceStatic(
                     $idProduct,
                     $idGlobalDemand,
                     0,
                     $useTax
-                );
-                $roomTypeDemandInfo[$idGlobalDemand]['price_tax_excl'] = HotelRoomTypeDemand::getPriceStatic(
-                    $idProduct,
-                    $idGlobalDemand,
-                    0,
-                    false
-                );
-                $roomTypeDemandInfo[$idGlobalDemand]['price_tax_incl'] = HotelRoomTypeDemand::getPriceStatic(
-                    $idProduct,
-                    $idGlobalDemand,
-                    0
                 );
                 if ($advOptions = $objAdvOption->getGlobalDemandAdvanceOptions($idGlobalDemand, $idLang)) {
                     foreach ($advOptions as &$option) {
@@ -175,17 +95,6 @@ class HotelRoomTypeDemand extends ObjectModel
                             $idGlobalDemand,
                             $idOption,
                             $useTax
-                        );
-                        $roomTypeDemandInfo[$idGlobalDemand]['adv_option'][$idOption]['price_tax_excl'] = HotelRoomTypeDemand::getPriceStatic(
-                            $idProduct,
-                            $idGlobalDemand,
-                            $idOption,
-                            false
-                        );
-                        $roomTypeDemandInfo[$idGlobalDemand]['adv_option'][$idOption]['price_tax_incl'] = HotelRoomTypeDemand::getPriceStatic(
-                            $idProduct,
-                            $idGlobalDemand,
-                            $idOption
                         );
                         $roomTypeDemandInfo[$idGlobalDemand]['adv_option'][$idOption]['name'] = $option['name'];
                     }
@@ -205,8 +114,7 @@ class HotelRoomTypeDemand extends ObjectModel
         $idCustomer = null,
         $idCart = null,
         $id_address = null,
-        Context $context = null,
-        $customPrice = null
+        Context $context = null
     ) {
         if (!$context) {
             $context = Context::getContext();
@@ -237,17 +145,31 @@ class HotelRoomTypeDemand extends ObjectModel
         $idState = 0;
         $zipcode = 0;
 
+        if (!$id_address && Validate::isLoadedObject($curCart)) {
+            $id_address = $curCart->{Configuration::get('PS_TAX_ADDRESS_TYPE')};
+        }
+
         if ($id_address) {
             $addressInfos = Address::getCountryAndState($id_address);
-        } else {
-            $addressInfos = Address::getCountryAndState(Cart::getIdAddressForTaxCalculation($idProduct));
+            if ($addressInfos['id_country']) {
+                $idCountry = (int)$addressInfos['id_country'];
+                $idState = (int)$addressInfos['id_state'];
+                $zipcode = $addressInfos['postcode'];
+            }
+        } elseif (isset($context->customer->geoloc_id_country)) {
+            $idCountry = (int)$context->customer->geoloc_id_country;
+            $idState = (int)$context->customer->id_state;
+            $zipcode = $context->customer->postcode;
         }
-        if ($addressInfos['id_country']) {
-            $idCountry = (int)$addressInfos['id_country'];
-            $idState = (int)$addressInfos['id_state'];
-            $zipcode = $addressInfos['postcode'];
-        }
+
         if (Tax::excludeTaxeOption()) {
+            $useTax = false;
+        }
+
+        if ($useTax != false
+            && !empty($addressInfos['vat_number'])
+            && $addressInfos['id_country'] != Configuration::get('VATNUMBER_COUNTRY')
+            && Configuration::get('VATNUMBER_MANAGEMENT')) {
             $useTax = false;
         }
 
@@ -267,8 +189,7 @@ class HotelRoomTypeDemand extends ObjectModel
             $useTax,
             $decimals,
             $idCustomer,
-            $idCart,
-            $customPrice
+            $idCart
         );
     }
 
@@ -284,8 +205,7 @@ class HotelRoomTypeDemand extends ObjectModel
         $useTax,
         $decimals,
         $idCustomer = 0,
-        $idCart = 0,
-        $customPrice = null
+        $idCart = 0
     ) {
         static $address = null;
         static $context = null;
@@ -313,28 +233,24 @@ class HotelRoomTypeDemand extends ObjectModel
 
         // here get the price of global demand
         $objRoomDmdPrice = new HotelRoomTypeDemandPrice();
-        if (!is_null($customPrice)) {
-            $price = $customPrice;
+        if ($idOption) {
+            $objOption = new HotelRoomTypeGlobalDemandAdvanceOption($idOption);
+            $price = $objRoomDmdPrice->getRoomTypeDemandPrice(
+                $idProduct,
+                $idGlobalDemand,
+                $idOption
+            );
+            if (!Validate::isPrice($price)) {
+                $price = $objOption->price;
+            }
         } else {
-            if ($idOption) {
-                $objOption = new HotelRoomTypeGlobalDemandAdvanceOption($idOption);
-                $price = $objRoomDmdPrice->getRoomTypeDemandPrice(
-                    $idProduct,
-                    $idGlobalDemand,
-                    $idOption
-                );
-                if (!Validate::isPrice($price)) {
-                    $price = $objOption->price;
-                }
-            } else {
-                $objGlobalDemand = new HotelRoomTypeGlobalDemand($idGlobalDemand);
-                $price = $objRoomDmdPrice->getRoomTypeDemandPrice(
-                    $idProduct,
-                    $idGlobalDemand
-                );
-                if (!Validate::isPrice($price)) {
-                    $price = $objGlobalDemand->price;
-                }
+            $objGlobalDemand = new HotelRoomTypeGlobalDemand($idGlobalDemand);
+            $price = $objRoomDmdPrice->getRoomTypeDemandPrice(
+                $idProduct,
+                $idGlobalDemand
+            );
+            if (!Validate::isPrice($price)) {
+                $price = $objGlobalDemand->price;
             }
         }
         $price = Tools::convertPrice($price, $idCurrency);

@@ -36,6 +36,14 @@ class AdminAboutHotelBlockSettingController extends ModuleAdminController
                 'title' =>  $this->l('Hotel Interior Description'),
                 'icon' =>   'icon-cogs',
                 'fields' => array(
+                    'HOTEL_INTERIOR_BLOCK_NAV_LINK' => array(
+                        'title' => $this->l('Show link at navigation'),
+                        'hint' => $this->l('Enable, if you want to display a link at navigation menu for the interior block at home page.'),
+                        'validation' => 'isBool',
+                        'cast' => 'intval',
+                        'type' => 'bool',
+                        'required' => true
+                    ),
                     'HOTEL_INTERIOR_HEADING' => array(
                         'title' => $this->l('Interior Block Title'),
                         'type' => 'textLang',
@@ -62,7 +70,7 @@ class AdminAboutHotelBlockSettingController extends ModuleAdminController
             ),
         );
 
-        $this->informations[] = $this->l('Keep interior images in a multiple of 3 for the best view.');
+        $this->informations[] = $this->l('For better view, upload hotel interior image in multiple of 3.');
         $this->addRowAction('edit');
         $this->addRowAction('delete');
 
@@ -157,7 +165,7 @@ class AdminAboutHotelBlockSettingController extends ModuleAdminController
 
     public function renderForm()
     {
-        $imgUrl = $imageSize = $imgExist = $image = false;
+        $imageUrl = $imageSize = false;
 
         if ($this->display == 'edit') {
             $idHtlInterior = Tools::getValue('id_interior_image');
@@ -182,7 +190,6 @@ class AdminAboutHotelBlockSettingController extends ModuleAdminController
             }
 
         }
-
         $this->fields_form = array(
             'legend' => array(
                 'title' => $this->l('Add New Hotel Interior Image'),
@@ -272,12 +279,9 @@ class AdminAboutHotelBlockSettingController extends ModuleAdminController
                 } while ((bool)Tools::file_get_contents(
                     $this->context->link->getMediaLink(_MODULE_DIR_.$this->module->name.'/views/img/hotel_interior/'.$tmp_name.'.jpg')
                 ));
-                $imageSize = ImageType::getByName(ImageType::getFormatedName('large'));
                 ImageManager::resize(
                     $file['tmp_name'],
-                    _PS_MODULE_DIR_.$this->module->name.'/views/img/hotel_interior/'.$tmp_name.'.jpg',
-                    $imageSize['width'],
-                    $imageSize['height']
+                    _PS_MODULE_DIR_.$this->module->name.'/views/img/hotel_interior/'.$tmp_name.'.jpg'
                 );
 
                 $objHtlInteriorImg->name = $tmp_name;
@@ -389,7 +393,7 @@ class AdminAboutHotelBlockSettingController extends ModuleAdminController
         parent::setMedia();
         Media::addJsDef(
             array(
-                'filesizeError' => $this->l('File exceeds maximum size.', null, true),
+                'filesizeError' => $this->l('File exceeds maximum size.'),
                 'maxSizeAllowed' => Tools::getMaxUploadSize(),
             )
         );

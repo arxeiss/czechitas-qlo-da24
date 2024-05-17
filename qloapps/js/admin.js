@@ -504,14 +504,6 @@ function changeCMSActivationAuthorization()
 		getE('PS_CONDITIONS_CMS_ID').disabled = 'disabled';
 }
 
-function changeOverbookingOrderAction()
-{
-    if (getE('PS_OVERBOOKING_ORDER_ACTION').value == $("input[name='OVERBOOKING_ORDER_CANCEL_ACTION']").val())
-        $('#PS_MAX_OVERBOOKING_PER_HOTEL_PER_DAY').closest('.form-group').hide();
-    else
-        $('#PS_MAX_OVERBOOKING_PER_HOTEL_PER_DAY').closest('.form-group').show();
-}
-
 function disableZipFormat()
 {
 	if ($('#need_zip_code_on').prop('checked') == false)
@@ -609,12 +601,6 @@ function showOptions(show)
 function submitAddProductAndPreview()
 {
 	$('#fakeSubmitAddProductAndPreview').attr('name','submitAddProductAndPreview');
-	$('#product_form').submit();
-}
-
-function submitAddProduct()
-{
-	$('#fakeSubmitAddProduct').attr('name','submitAddProduct');
 	$('#product_form').submit();
 }
 
@@ -742,32 +728,8 @@ $(document).ready(function()
 		$('#theme_fieldset_'+formToMove+' .form-wrapper').appendTo('#'+formDestination);
 	}
 
-	try
-		{
-			resAjax = $.ajax({
-				type:"POST",
-				url: 'index.php',
-				headers: {"cache-control": "no-cache"},
-				async: true,
-				cache: false,
-				data: {
-					ajax : "1",
-					token : token,
-					action : "refreshModuleList"
-				},
-				success: function(data){
-				}
-			});
-		}
-	catch(e) { }
-
-
-
 	$('select.chosen').each(function(k, item){
-		$(item).chosen({
-			disable_search_threshold: 5,
-			search_contains: true,
-		});
+		$(item).chosen({disable_search_threshold: 10, search_contains: true});
 	});
 	// Apply chosen() when modal is loaded
 	$(document).on('shown.bs.modal', function (e) {
@@ -901,6 +863,7 @@ $(document).ready(function()
 		var moduleLink = $(this).data('link');
 		var authorUri = $(this).data('author-uri');
 		var isValidUri = /(https?):\/\/([a-z0-9\.]*)?(prestashop.com).*/gi;
+		var addonsSearchLink = 'http://addons.prestashop.com/en/search?search_query='+encodeURIComponent(moduleDisplayName)+'&utm_source=back-office&utm_medium=addons-certified&utm_campaign=back-office-'+iso_user.toUpperCase();
 
 		$('.modal #untrusted-module-logo').attr('src', moduleImage);
 		$('.modal .module-display-name-placeholder').text(moduleDisplayName);
@@ -910,6 +873,7 @@ $(document).ready(function()
 			$('.modal .author-name-placeholder').wrap('<a href="'+authorUri+'" onclick="window.open(this.href);return false;"></a>');
 
 		$('.modal #proceed-install-anyway').attr('href', moduleLink);
+		$('.modal .catalog-link').attr('href', addonsSearchLink);
 		$('.modal .catalog-link').attr('onclick', 'window.open(this.href);return false;');
 	});
 
@@ -1230,24 +1194,6 @@ function sendBulkAction(form, action)
 	$(form).submit();
 }
 
-function checkIfEmployeeIsLoggedIn() {
-	return new Promise(function (resolve) {
-		$.ajax({
-			url : window.location.pathname,
-			type: 'POST',
-			dataType: 'JSON',
-			data : {
-				ajax : '1',
-				controller : 'AdminLogin',
-				action : 'checkLoginStatus',
-			},
-			success : function(response) {
-				resolve(response.is_logged_in);
-			}
-		});
-	});
-}
-
 function openModulesList()
 {
 	if (!modules_list_loaded)
@@ -1260,14 +1206,14 @@ function openModulesList()
 				ajax : "1",
 				controller : "AdminModules",
 				action : "getTabModulesList",
-				controller_class: help_class_name,
+				tab_modules_list : tab_modules_list,
 				back_tab_modules_list : window.location.href
 			},
 			success : function(data)
 			{
 				$('#modules_list_container_tab_modal').html(data).slideDown();
 				$('#modules_list_loader').hide();
-				// modules_list_loaded = true;
+				modules_list_loaded = true;
 				$('.help-tooltip').tooltip();
 			}
 		});
@@ -1375,6 +1321,21 @@ function ajaxStates(id_state_selected)
 			}
 		}
 	});
+
+	if (module_dir && vat_number)
+	{
+		$.ajax({
+			type: "GET",
+			url: window.location.origin + module_dir + "vatnumber/ajax.php?id_country=" + $('#id_country').val(),
+			success: function(isApplicable)
+			{
+				if(isApplicable == 1)
+					$('#vat_area').show();
+				else
+					$('#vat_area').hide();
+			}
+		});
+	}
 }
 
 function check_for_all_accesses(tabsize, tabnumber)
@@ -1567,70 +1528,15 @@ function parseDate(date){
 	return $.datepicker.parseDate("yy-mm-dd", date);
 }
 
-function refresh_kpis()
+function refresh_kpis(callFunction)
 {
 	$('.box-stats').each(function() {
 		if ($(this).attr('id')) {
 			var functionName = 'refresh_' + $(this).attr('id').replace(/-/g, '_');
 
 			if (typeof window[functionName] === 'function') {
-				window[functionName]();
+				window[functionName](callFunction);
 			}
-		}
-	});
-}
-
-$(document).on('change', '.kpi-container .kpi-display-toggle', function (e) {
-	let kpiCheckbox = $(this);
-	let isVisible = parseInt(kpiCheckbox.is(':checked') & 1);
-
-	// hide or show the KPI
-	$('#' + kpiCheckbox.attr('data-kpi-id')).parent().toggle(isVisible);
-
-	// save visibility state to cookie
-	$.ajax({
-		type: 'POST',
-		headers: { 'cache-control': 'no-cache' },
-		url: window.location,
-		cache: false,
-		dataType: 'json',
-		data: {
-			ajax: 1,
-			controller: help_class_name,
-			action: 'changeKpiVisibility',
-			kpi_id: kpiCheckbox.attr('data-kpi-id'),
-			is_visible: isVisible,
-		}
-	});
-
-	// at least one KPI must be displayed
-	if ($(kpiCheckbox).closest('.actions-wrap').find('.kpi-display-toggle:checked').length == 1) {
-		$(kpiCheckbox).closest('.actions-wrap').find('.kpi-display-toggle:checked').attr('disabled', true);
-	} else {
-		$(kpiCheckbox).closest('.actions-wrap').find('.kpi-display-toggle').attr('disabled', false);
-	}
-});
-
-// prevent dropdown from closing on clicking its body
-$(document).on('click', '.kpi-container .dropdown-menu', function (e) {
-	e.stopPropagation();
-});
-
-function toggleKpiView() {
-	$('.kpi-container').toggleClass('no-wrapping'); // default view is to wrap KPIs
-
-	// save view to cookie
-	$.ajax({
-		type: 'POST',
-		headers: { 'cache-control': 'no-cache' },
-		url: window.location,
-		cache: false,
-		dataType: 'json',
-		data: {
-			ajax: 1,
-			controller: help_class_name,
-			action: 'saveKpiView',
-			no_wrapping: parseInt($('.kpi-container').hasClass('no-wrapping') & 1),
 		}
 	});
 }
@@ -1683,61 +1589,5 @@ function countDown($source, $target) {
 
 	$source.keyup(function(){
 		$target.html(max-$source.val().length);
-	});
-}
-
-function loadRecommendation()
-{
-	$.ajax({
-		type: 'POST',
-		url: 'index.php',
-		async: true,
-		dataType: 'JSON',
-		data: {
-			action: 'getRecommendationContent',
-			tab: help_class_name,
-			ajax: 1,
-			token: token
-		},
-		success: function(res) {
-			if (res.success && res.html && res.html.trim()) {
-				$('#recommendation-wrapper-skeleton').fadeIn('slow');
-				$('#recommendation-wrapper').html(res.html);
-				let images = $('#recommendation-wrapper img');
-				let loaded = 0;
-				let total = $(images).length;
-				if (images.length) {
-					$(images).on('load', function() {
-						if (++loaded === total) {
-							$('#recommendation-wrapper-skeleton').fadeOut('slow').hide();
-							$('#recommendation-wrapper').fadeIn();
-						}
-					});
-				} else {
-					$('#recommendation-wrapper-skeleton').fadeOut('slow').hide();
-					$('#recommendation-wrapper').fadeIn();
-				}
-			}
-		},
-		error: function(res) {
-			$('#recommendation-wrapper-skeleton').fadeOut('slow').hide();
-		}
-	});
-}
-
-function closeRecommendation()
-{
-	$('#recommendation-wrapper').fadeOut('slow');
-	$.ajax({
-		type: 'POST',
-		url: 'index.php',
-		async: true,
-		dataType: 'JSON',
-		data: {
-			action: 'recommendationClosed',
-			tab: help_class_name,
-			ajax: 1,
-			token: token
-		}
 	});
 }

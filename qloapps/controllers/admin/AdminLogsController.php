@@ -86,7 +86,7 @@ class AdminLogsControllerCore extends AdminController
                 'fields' =>    array(
                     'PS_LOGS_BY_EMAIL' => array(
                         'title' => $this->l('Minimum severity level'),
-                        'hint' => $this->l('Enter "5" if you do not want to receive any emails.').'<br />'.$this->l('Emails will be sent to the website owner.'),
+                        'hint' => $this->l('Enter "5" if you do not want to receive any emails.').'<br />'.$this->l('Emails will be sent to the shop owner.'),
                         'cast' => 'intval',
                         'type' => 'text'
                     )
@@ -95,10 +95,8 @@ class AdminLogsControllerCore extends AdminController
             )
         );
         $this->list_no_link = true;
-        $this->_select .= 'CONCAT(e.firstname, \' \', e.lastname) employee';
+        $this->_select .= 'CONCAT(LEFT(e.firstname, 1), \'. \', e.lastname) employee';
         $this->_join .= ' LEFT JOIN '._DB_PREFIX_.'employee e ON (a.id_employee = e.id_employee)';
-        $this->_orderBy = 'a.date_add';
-        $this->_orderWay = 'DESC';
         $this->_use_found_rows = false;
         parent::__construct();
     }
@@ -126,8 +124,8 @@ class AdminLogsControllerCore extends AdminController
         $template = $this->context->smarty->createTemplate('controllers/logs/employee_field.tpl', $this->context->smarty);
         $employee = new Employee((int)$tr['id_employee']);
         $template->assign(array(
-            'employee_name' => $value,
-            'employee_email' => $employee->email,
+            'employee_image' => $employee->getImage(),
+            'employee_name' => $value
         ));
         return $template->fetch();
     }

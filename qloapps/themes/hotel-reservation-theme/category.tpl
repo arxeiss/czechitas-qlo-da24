@@ -31,6 +31,18 @@
             </div>
             <div class="col-sm-3">
                 <div class="filter_dw_cont">
+                    <button class="btn btn-default dropdown-toggle" type="button" id="gst_rating" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="pull-left sort_btn_span" data-sort-by="0" data-sort-value="0" data-sort-for="{l s='Rating'}">{l s='Rating'}</span>
+                        <span class="caret pull-right margin-top-7"></span>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="gst_rating">
+                        <li><a href="#" class="sort_result" data-sort-by="1" data-value="1">{l s='Rating Ascending'}</a></li>
+                        <li><a href="#" class="sort_result" data-sort-by="1" data-value="2">{l s='Rating Descending'}</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="filter_dw_cont">
                     <button class="btn btn-default dropdown-toggle" type="button" id="price_ftr" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="pull-left sort_btn_span" data-sort-by="0" data-sort-value="0" data-sort-for="{l s='Price'}">{l s='Price'}</span>
                         <span class="caret pull-right margin-top-7"></span>
@@ -46,16 +58,14 @@
         <div class="row margin-lr-0" id="category_data_cont">
             {include file="./_partials/room_type_list.tpl"}
         </div>
+
     </div>
 </div>
-
 {strip}
     {addJsDef product_controller_url=$link->getPageLink('product')}
-    {* {addJsDef feat_img_dir=$feat_img_dir} *}
-    {* {addJsDef ratting_img=$ratting_img} *}
+    {addJsDef feat_img_dir=$feat_img_dir}
+    {addJsDef ratting_img=$ratting_img}
     {addJsDef currency_prefix = $currency->prefix}
     {addJsDef currency_suffix = $currency->suffix}
-    {if isset($max_order_date)}
-        {addJsDef max_order_date = $max_order_date}
-    {/if}
+    {addJsDef max_order_date = $max_order_date}
 {/strip}

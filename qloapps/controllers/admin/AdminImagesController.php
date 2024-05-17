@@ -52,52 +52,20 @@ class AdminImagesControllerCore extends AdminController
         );
 
         $this->fields_list = array(
-            'id_image_type' => array(
-                'title' => $this->l('ID'),
-                'align' => 'center',
-                'class' => 'fixed-width-xs'
-            ),
-            'name' => array(
-                'title' => $this->l('Name'),
-                'align' => 'left'
-            ),
-            'width' => array(
-                'title' => $this->l('Width'),
-                'suffix' => ' px'
-                ),
-            'height' => array(
-                'title' => $this->l('Height'),
-                'suffix' => ' px'
-            ),
-            'products' => array(
-                'title' => $this->l('Room Types/Products'),
-                'align' => 'center',
-                'type' => 'bool',
-                'active' => 'products',
-                'ajax' => true,
-                'orderby' => false
-            ),
-            'categories' => array(
-                'title' => $this->l('Categories'),
-                'align' => 'center',
-                'type' => 'bool',
-                'active' => 'categories',
-                'ajax' => true,
-                'orderby' => false
-            ),
-            'hotels' => array(
-                'title' => $this->l('Hotels'),
-                'align' => 'center',
-                'type' => 'bool',
-                'active' => 'hotels',
-                'ajax' => true,
-                'orderby' => false
-            ),
+            'id_image_type' => array('title' => $this->l('ID'), 'align' => 'center', 'class' => 'fixed-width-xs'),
+            'name' => array('title' => $this->l('Name')),
+            'width' => array('title' => $this->l('Width'),  'suffix' => ' px'),
+            'height' => array('title' => $this->l('Height'),  'suffix' => ' px'),
+            'products' => array('title' => $this->l('Products'), 'align' => 'center', 'type' => 'bool', 'callback' => 'printEntityActiveIcon', 'orderby' => false),
+            'categories' => array('title' => $this->l('Categories'), 'align' => 'center', 'type' => 'bool', 'callback' => 'printEntityActiveIcon', 'orderby' => false),
+            'manufacturers' => array('title' => $this->l('Manufacturers'), 'align' => 'center', 'type' => 'bool', 'callback' => 'printEntityActiveIcon', 'orderby' => false),
+            'suppliers' => array('title' => $this->l('Suppliers'), 'align' => 'center', 'type' => 'bool', 'callback' => 'printEntityActiveIcon', 'orderby' => false),
+            'stores' => array('title' => $this->l('Stores'), 'align' => 'center', 'type' => 'bool', 'callback' => 'printEntityActiveIcon', 'orderby' => false)
         );
 
         // Scenes tab has been removed by default from the installation, but may still exists in updates
         if (Tab::getIdFromClassName('AdminScenes')) {
-            $this->fields_list['scenes'] = array('title' => $this->l('Scenes'), 'align' => 'center', 'type' => 'bool', 'orderby' => false);
+            $this->fields_list['scenes'] = array('title' => $this->l('Scenes'), 'align' => 'center', 'type' => 'bool', 'callback' => 'printEntityActiveIcon', 'orderby' => false);
         }
 
         // No need to display the old image system migration tool except if product images are in _PS_PROD_IMG_DIR_
@@ -260,7 +228,7 @@ class AdminImagesControllerCore extends AdminController
                 ),
                 array(
                     'type' => 'switch',
-                    'label' => $this->l('Room Types/Products'),
+                    'label' => $this->l('Products'),
                     'name' => 'products',
                     'required' => false,
                     'is_bool' => true,
@@ -301,144 +269,92 @@ class AdminImagesControllerCore extends AdminController
                 ),
                 array(
                     'type' => 'switch',
-                    'label' => $this->l('Hotels'),
-                    'name' => 'hotels',
+                    'label' => $this->l('Manufacturers'),
+                    'name' => 'manufacturers',
                     'required' => false,
                     'is_bool' => true,
-                    'hint' => $this->l('This type will be used for Hotel images.'),
+                    'hint' => $this->l('This type will be used for Manufacturer images.'),
                     'values' => array(
                         array(
-                            'id' => 'hotels_on',
+                            'id' => 'manufacturers_on',
                             'value' => 1,
                             'label' => $this->l('Enabled')
                         ),
                         array(
-                            'id' => 'hotels_off',
+                            'id' => 'manufacturers_off',
                             'value' => 0,
                             'label' => $this->l('Disabled')
                         ),
                     )
                 ),
-                // array(
-                //     'type' => 'switch',
-                //     'label' => $this->l('Manufacturers'),
-                //     'name' => 'manufacturers',
-                //     'required' => false,
-                //     'is_bool' => true,
-                //     'hint' => $this->l('This type will be used for Manufacturer images.'),
-                //     'values' => array(
-                //         array(
-                //             'id' => 'manufacturers_on',
-                //             'value' => 1,
-                //             'label' => $this->l('Enabled')
-                //         ),
-                //         array(
-                //             'id' => 'manufacturers_off',
-                //             'value' => 0,
-                //             'label' => $this->l('Disabled')
-                //         ),
-                //     )
-                // ),
-                // array(
-                //     'type' => 'switch',
-                //     'label' => $this->l('Suppliers'),
-                //     'name' => 'suppliers',
-                //     'required' => false,
-                //     'is_bool' => true,
-                //     'hint' => $this->l('This type will be used for Supplier images.'),
-                //     'values' => array(
-                //         array(
-                //             'id' => 'suppliers_on',
-                //             'value' => 1,
-                //             'label' => $this->l('Enabled')
-                //         ),
-                //         array(
-                //             'id' => 'suppliers_off',
-                //             'value' => 0,
-                //             'label' => $this->l('Disabled')
-                //         ),
-                //     )
-                // ),
-                // array(
-                //     'type' => 'switch',
-                //     'label' => $this->l('Scenes'),
-                //     'name' => 'scenes',
-                //     'required' => false,
-                //     'class' => 't',
-                //     'is_bool' => true,
-                //     'hint' => $this->l('This type will be used for Scene images.'),
-                //     'values' => array(
-                //         array(
-                //             'id' => 'scenes_on',
-                //             'value' => 1,
-                //             'label' => $this->l('Enabled')
-                //         ),
-                //         array(
-                //             'id' => 'scenes_off',
-                //             'value' => 0,
-                //             'label' => $this->l('Disabled')
-                //         ),
-                //     )
-                // ),
-                // array(
-                //     'type' => 'switch',
-                //     'label' => $this->l('Stores'),
-                //     'name' => 'stores',
-                //     'required' => false,
-                //     'is_bool' => true,
-                //     'hint' => $this->l('This type will be used for Store images.'),
-                //     'values' => array(
-                //         array(
-                //             'id' => 'stores_on',
-                //             'value' => 1,
-                //             'label' => $this->l('Enabled')
-                //         ),
-                //         array(
-                //             'id' => 'stores_off',
-                //             'value' => 0,
-                //             'label' => $this->l('Disabled')
-                //         ),
-                //     )
-                // ),
+                array(
+                    'type' => 'switch',
+                    'label' => $this->l('Suppliers'),
+                    'name' => 'suppliers',
+                    'required' => false,
+                    'is_bool' => true,
+                    'hint' => $this->l('This type will be used for Supplier images.'),
+                    'values' => array(
+                        array(
+                            'id' => 'suppliers_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ),
+                        array(
+                            'id' => 'suppliers_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        ),
+                    )
+                ),
+                array(
+                    'type' => 'switch',
+                    'label' => $this->l('Scenes'),
+                    'name' => 'scenes',
+                    'required' => false,
+                    'class' => 't',
+                    'is_bool' => true,
+                    'hint' => $this->l('This type will be used for Scene images.'),
+                    'values' => array(
+                        array(
+                            'id' => 'scenes_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ),
+                        array(
+                            'id' => 'scenes_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        ),
+                    )
+                ),
+                array(
+                    'type' => 'switch',
+                    'label' => $this->l('Stores'),
+                    'name' => 'stores',
+                    'required' => false,
+                    'is_bool' => true,
+                    'hint' => $this->l('This type will be used for Store images.'),
+                    'values' => array(
+                        array(
+                            'id' => 'stores_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ),
+                        array(
+                            'id' => 'stores_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        ),
+                    )
+                ),
             ),
             'submit' => array(
                 'title' => $this->l('Save')
-            ),
-            'buttons' => array(
-                'save-and-stay' => array(
-                    'title' => $this->l('Save and stay'),
-                    'name' => 'submitAdd'.$this->table.'AndStay',
-                    'type' => 'submit',
-                    'class' => 'btn btn-default pull-right',
-                    'icon' => 'process-icon-save',
-                ),
-            ),
+            )
         );
 
         parent::__construct();
-    }
-
-    public function ajaxProcess()
-    {
-        $response = array('success' => false);
-        if ($action = Tools::getValue('action')) {
-            $action = str_replace('image_type', '', $action);
-            $fields = ObjectModel::getDefinition($this->className)['fields'];
-            if (array_key_exists($action, $fields)) {
-                $idImageType = Tools::getValue('id_image_type');
-                if (Validate::isLoadedObject($objImageType = new ImageType($idImageType))) {
-                    $objImageType->$action = !$objImageType->$action;
-                    if ($objImageType->save()) {
-                        $response['success'] = true;
-                        $response['text'] = $this->l('Updated successfully.');
-                    } else {
-                        $response['text'] = $this->l('An error occurred while updating image type for .'.$action);
-                    }
-                }
-            }
-        }
-
-        $this->ajaxDie(json_encode($response));
     }
 
     public function postProcess()
@@ -488,6 +404,11 @@ class AdminImagesControllerCore extends AdminController
         }
     }
 
+    public static function printEntityActiveIcon($value, $object)
+    {
+        return ($value ? '<span class="list-action-enable action-enabled"><i class="icon-check"></i></span>' : '<span class="list-action-enable action-disabled"><i class="icon-remove"></i></span>');
+    }
+
     protected function _childValidation()
     {
         if (!Tools::getValue('id_image_type') && Validate::isImageTypeName($typeName = Tools::getValue('name')) && ImageType::typeAlreadyExists($typeName)) {
@@ -502,12 +423,11 @@ class AdminImagesControllerCore extends AdminController
     {
         $types = array(
             'categories' => $this->l('Categories'),
-            'products' => $this->l('Room Types/Products'),
-            'hotels' => $this->l('Hotels'),
-            // 'manufacturers' => $this->l('Manufacturers'),
-            // 'suppliers' => $this->l('Suppliers'),
-            // 'scenes' => $this->l('Scenes'),
-            // 'stores' => $this->l('Stores')
+            'manufacturers' => $this->l('Manufacturers'),
+            'suppliers' => $this->l('Suppliers'),
+            'scenes' => $this->l('Scenes'),
+            'products' => $this->l('Products'),
+            'stores' => $this->l('Stores')
         );
 
         $formats = array();
@@ -535,6 +455,19 @@ class AdminImagesControllerCore extends AdminController
         if (!is_dir($dir)) {
             return false;
         }
+        $toDel = scandir($dir);
+
+        foreach ($toDel as $d) {
+            foreach ($type as $imageType) {
+                if (preg_match('/^[0-9]+\-'.($product ? '[0-9]+\-' : '').$imageType['name'].'\.jpg$/', $d)
+                    || (count($type) > 1 && preg_match('/^[0-9]+\-[_a-zA-Z0-9-]*\.jpg$/', $d))
+                    || preg_match('/^([[:lower:]]{2})\-default\-'.$imageType['name'].'\.jpg$/', $d)) {
+                    if (file_exists($dir.$d)) {
+                        unlink($dir.$d);
+                    }
+                }
+            }
+        }
 
         // delete product images using new filesystem.
         if ($product) {
@@ -555,25 +488,6 @@ class AdminImagesControllerCore extends AdminController
                     }
                 }
             }
-        } else {
-            $toDel = scandir($dir);
-            foreach ($toDel as $d) {
-                if ($d === '.' || $d === '..') {
-                    continue;
-                }
-                if (is_dir($dir.$d)) {
-                    $this->_deleteOldImages($dir.$d.'/', $type, $product);
-                }
-                foreach ($type as $imageType) {
-                    if (preg_match('/^[0-9]+\-'.($product ? '[0-9]+\-' : '').$imageType['name'].'\.jpg$/', $d)
-                        || (count($type) > 1 && preg_match('/^[0-9]+\-[_a-zA-Z0-9-]*\.jpg$/', $d))
-                        || preg_match('/^([[:lower:]]{2})\-default\-'.$imageType['name'].'\.jpg$/', $d)) {
-                        if (file_exists($dir.$d)) {
-                            unlink($dir.$d);
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -585,67 +499,15 @@ class AdminImagesControllerCore extends AdminController
      * @param bool $productsImages
      * @return bool|string
      */
-    protected function _regenerateNewImages($dir, $type, $imageElement = false)
+    protected function _regenerateNewImages($dir, $type, $productsImages = false)
     {
         if (!is_dir($dir)) {
             return false;
         }
 
         $generate_hight_dpi_images = (bool)Configuration::get('PS_HIGHT_DPI');
-        if ($imageElement == 'products') {
-            foreach (Image::getAllImages() as $image) {
-                $imageObj = new Image($image['id_image']);
-                $existing_img = $dir.$imageObj->getExistingImgPath().'.jpg';
-                if (file_exists($existing_img) && filesize($existing_img)) {
-                    foreach ($type as $imageType) {
-                        if (!file_exists($dir.$imageObj->getExistingImgPath().'-'.stripslashes($imageType['name']).'.jpg')) {
-                            if (!ImageManager::resize($existing_img, $dir.$imageObj->getExistingImgPath().'-'.stripslashes($imageType['name']).'.jpg', (int)$imageType['width'], (int)$imageType['height'])) {
-                                $this->errors[] = sprintf(Tools::displayError('Original image is corrupt (%s) for product ID %2$d or bad permission on folder'), $existing_img, (int)$imageObj->id_product);
-                            }
 
-                            if ($generate_hight_dpi_images) {
-                                if (!ImageManager::resize($existing_img, $dir.$imageObj->getExistingImgPath().'-'.stripslashes($imageType['name']).'2x.jpg', (int)$imageType['width']*2, (int)$imageType['height']*2)) {
-                                    $this->errors[] = sprintf(Tools::displayError('Original image is corrupt (%s) for product ID %2$d or bad permission on folder'), $existing_img, (int)$imageObj->id_product);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    $this->errors[] = sprintf(Tools::displayError('Original image is missing or empty (%1$s) for product ID %2$d'), $existing_img, (int)$imageObj->id_product);
-                }
-                if (time() - $this->start_time > $this->max_execution_time - 4) { // stop 4 seconds before the tiemout, just enough time to process the end of the page on a slow server
-                    return 'timeout';
-                }
-            }
-        } elseif ($imageElement == 'hotels') {
-            $objHotelImage = new HotelImage();
-            foreach($objHotelImage->getAllImages() as $image) {
-                $objHotelImage = new HotelImage($image['id']);
-                $existing_img = $dir.$objHotelImage->getImagePath().'.jpg';
-
-                if (file_exists($existing_img) && filesize($existing_img)) {
-                    foreach ($type as $imageType) {
-                        if (!file_exists($dir.$objHotelImage->getImagePath().'-'.stripslashes($imageType['name']).'.jpg')) {
-                            if (!ImageManager::resize($existing_img, $dir.$objHotelImage->getImagePath().'-'.stripslashes($imageType['name']).'.jpg', (int)$imageType['width'], (int)$imageType['height'])) {
-                                $this->errors[] = sprintf(Tools::displayError('Original image is corrupt (%s) for hotel ID %2$d or bad permission on folder'), $existing_img, (int)$objHotelImage->id_hotel);
-                            }
-
-                            if ($generate_hight_dpi_images) {
-                                if (!ImageManager::resize($existing_img, $dir.$objHotelImage->getImagePath().'-'.stripslashes($imageType['name']).'2x.jpg', (int)$imageType['width']*2, (int)$imageType['height']*2)) {
-                                    $this->errors[] = sprintf(Tools::displayError('Original image is corrupt (%s) for hotel ID %2$d or bad permission on folder'), $existing_img, (int)$objHotelImage->id_hotel);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    $this->errors[] = sprintf(Tools::displayError('Original image is missing or empty (%1$s) for hotel ID %2$d'), $existing_img, (int)$objHotelImage->id_hotel);
-                }
-                if (time() - $this->start_time > $this->max_execution_time - 4) { // stop 4 seconds before the tiemout, just enough time to process the end of the page on a slow server
-                    return 'timeout';
-                }
-
-            }
-        } else {
+        if (!$productsImages) {
             $formated_thumb_scene = ImageType::getFormatedName('thumb_scene');
             $formated_medium = ImageType::getFormatedName('medium');
             foreach (scandir($dir) as $image) {
@@ -682,6 +544,31 @@ class AdminImagesControllerCore extends AdminController
                             return 'timeout';
                         }
                     }
+                }
+            }
+        } else {
+            foreach (Image::getAllImages() as $image) {
+                $imageObj = new Image($image['id_image']);
+                $existing_img = $dir.$imageObj->getExistingImgPath().'.jpg';
+                if (file_exists($existing_img) && filesize($existing_img)) {
+                    foreach ($type as $imageType) {
+                        if (!file_exists($dir.$imageObj->getExistingImgPath().'-'.stripslashes($imageType['name']).'.jpg')) {
+                            if (!ImageManager::resize($existing_img, $dir.$imageObj->getExistingImgPath().'-'.stripslashes($imageType['name']).'.jpg', (int)$imageType['width'], (int)$imageType['height'])) {
+                                $this->errors[] = sprintf(Tools::displayError('Original image is corrupt (%s) for product ID %2$d or bad permission on folder'), $existing_img, (int)$imageObj->id_product);
+                            }
+
+                            if ($generate_hight_dpi_images) {
+                                if (!ImageManager::resize($existing_img, $dir.$imageObj->getExistingImgPath().'-'.stripslashes($imageType['name']).'2x.jpg', (int)$imageType['width']*2, (int)$imageType['height']*2)) {
+                                    $this->errors[] = sprintf(Tools::displayError('Original image is corrupt (%s) for product ID %2$d or bad permission on folder'), $existing_img, (int)$imageObj->id_product);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    $this->errors[] = sprintf(Tools::displayError('Original image is missing or empty (%1$s) for product ID %2$d'), $existing_img, (int)$imageObj->id_product);
+                }
+                if (time() - $this->start_time > $this->max_execution_time - 4) { // stop 4 seconds before the tiemout, just enough time to process the end of the page on a slow server
+                    return 'timeout';
                 }
             }
         }
@@ -762,8 +649,11 @@ class AdminImagesControllerCore extends AdminController
 
         $process = array(
             array('type' => 'categories', 'dir' => _PS_CAT_IMG_DIR_),
+            array('type' => 'manufacturers', 'dir' => _PS_MANU_IMG_DIR_),
+            array('type' => 'suppliers', 'dir' => _PS_SUPP_IMG_DIR_),
+            array('type' => 'scenes', 'dir' => _PS_SCENE_IMG_DIR_),
             array('type' => 'products', 'dir' => _PS_PROD_IMG_DIR_),
-            array('type' => 'hotels', 'dir' => _PS_HOTEL_IMG_DIR_),
+            array('type' => 'stores', 'dir' => _PS_STORE_IMG_DIR_)
         );
 
         // Launching generation process
@@ -788,7 +678,7 @@ class AdminImagesControllerCore extends AdminController
             if ($deleteOldImages) {
                 $this->_deleteOldImages($proc['dir'], $formats, ($proc['type'] == 'products' ? true : false));
             }
-            if (($return = $this->_regenerateNewImages($proc['dir'], $formats, $proc['type'])) === true) {
+            if (($return = $this->_regenerateNewImages($proc['dir'], $formats, ($proc['type'] == 'products' ? true : false))) === true) {
                 if (!count($this->errors)) {
                     $this->errors[] = sprintf(Tools::displayError('Cannot write images for this type: %s. Please check the %s folder\'s writing permissions.'), $proc['type'], $proc['dir']);
                 }

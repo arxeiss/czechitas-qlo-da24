@@ -24,11 +24,10 @@
 *  International Registered Trademark & Property of PrestaShop SA
 */
 
-if (!defined('_PS_VERSION_')) {
+if (!defined('_PS_VERSION_'))
 	exit;
-}
 
-class Dashgoals extends Module
+class DashGoals extends Module
 {
 	protected static $month_labels = array();
 	protected static $types = array('traffic', 'conversion', 'avg_cart_value');
@@ -37,15 +36,11 @@ class Dashgoals extends Module
 	protected static $more_color = array('#803E84', '#008E7E', '#20B2E7', '#F66E1B');
 	protected static $less_color = array('#BC77BE', '#00C2BB', '#51D6F2', '#FBB244');
 
-    const DG_VALUE_TYPE_TEXT = 1;
-    const DG_VALUE_TYPE_PRICE = 2;
-    const DG_VALUE_TYPE_PERCENT = 3;
-
 	public function __construct()
 	{
 		$this->name = 'dashgoals';
 		$this->tab = 'dashboard';
-		$this->version = '1.0.2';
+		$this->version = '1.0.0';
 		$this->author = 'PrestaShop';
 
 		parent::__construct();
@@ -73,21 +68,17 @@ class Dashgoals extends Module
 	public function install()
 	{
 		Configuration::updateValue('PS_DASHGOALS_CURRENT_YEAR', date('Y'));
-		for ($month = '01'; $month <= 12; $month = sprintf('%02d', $month + 1)) {
+		for ($month = '01'; $month <= 12; $month = sprintf('%02d', $month + 1))
+		{
 			$key = Tools::strtoupper('dashgoals_traffic_'.$month.'_'.date('Y'));
-			if (!ConfigurationKPI::get($key)) {
+			if (!ConfigurationKPI::get($key))
 				ConfigurationKPI::updateValue($key, 600);
-			}
-
 			$key = Tools::strtoupper('dashgoals_conversion_'.$month.'_'.date('Y'));
-			if (!ConfigurationKPI::get($key)) {
+			if (!ConfigurationKPI::get($key))
 				ConfigurationKPI::updateValue($key, 2);
-			}
-
 			$key = Tools::strtoupper('dashgoals_avg_cart_value_'.$month.'_'.date('Y'));
-			if (!ConfigurationKPI::get($key)) {
+			if (!ConfigurationKPI::get($key))
 				ConfigurationKPI::updateValue($key, 80);
-			}
 		}
 
 		// Prepare tab
@@ -95,9 +86,8 @@ class Dashgoals extends Module
 		$tab->active = 1;
 		$tab->class_name = 'AdminDashgoals';
 		$tab->name = array();
-		foreach (Language::getLanguages(true) as $lang) {
+		foreach (Language::getLanguages(true) as $lang)
 			$tab->name[$lang['id_lang']] = 'Dashgoals';
-		}
 		$tab->id_parent = -1;
 		$tab->module = $this->name;
 
@@ -113,7 +103,8 @@ class Dashgoals extends Module
 	public function uninstall()
 	{
 		$id_tab = (int)Tab::getIdFromClassName('AdminDashgoals');
-		if ($id_tab) {
+		if ($id_tab)
+		{
 			$tab = new Tab($id_tab);
 			$tab->delete();
 		}
@@ -123,35 +114,24 @@ class Dashgoals extends Module
 
 	public function hookActionAdminControllerSetMedia()
 	{
-		if (get_class($this->context->controller) == 'AdminDashboardController') {
-            Media::addJsDef(array(
-                'goal_set_txt' => $this->l('Goal Set'),
-                'goal_diff_txt' => $this->l('Goal Difference'),
-                'VALUE_TYPE_PRICE' => self::DG_VALUE_TYPE_PRICE,
-                'VALUE_TYPE_PERCENT' => self::DG_VALUE_TYPE_PERCENT,
-            ));
-
-			$this->context->controller->addJS($this->_path.'views/js/'.$this->name.'.js');
-			$this->context->controller->addCSS($this->_path.'views/css/'.$this->name.'.css');
-		}
+		if (get_class($this->context->controller) == 'AdminDashboardController')
+			$this->context->controller->addJs($this->_path.'views/js/'.$this->name.'.js');
 	}
 
 	public function setMonths($year)
 	{
 		$months = array();
-		for ($i = '01'; $i <= 12; $i = sprintf('%02d', $i + 1)) {
+		for ($i = '01'; $i <= 12; $i = sprintf('%02d', $i + 1))
 			$months[$i.'_'.$year] = array('label' => Dashgoals::$month_labels[$i], 'values' => array());
-		}
 
-		foreach (Dashgoals::$types as $type) {
-			foreach ($months as $month => &$month_row) {
+		foreach (Dashgoals::$types as $type)
+			foreach ($months as $month => &$month_row)
+			{
 				$key = 'dashgoals_'.$type.'_'.$month;
-				if (Tools::isSubmit('submitDashGoals')) {
+				if (Tools::isSubmit('submitDashGoals'))
 					ConfigurationKPI::updateValue(Tools::strtoupper($key), (float)Tools::getValue($key));
-				}
 				$month_row['values'][$type] = ConfigurationKPI::get(Tools::strtoupper($key));
 			}
-		}
 
 		return $months;
 	}
@@ -202,344 +182,347 @@ class Dashgoals extends Module
 	{
 		// There are stream types (different charts) and for each types there are 3 available zones (one color for the goal, one if you over perform and one if you under perfom)
 		$stream_types = array(
-			array('type' => 'traffic', 'title' => $this->l('Traffic')),
-			array('type' => 'conversion', 'title' => $this->l('Conversion rate')),
-			array('type' => 'avg_cart_value', 'title' => $this->l('Average order value')),
-			array('type' => 'sales', 'title' => $this->l('Sales')),
+			array('type' => 'traffic', 'title' => $this->l('Traffic'), 'unit_text' => $this->l('visits')),
+			array('type' => 'conversion', 'title' => $this->l('Conversion'), 'unit_text' => ''),
+			array('type' => 'avg_cart_value', 'title' => $this->l('Average cart value'), 'unit_text' => ''),
+			array('type' => 'sales', 'title' => $this->l('Sales'), 'unit_text' => '')
 		);
 		$stream_zones = array(
-			array('zone' => 'real'),
-			array('zone' => 'more'),
-			array('zone' => 'less')
+			array('zone' => 'real', 'text' => ''),
+			array('zone' => 'more', 'text' => $this->l('Goal exceeded')),
+			array('zone' => 'less', 'text' => $this->l('Goal not reached'))
 		);
 
 		// We initialize all the streams types for all the zones
 		$streams = array();
+		$average_goals = array();
 
-		foreach ($stream_types as $key => $stream_type) {
+		foreach ($stream_types as $key => $stream_type)
+		{
 			$streams[$stream_type['type']] = array();
-			foreach ($stream_zones as $stream_zone) {
+			foreach ($stream_zones as $stream_zone)
 				$streams[$stream_type['type']][$stream_zone['zone']] = array(
 					'key' => $stream_type['type'].'_'.$stream_zone['zone'],
 					'title' => $stream_type['title'],
+					'unit_text' => $stream_type['unit_text'],
+					'zone_text' => $stream_zone['text'],
 					'color' => ($stream_zone['zone'] == 'more' ? self::$more_color[$key] : ($stream_zone['zone'] == 'less' ? self::$less_color[$key] : self::$real_color[$key])),
 					'values' => array(),
 					'disabled' => (isset($stream_type['type']) && $stream_type['type'] == 'sales') ? false : true
 				);
-			}
+
+			if (isset($stream_type['type']))
+				$average_goals[$stream_type['type']] = 0;
 		}
 
-		if (Configuration::get('PS_DASHBOARD_SIMULATION')) {
+		if (Configuration::get('PS_DASHBOARD_SIMULATION'))
+		{
 			$visits = $orders = $sales = array();
 			$from = strtotime(date('Y-01-01 00:00:00'));
 			$to = strtotime(date('Y-12-31 00:00:00'));
-			for ($date = $from; $date <= $to; $date = strtotime('+1 day', $date)) {
+			for ($date = $from; $date <= $to; $date = strtotime('+1 day', $date))
+			{
 				$visits[$date] = round(rand(2000, 5000));
 				$orders[$date] = round(rand(40, 100));
 				$sales[$date] = round(rand(3000, 9000), 2);
 			}
 
+			// We need to calculate the average value of each goals for the year, this will be the base rate for "100%"
+			for ($i = '01'; $i <= 12; $i = sprintf('%02d', $i + 1))
+			{
+				$average_goals['traffic'] += $this->fakeConfigurationKPI_get('DASHGOALS_TRAFFIC_'.$i.'_'.$year);
+				$average_goals['conversion'] += $this->fakeConfigurationKPI_get('DASHGOALS_CONVERSION_'.$i.'_'.$year);
+				$average_goals['avg_cart_value'] += $this->fakeConfigurationKPI_get('DASHGOALS_AVG_CART_VALUE_'.$i.'_'.$year);
+			}
+			foreach ($average_goals as &$average_goal)
+				$average_goal /= 12;
+			$average_goals['sales'] = $average_goals['traffic'] * $average_goals['conversion'] / 100 * $average_goals['avg_cart_value'];
+
 			// Now we can calculate the value for every months
-			for ($i = '01'; $i <= 12; $i = sprintf('%02d', $i + 1)) {
+			for ($i = '01'; $i <= 12; $i = sprintf('%02d', $i + 1))
+			{
 				$timestamp = strtotime($year.'-'.$i.'-01');
 
-                // Start setting traffic dummy data
 				$month_goal = $this->fakeConfigurationKPI_get('DASHGOALS_TRAFFIC_'.$i.'_'.$year);
 				$value = (isset($visits[$timestamp]) ? $visits[$timestamp] : 0);
-				$stream_values = $this->getValuesFromGoals($month_goal, $value, Dashgoals::$month_labels[$i]);
+				$stream_values = $this->getValuesFromGoals($average_goals['traffic'], $month_goal, $value, Dashgoals::$month_labels[$i]);
+				$goal_diff = $value - $month_goal;
+				$stream_values['real']['traffic'] = $value;
+				$stream_values['real']['goal'] = $month_goal;
+				if ($value > 0)
+					$stream_values['real']['goal_diff'] = round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2);
 
-                $goal_diff = $value - $month_goal;
+				$stream_values['less']['traffic'] = $value;
+				$stream_values['more']['traffic'] = $value;
 
-                $monthGoalInfo = array();
-                if ($goal_diff < 0) {
-                    $monthGoalInfo['complete'] = 0;
-                } else {
-                    $monthGoalInfo['complete'] = 1;
-                }
-                $goal_diff = abs($goal_diff);
-                $monthGoalInfo['value_type'] = self::DG_VALUE_TYPE_TEXT;
-                $monthGoalInfo['value'] = Tools::ps_round($value, 2);
-                $monthGoalInfo['goal'] = Tools::ps_round($month_goal, 2);
-                $monthGoalInfo['goal_diff'] = Tools::ps_round($goal_diff, 2);
-                $monthGoalInfo['goal_diff_percent'] = ($value > 0) ? Tools::ps_round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2) : 100;
-                // for dummy data future goal will be 0 always
-                $monthGoalInfo['is_future_goal'] = 0;
+				if ($value > 0 && $value < $month_goal)
+					$stream_values['less']['goal_diff'] = $goal_diff;
+				elseif ($value > 0)
+					$stream_values['more']['goal_diff'] = $goal_diff;
 
-                $stream_values['real'] = array_merge($stream_values['real'], $monthGoalInfo);
-                $stream_values['less'] = array_merge($stream_values['less'], $monthGoalInfo);
-                $stream_values['more'] = array_merge($stream_values['more'], $monthGoalInfo);
-
-				foreach ($stream_zones as $stream_zone) {
-                    $stream_values[$stream_zone['zone']]['title'] = $streams['traffic'][$stream_zone['zone']]['title'];
-					$streams['traffic'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
+				if ($value == 0)
+				{
+					$streams['traffic']['less']['zone_text'] = $this->l('Goal set:');
+					$stream_values['less']['goal'] = $month_goal;
 				}
 
-                // Start setting conversion rate dummy data
+				foreach ($stream_zones as $stream_zone)
+					$streams['traffic'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
+
 				$month_goal = $this->fakeConfigurationKPI_get('DASHGOALS_CONVERSION_'.$i.'_'.$year);
 				$value = 100 * ((isset($visits[$timestamp]) && $visits[$timestamp] && isset($orders[$timestamp]) && $orders[$timestamp]) ? ($orders[$timestamp] / $visits[$timestamp]) : 0);
-				$stream_values = $this->getValuesFromGoals($month_goal, $value, Dashgoals::$month_labels[$i]);
+				$stream_values = $this->getValuesFromGoals($average_goals['conversion'], $month_goal, $value, Dashgoals::$month_labels[$i]);
+				$goal_diff = $value - $month_goal;
+				$stream_values['real']['conversion'] = round($value, 2);
+				$stream_values['real']['goal'] = round($month_goal, 2);
+				if ($value > 0)
+					$stream_values['real']['goal_diff'] = round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2);
 
-                $goal_diff = $value - $month_goal;
+				$stream_values['less']['conversion'] = $value;
+				$stream_values['more']['conversion'] = $value;
 
-                $monthGoalInfo = array();
-                if ($goal_diff < 0) {
-                    $monthGoalInfo['complete'] = 0;
-                } else {
-                    $monthGoalInfo['complete'] = 1;
-                }
-                $goal_diff = abs($goal_diff);
-                $monthGoalInfo['value_type'] = self::DG_VALUE_TYPE_PERCENT;
-                $monthGoalInfo['value'] = Tools::ps_round($value, 2);
-                $monthGoalInfo['goal'] = Tools::ps_round($month_goal, 2);
-                $monthGoalInfo['goal_diff'] = Tools::ps_round($goal_diff, 2);
-                $monthGoalInfo['goal_diff_percent'] = ($value > 0) ? Tools::ps_round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2) : 100;
-                // for dummy data future goal will be 0 always
-                $monthGoalInfo['is_future_goal'] = 0;
+				if ($value > 0 && $value < $month_goal)
+					$stream_values['less']['goal_diff'] = round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2);
+				elseif ($value > 0)
+					$stream_values['more']['goal_diff'] = round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2);
 
-                $stream_values['real'] = array_merge($stream_values['real'], $monthGoalInfo);
-                $stream_values['less'] = array_merge($stream_values['less'], $monthGoalInfo);
-                $stream_values['more'] = array_merge($stream_values['more'], $monthGoalInfo);
-
-				foreach ($stream_zones as $stream_zone) {
-                    $stream_values[$stream_zone['zone']]['title'] = $streams['conversion'][$stream_zone['zone']]['title'];
-					$streams['conversion'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
+				if ($value == 0)
+				{
+					$streams['conversion']['less']['zone_text'] = $this->l('Goal set:');
+					$stream_values['less']['goal'] = $month_goal;
 				}
 
-                // Start setting avg cart value dummy data
+				foreach ($stream_zones as $stream_zone)
+					$streams['conversion'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
+
 				$month_goal = $this->fakeConfigurationKPI_get('DASHGOALS_AVG_CART_VALUE_'.$i.'_'.$year);
 				$value = ((isset($orders[$timestamp]) && $orders[$timestamp] && isset($sales[$timestamp]) && $sales[$timestamp]) ? ($sales[$timestamp] / $orders[$timestamp]) : 0);
-				$stream_values = $this->getValuesFromGoals($month_goal, $value, Dashgoals::$month_labels[$i]);
-
+				$stream_values = $this->getValuesFromGoals($average_goals['avg_cart_value'], $month_goal, $value, Dashgoals::$month_labels[$i]);
 				$goal_diff = $value - $month_goal;
+				$stream_values['real']['avg_cart_value'] = $value;
+				$stream_values['real']['goal'] = $month_goal;
+				if ($value > 0)
+					$stream_values['real']['goal_diff'] = round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2);
 
-                $monthGoalInfo = array();
-                if ($goal_diff < 0) {
-                    $monthGoalInfo['complete'] = 0;
-                } else {
-                    $monthGoalInfo['complete'] = 1;
-                }
-                $goal_diff = abs($goal_diff);
-                $monthGoalInfo['value_type'] = self::DG_VALUE_TYPE_PRICE;
-                $monthGoalInfo['value'] = Tools::ps_round($value, 2);
-                $monthGoalInfo['goal'] = Tools::ps_round($month_goal, 2);
-                $monthGoalInfo['goal_diff'] = Tools::ps_round($goal_diff, 2);
-                $monthGoalInfo['goal_diff_percent'] = ($value > 0) ? Tools::ps_round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2) : 100;
-                // for dummy data future goal will be 0 always
-                $monthGoalInfo['is_future_goal'] = 0;
+				$stream_values['less']['avg_cart_value'] = $value;
+				$stream_values['more']['avg_cart_value'] = $value;
 
-                $stream_values['real'] = array_merge($stream_values['real'], $monthGoalInfo);
-                $stream_values['less'] = array_merge($stream_values['less'], $monthGoalInfo);
-                $stream_values['more'] = array_merge($stream_values['more'], $monthGoalInfo);
+				if ($value > 0 && $value < $month_goal)
+					$stream_values['less']['goal_diff'] = $goal_diff;
+				elseif ($value > 0)
+					$stream_values['more']['goal_diff'] = $goal_diff;
 
-				foreach ($stream_zones as $stream_zone) {
-                    $stream_values[$stream_zone['zone']]['title'] = $streams['avg_cart_value'][$stream_zone['zone']]['title'];
-					$streams['avg_cart_value'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
+				if ($value == 0)
+				{
+					$streams['avg_cart_value']['less']['zone_text'] = $this->l('Goal set:');
+					$stream_values['less']['goal'] = $month_goal;
 				}
 
-                // Start setting sales dummy data
+				foreach ($stream_zones as $stream_zone)
+					$streams['avg_cart_value'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
+
 				$month_goal = $this->fakeConfigurationKPI_get('DASHGOALS_TRAFFIC_'.$i.'_'.$year) * $this->fakeConfigurationKPI_get('DASHGOALS_CONVERSION_'.$i.'_'.$year) / 100 * $this->fakeConfigurationKPI_get('DASHGOALS_AVG_CART_VALUE_'.$i.'_'.$year);
 				$value = (isset($sales[$timestamp]) ? $sales[$timestamp] : 0);
-				$stream_values = $this->getValuesFromGoals($month_goal, $value, Dashgoals::$month_labels[$i]);
+				$stream_values = $this->getValuesFromGoals($average_goals['sales'], $month_goal, $value, Dashgoals::$month_labels[$i]);
+				$goal_diff = $value - $month_goal;
+				$stream_values['real']['sales'] = $value;
+				$stream_values['real']['goal'] = $month_goal;
 
-                $goal_diff = $value - $month_goal;
+				if ($value > 0)
+					$stream_values['real']['goal_diff'] = round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2);
 
-                $monthGoalInfo = array();
-                if ($goal_diff < 0) {
-                    $monthGoalInfo['complete'] = 0;
-                } else {
-                    $monthGoalInfo['complete'] = 1;
-                }
-                $goal_diff = abs($goal_diff);
-                $monthGoalInfo['value_type'] = self::DG_VALUE_TYPE_PRICE;
-                $monthGoalInfo['value'] = Tools::ps_round($value, 2);
-                $monthGoalInfo['goal'] = Tools::ps_round($month_goal, 2);
-                $monthGoalInfo['goal_diff'] = Tools::ps_round($goal_diff, 2);
-                $monthGoalInfo['goal_diff_percent'] = ($value > 0) ? Tools::ps_round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2) : 100;
-                // for dummy data future goal will be 0 always
-                $monthGoalInfo['is_future_goal'] = 0;
+				$stream_values['less']['sales'] = $value;
+				$stream_values['more']['sales'] = $value;
 
-                $stream_values['real'] = array_merge($stream_values['real'], $monthGoalInfo);
-                $stream_values['less'] = array_merge($stream_values['less'], $monthGoalInfo);
-                $stream_values['more'] = array_merge($stream_values['more'], $monthGoalInfo);
+				if ($value > 0 && $value < $month_goal)
+					$stream_values['less']['goal_diff'] = $goal_diff;
+				elseif ($value > 0)
+					$stream_values['more']['goal_diff'] = $goal_diff;
 
-				foreach ($stream_zones as $stream_zone) {
-                    $stream_values[$stream_zone['zone']]['title'] = $streams['sales'][$stream_zone['zone']]['title'];
-					$streams['sales'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
+				if ($value == 0)
+				{
+					$streams['sales']['less']['zone_text'] = $this->l('Goal set:');
+					$stream_values['less']['goal'] = $month_goal;
 				}
+
+				foreach ($stream_zones as $stream_zone)
+					$streams['sales'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
 			}
-		} else {
+		}
+		else
+		{
 			// Retrieve gross data from AdminStatsController
 			$visits = AdminStatsController::getVisits(false, $year.date('-01-01'), $year.date('-12-31'), 'month');
 			$orders = AdminStatsController::getOrders($year.date('-01-01'), $year.date('-12-31'), 'month');
 			$sales = AdminStatsController::getTotalSales($year.date('-01-01'), $year.date('-12-31'), 'month');
 
+			// We need to calculate the average value of each goals for the year, this will be the base rate for "100%"
+			for ($i = '01'; $i <= 12; $i = sprintf('%02d', $i + 1))
+			{
+				$average_goals['traffic'] += ConfigurationKPI::get('DASHGOALS_TRAFFIC_'.$i.'_'.$year);
+				$average_goals['conversion'] += ConfigurationKPI::get('DASHGOALS_CONVERSION_'.$i.'_'.$year) / 100;
+				$average_goals['avg_cart_value'] += ConfigurationKPI::get('DASHGOALS_AVG_CART_VALUE_'.$i.'_'.$year);
+			}
+			foreach ($average_goals as &$average_goal)
+				$average_goal /= 12;
+			$average_goals['sales'] = $average_goals['traffic'] * $average_goals['conversion'] * $average_goals['avg_cart_value'];
+
 			// Now we can calculate the value for every months
-			for ($i = '01'; $i <= 12; $i = sprintf('%02d', $i + 1)) {
+			for ($i = '01'; $i <= 12; $i = sprintf('%02d', $i + 1))
+			{
 				$timestamp = strtotime($year.'-'.$i.'-01');
 
-                // send if goal is for future or past
-                $isFutureGoal = 0;
-                if (strtotime($year.'-'.$i) > strtotime(date('Y-m'))) {
-                    $isFutureGoal = 1;
-                }
-
-                // Start setting traffic data
 				$month_goal = ConfigurationKPI::get('DASHGOALS_TRAFFIC_'.$i.'_'.$year);
 				$value = (isset($visits[$timestamp]) ? $visits[$timestamp] : 0);
-				$stream_values = $this->getValuesFromGoals($month_goal, $value, Dashgoals::$month_labels[$i]);
-
+				$stream_values = $this->getValuesFromGoals($average_goals['traffic'], $month_goal, $value, Dashgoals::$month_labels[$i]);
 				$goal_diff = $value - $month_goal;
+				$stream_values['real']['traffic'] = $value;
+				$stream_values['real']['goal'] = $month_goal;
+				if ($value > 0)
+					$stream_values['real']['goal_diff'] = round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2);
 
-                $monthGoalInfo = array();
-                if ($goal_diff < 0) {
-                    $monthGoalInfo['complete'] = 0;
-                } else {
-                    $monthGoalInfo['complete'] = 1;
-                }
-                $goal_diff = abs($goal_diff);
-                $monthGoalInfo['value_type'] = self::DG_VALUE_TYPE_TEXT;
-                $monthGoalInfo['value'] = Tools::ps_round($value, 2);
-                $monthGoalInfo['goal'] = Tools::ps_round($month_goal, 2);
-                $monthGoalInfo['goal_diff'] = Tools::ps_round($goal_diff, 2);
-                $monthGoalInfo['goal_diff_percent'] = ($value > 0) ? Tools::ps_round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2) : 100;
-                $monthGoalInfo['is_future_goal'] = $isFutureGoal;
+				$stream_values['less']['traffic'] = $value;
+				$stream_values['more']['traffic'] = $value;
 
-                $stream_values['real'] = array_merge($stream_values['real'], $monthGoalInfo);
-                $stream_values['less'] = array_merge($stream_values['less'], $monthGoalInfo);
-                $stream_values['more'] = array_merge($stream_values['more'], $monthGoalInfo);
+				if ($value > 0 && $value < $month_goal)
+					$stream_values['less']['goal_diff'] = $goal_diff;
+				elseif ($value > 0)
+					$stream_values['more']['goal_diff'] = $goal_diff;
 
-				foreach ($stream_zones as $stream_zone) {
-                    $stream_values[$stream_zone['zone']]['title'] = $streams['traffic'][$stream_zone['zone']]['title'];
-					$streams['traffic'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
+				if ($value == 0)
+				{
+					$streams['traffic']['less']['zone_text'] = $this->l('Goal set:');
+					$stream_values['less']['goal'] = $month_goal;
 				}
 
-                // Start setting conversion rate data
+				foreach ($stream_zones as $stream_zone)
+					$streams['traffic'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
+
 				$month_goal = ConfigurationKPI::get('DASHGOALS_CONVERSION_'.$i.'_'.$year);
 				$value = 100 * ((isset($visits[$timestamp]) && $visits[$timestamp] && isset($orders[$timestamp]) && $orders[$timestamp]) ? ($orders[$timestamp] / $visits[$timestamp]) : 0);
-				$stream_values = $this->getValuesFromGoals($month_goal, $value, Dashgoals::$month_labels[$i]);
-
+				$stream_values = $this->getValuesFromGoals($average_goals['conversion'] * 100, $month_goal, $value, Dashgoals::$month_labels[$i]);
 				$goal_diff = $value - $month_goal;
+				$stream_values['real']['conversion'] = round($value, 2);
+				$stream_values['real']['goal'] = round($month_goal, 2);
+				if ($value > 0)
+					$stream_values['real']['goal_diff'] = round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2);
 
-                $monthGoalInfo = array();
-                if ($goal_diff < 0) {
-                    $monthGoalInfo['complete'] = 0;
-                } else {
-                    $monthGoalInfo['complete'] = 1;
-                }
-                $goal_diff = abs($goal_diff);
-                $monthGoalInfo['value'] = Tools::ps_round($value, 2);
-                $monthGoalInfo['value_type'] = self::DG_VALUE_TYPE_PERCENT;
-                $monthGoalInfo['goal'] = Tools::ps_round($month_goal, 2);
-                $monthGoalInfo['goal_diff'] = Tools::ps_round($goal_diff, 2);
-                $monthGoalInfo['goal_diff_percent'] = ($value > 0) ? Tools::ps_round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2) : 100;
-                $monthGoalInfo['is_future_goal'] = $isFutureGoal;
+				$stream_values['less']['conversion'] = $value;
+				$stream_values['more']['conversion'] = $value;
 
-                $stream_values['real'] = array_merge($stream_values['real'], $monthGoalInfo);
-                $stream_values['less'] = array_merge($stream_values['less'], $monthGoalInfo);
-                $stream_values['more'] = array_merge($stream_values['more'], $monthGoalInfo);
+				if ($value > 0 && $value < $month_goal)
+					$stream_values['less']['goal_diff'] = round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2);
+				elseif ($value > 0)
+					$stream_values['more']['goal_diff'] = round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2);
 
-				foreach ($stream_zones as $stream_zone) {
-                    $stream_values[$stream_zone['zone']]['title'] = $streams['conversion'][$stream_zone['zone']]['title'];
-					$streams['conversion'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
+				if ($value == 0)
+				{
+					$streams['conversion']['less']['zone_text'] = $this->l('Goal set:');
+					$stream_values['less']['goal'] = $month_goal;
 				}
 
-                // Start setting average cart value data
+				foreach ($stream_zones as $stream_zone)
+					$streams['conversion'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
+
 				$month_goal = ConfigurationKPI::get('DASHGOALS_AVG_CART_VALUE_'.$i.'_'.$year);
 				$value = ((isset($orders[$timestamp]) && $orders[$timestamp] && isset($sales[$timestamp]) && $sales[$timestamp]) ? ($sales[$timestamp] / $orders[$timestamp]) : 0);
-				$stream_values = $this->getValuesFromGoals($month_goal, $value, Dashgoals::$month_labels[$i]);
-
+				$stream_values = $this->getValuesFromGoals($average_goals['avg_cart_value'], $month_goal, $value, Dashgoals::$month_labels[$i]);
 				$goal_diff = $value - $month_goal;
+				$stream_values['real']['avg_cart_value'] = $value;
+				$stream_values['real']['goal'] = $month_goal;
+				if ($value > 0)
+					$stream_values['real']['goal_diff'] = round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2);
 
-                $monthGoalInfo = array();
-                if ($goal_diff < 0) {
-                    $monthGoalInfo['complete'] = 0;
-                } else {
-                    $monthGoalInfo['complete'] = 1;
-                }
-                $goal_diff = abs($goal_diff);
-                $monthGoalInfo['value'] = Tools::ps_round($value, 2);
-                $monthGoalInfo['value_type'] = self::DG_VALUE_TYPE_PRICE;
-                $monthGoalInfo['goal'] = Tools::ps_round($month_goal, 2);
-                $monthGoalInfo['goal_diff'] = Tools::ps_round($goal_diff, 2);
-                $monthGoalInfo['goal_diff_percent'] = ($value > 0) ? Tools::ps_round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2) : 100;
-                $monthGoalInfo['is_future_goal'] = $isFutureGoal;
+				$stream_values['less']['avg_cart_value'] = $value;
+				$stream_values['more']['avg_cart_value'] = $value;
 
-                $stream_values['real'] = array_merge($stream_values['real'], $monthGoalInfo);
-                $stream_values['less'] = array_merge($stream_values['less'], $monthGoalInfo);
-                $stream_values['more'] = array_merge($stream_values['more'], $monthGoalInfo);
+				if ($value > 0 && $value < $month_goal)
+					$stream_values['less']['goal_diff'] = $goal_diff;
+				elseif ($value > 0)
+					$stream_values['more']['goal_diff'] = $goal_diff;
 
-				foreach ($stream_zones as $stream_zone) {
-                    $stream_values[$stream_zone['zone']]['title'] = $streams['avg_cart_value'][$stream_zone['zone']]['title'];
+				if ($value == 0)
+				{
+					$streams['avg_cart_value']['less']['zone_text'] = $this->l('Goal set:');
+					$stream_values['less']['goal'] = $month_goal;
+				}
+
+				foreach ($stream_zones as $stream_zone)
 					$streams['avg_cart_value'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
-				}
 
-                // Start setting up data for sales
 				$month_goal = ConfigurationKPI::get('DASHGOALS_TRAFFIC_'.$i.'_'.$year) * ConfigurationKPI::get('DASHGOALS_CONVERSION_'.$i.'_'.$year) / 100 * ConfigurationKPI::get('DASHGOALS_AVG_CART_VALUE_'.$i.'_'.$year);
-
 				$value = (isset($sales[$timestamp]) && $sales[$timestamp]) ? $sales[$timestamp] : 0;
-
-                $stream_values = $this->getValuesFromGoals($month_goal, isset($sales[$timestamp]) ? $sales[$timestamp] : 0, Dashgoals::$month_labels[$i]);
-
+				$stream_values = $this->getValuesFromGoals($average_goals['sales'], $month_goal, isset($sales[$timestamp]) ? $sales[$timestamp] : 0, Dashgoals::$month_labels[$i]);
 				$goal_diff = $value - $month_goal;
+				$stream_values['real']['sales'] = $value;
+				$stream_values['real']['goal'] = $month_goal;
 
-                $monthGoalInfo = array();
-                if ($goal_diff < 0) {
-                    $monthGoalInfo['complete'] = 0;
-                } else {
-                    $monthGoalInfo['complete'] = 1;
-                }
-                $goal_diff = abs($goal_diff);
-                $monthGoalInfo['value'] = Tools::ps_round($value, 2);
-                $monthGoalInfo['value_type'] = self::DG_VALUE_TYPE_PRICE;
-                $monthGoalInfo['goal'] = Tools::ps_round($month_goal, 2);
-                $monthGoalInfo['goal_diff'] = Tools::ps_round($goal_diff, 2);
-                $monthGoalInfo['goal_diff_percent'] = ($value > 0) ? Tools::ps_round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2) : 100;
-                $monthGoalInfo['is_future_goal'] = $isFutureGoal;
+				if ($value > 0)
+					$stream_values['real']['goal_diff'] = round(($goal_diff * 100) / ($month_goal > 0 ? $month_goal : 1), 2);
 
-                $stream_values['real'] = array_merge($stream_values['real'], $monthGoalInfo);
-                $stream_values['less'] = array_merge($stream_values['less'], $monthGoalInfo);
-                $stream_values['more'] = array_merge($stream_values['more'], $monthGoalInfo);
+				$stream_values['less']['sales'] = $value;
+				$stream_values['more']['sales'] = $value;
 
-				foreach ($stream_zones as $stream_zone) {
-                    $stream_values[$stream_zone['zone']]['title'] = $streams['sales'][$stream_zone['zone']]['title'];
-					$streams['sales'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
+				if ($value > 0 && $value < $month_goal)
+					$stream_values['less']['goal_diff'] = $goal_diff;
+				elseif ($value > 0)
+					$stream_values['more']['goal_diff'] = $goal_diff;
+
+				if ($value == 0)
+				{
+					$streams['sales']['less']['zone_text'] = $this->l('Goal set:');
+					$stream_values['less']['goal'] = $month_goal;
 				}
+
+				foreach ($stream_zones as $stream_zone)
+					$streams['sales'][$stream_zone['zone']]['values'][] = $stream_values[$stream_zone['zone']];
 			}
 		}
 
-        // Merge all the streams before sending
+		// Merge all the streams before sending
 		$all_streams = array();
-		foreach ($stream_types as $stream_type) {
-			foreach ($stream_zones as $stream_zone) {
+		foreach ($stream_types as $stream_type)
+			foreach ($stream_zones as $stream_zone)
 				$all_streams[] = $streams[$stream_type['type']][$stream_zone['zone']];
-			}
-		}
 
 		return array('chart_type' => 'bar_chart_goals', 'data' => $all_streams);
 	}
 
-	protected function getValuesFromGoals($month_goal, $value, $label)
-    {
-        // Initialize value for each zone
-        $stream_values = [
-            'real' => ['x' => $label, 'y' => 0],
-            'less' => ['x' => $label, 'y' => 0],
-            'more' => ['x' => $label, 'y' => 0],
-        ];
+	protected function getValuesFromGoals($average_goal, $month_goal, $value, $label)
+	{
+		// Initialize value for each zone
+		$stream_values = array(
+			'real' => array('x' => $label, 'y' => 0),
+			'less' => array('x' => $label, 'y' => 0),
+			'more' => array('x' => $label, 'y' => 0)
+		);
 
-        if ($value > 0) {
-            $goalDiff = $value - $month_goal;
-            if (($goalDiff) > 0) {
-                $stream_values['real']['y'] = (float)Tools::ps_round($month_goal, 2);
-                $stream_values['more']['y'] = (float)Tools::ps_round($goalDiff, 2);
-            } elseif (($goalDiff) < 0) {
-                $stream_values['real']['y'] = (float)Tools::ps_round($value, 2);
-                $stream_values['less']['y'] = (float)Tools::ps_round(($month_goal - $value), 2);
-            }
-        } else {
-            $stream_values['less']['y'] = (float)Tools::ps_round($month_goal, 2);
-        }
+		// Calculate the percentage of fullfilment of the goal
+		$fullfilment = 0;
+		if ($value && $month_goal)
+			$fullfilment = round($value / $month_goal, 2);
 
-        return $stream_values;
-    }
+		// Base rate is essential here : it determines the value of the goal compared to the "100%" of the chart legend
+		$base_rate = 0;
+		if ($average_goal && $month_goal)
+			$base_rate = $month_goal / $average_goal;
+
+		// Fullfilment of 1 means that we performed exactly anticipated
+		if ($fullfilment == 1)
+			$stream_values['real'] = array('x' => $label, 'y' => round($base_rate, 2));
+		// Fullfilment lower than 1 means that we UNDER performed
+		elseif ($fullfilment < 1)
+		{
+			$stream_values['real'] = array('x' => $label, 'y' => round($fullfilment * $base_rate, 2));
+			$stream_values['less'] = array('x' => $label, 'y' => round($base_rate - ($fullfilment * $base_rate), 2));
+		}
+		// Fullfilment greater than 1 means that we OVER performed
+		elseif ($fullfilment > 1)
+		{
+			$stream_values['real'] = array('x' => $label, 'y' => round($base_rate, 2));
+			$stream_values['more'] = array('x' => $label, 'y' => round(($fullfilment * $base_rate) - $base_rate, 2));
+		}
+
+		return $stream_values;
+	}
 }

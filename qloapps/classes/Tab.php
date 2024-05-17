@@ -46,6 +46,8 @@ class TabCore extends ObjectModel
     /** @var int hide_host_mode */
     public $hide_host_mode = false;
 
+    const TAB_MODULE_LIST_URL = _PS_TAB_MODULE_LIST_URL_;
+
     /**
      * @see ObjectModel::$definition
      */
@@ -561,6 +563,9 @@ class TabCore extends ObjectModel
     public static function getTabModulesList($id_tab)
     {
         $modules_list = array('default_list' => array(), 'slider_list' => array());
+        //@TODO in future we will show Qloapps recommended addons as per the tabs
+        // for not we will not show any recommended addons of prestashop
+        return $modules_list;
 
         $xml_tab_modules_list = false;
 
@@ -594,10 +599,5 @@ class TabCore extends ObjectModel
         }
 
         return $modules_list;
-    }
-
-    public static function isTabModuleListAvailable()
-    {
-        return file_exists(_PS_ROOT_DIR_.Module::CACHE_FILE_TAB_MODULES_LIST);
     }
 }

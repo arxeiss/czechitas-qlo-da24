@@ -20,8 +20,7 @@
   <tab id="Administration" name="Administrasi"/>
   <tab id="Stats" name="Statistik"/>
   <tab id="Stock" name="Stok"/>
-  <tab id="Products" name="Kelola Produk Layanan"/>
-  <tab id="Room_Types" name="Kelola Jenis Kamar"/>
+  <tab id="Products" name="Produk"/>
   <tab id="Categories" name="Kategori"/>
   <tab id="Monitoring" name="Monitoring"/>
   <tab id="Attributes_and_Values" name="Atribut produk"/>
@@ -60,7 +59,6 @@
   <tab id="Tax_Rules" name="Aturan pajak"/>
   <tab id="Translations" name="Terjemahan"/>
   <tab id="Modules_1" name="Modul dan layanan"/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id="Modules_Themes_Catalog" name="Katalog modul dan theme"/>
   <tab id="Positions" name="Posisi"/>
   <tab id="Payment" name="Pembayaran"/>

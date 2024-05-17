@@ -20,8 +20,7 @@
   <tab id="Administration" name="Administrace"/>
   <tab id="Stats" name="Statistiky"/>
   <tab id="Stock" name="Zásoby"/>
-  <tab id="Products" name="Správa servisních produktů"/>
-  <tab id="Room_Types" name="Manage Room Types"/>
+  <tab id="Products" name="Produkty"/>
   <tab id="Categories" name="Kategorie"/>
   <tab id="Monitoring" name="Monitorování"/>
   <tab id="Attributes_and_Values" name="Atributy produktů"/>
@@ -60,7 +59,6 @@
   <tab id="Tax_Rules" name="Daňová pravidla"/>
   <tab id="Translations" name="Překlady"/>
   <tab id="Modules_1" name="Moduly a Služby"/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id="Modules_Themes_Catalog" name="Katalog modulů a šablon"/>
   <tab id="Positions" name="Pozice modulů"/>
   <tab id="Payment" name="Platba"/>

@@ -29,7 +29,7 @@ Total
 Total Rooms Cost
 {total_products}
 
-Total Extra Services Cost
+Total Additional Facilities Cost
 {total_extra_demands_te}
 
 Discounts
@@ -38,7 +38,7 @@ Discounts
 Total Rooms Tax
 {total_tax_paid}
 
-Extra Services Tax
+Additional Facilities Tax
 {extra_demands_tax}
 
 Final Booking Amount

@@ -87,7 +87,7 @@ class AdminContactsControllerCore extends AdminController
                     'required' => false,
                     'class' => 't',
                     'is_bool' => true,
-                    'hint' => $this->l('If enabled, all messages will be saved in the "Customer Service" page under the "Customers" menu.'),
+                    'hint' => $this->l('If enabled, all messages will be saved in the "Customer Service" page under the "Customer" menu.'),
                     'values' => array(
                         array(
                             'id' => 'customer_service_on',
@@ -113,16 +113,7 @@ class AdminContactsControllerCore extends AdminController
             ),
             'submit' => array(
                 'title' => $this->l('Save'),
-            ),
-            'buttons' => array(
-                'save-and-stay' => array(
-                    'title' => $this->l('Save and stay'),
-                    'name' => 'submitAdd'.$this->table.'AndStay',
-                    'type' => 'submit',
-                    'class' => 'btn btn-default pull-right',
-                    'icon' => 'process-icon-save',
-                ),
-            ),
+            )
         );
         
         if (Shop::isFeatureActive()) {

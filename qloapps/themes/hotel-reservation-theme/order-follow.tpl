@@ -31,7 +31,7 @@
 		{$navigationPipe}
 	</span>
 	<span class="navigation_page">
-		{l s='Booking refund requests'}
+		{l s='Booking Refund Requests'}
 	</span>
 {/capture}
 
@@ -44,30 +44,24 @@
 			<table class="table table-bordered">
 				<thead>
 					<tr>
+						<th>{l s='Refund Id'}</th>
 						<th>{l s='Order'}</th>
-						<th>{l s='Total rooms'}</th>
 						<th>{l s='Refund status'}</th>
 						<th>{l s='Date requested'}</th>
-						<th>{l s='Actions'}</th>
+						<th></th>
 					</tr>
 				</thead>
 				<tbody>
 					{foreach from=$ordersReturns item=return}
 						<tr>
 							<td>
+								<a href="{$link->getPageLink('order-return', true)|escape:'html':'UTF-8'}&amp;id_order_return={$return.id_order_return|escape:'html':'UTF-8'}">{l s='#'}{$return.id_order_return|escape:'html':'UTF-8'}</a>
+							</td>
+							<td>
 								#{$return.reference|escape:'html':'UTF-8'}
 							</td>
 							<td>
-								{$return.total_rooms|escape:'html':'UTF-8'}
-							</td>
-							<td>
-								<span class="badge wk-badge" style="background-color:{$return.state_color|escape:'html':'UTF-8'}">
-									{if $return.is_cancelled}
-										{l s='Cancelled'}
-									{else}
-										{$return.state_name|escape:'html':'UTF-8'}
-									{/if}
-								</span>
+								<span class="badge wk-badge" style="background-color:{$return.state_color|escape:'html':'UTF-8'}">{$return.state_name|escape:'html':'UTF-8'}</span>
 							</td>
 							<td>
 								{dateFormat date=$return.date_add full=0}
@@ -86,6 +80,6 @@
 </div>
 
 <ul class="footer_links clearfix">
-	<li><a class="btn btn-default button button-small" href="{$link->getPageLink('my-account', true)|escape:'html':'UTF-8'}"><span><i class="icon-chevron-left"></i> {l s='Back to My account'}</span></a></li>
+	<li><a class="btn btn-default button button-small" href="{$link->getPageLink('my-account', true)|escape:'html':'UTF-8'}"><span><i class="icon-chevron-left"></i> {l s='Back to your account'}</span></a></li>
 	<li><a class="btn btn-default button button-small" href="{if isset($force_ssl) && $force_ssl}{$base_dir_ssl}{else}{$base_dir}{/if}"><span><i class="icon-chevron-left"></i> {l s='Home'}</span></a></li>
 </ul>

@@ -98,18 +98,6 @@ class OrderDetailCore extends ObjectModel
     /** @var float */
     public $product_quantity_discount;
 
-    /** @var bool */
-    public $is_booking_product;
-
-    /** @var int */
-    public $product_service_type;
-
-    /** @var bool */
-    public $product_allow_multiple_quantity;
-
-    /** @var int */
-    public $product_price_calculation_method;
-
     /** @var string */
     public $product_ean13;
 
@@ -196,12 +184,6 @@ class OrderDetailCore extends ObjectModel
             'reduction_amount_tax_excl' =>  array('type' => self::TYPE_FLOAT, 'validate' => 'isPrice'),
             'group_reduction' =>            array('type' => self::TYPE_FLOAT, 'validate' => 'isFloat'),
             'product_quantity_discount' =>    array('type' => self::TYPE_FLOAT, 'validate' => 'isFloat'),
-            'is_booking_product' =>                array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
-            'product_service_type' =>        array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
-            'product_auto_add' =>            array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
-            'product_price_addition_type' =>    array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
-            'product_allow_multiple_quantity' => array('type' => self::TYPE_BOOL, 'validate' => 'isBool'),
-            'product_price_calculation_method' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
             'product_ean13' =>                array('type' => self::TYPE_STRING, 'validate' => 'isEan13'),
             'product_upc' =>                array('type' => self::TYPE_STRING, 'validate' => 'isUpc'),
             'product_reference' =>            array('type' => self::TYPE_STRING, 'validate' => 'isReference'),
@@ -430,7 +412,7 @@ class OrderDetailCore extends ObjectModel
     public function updateTaxAmount($order)
     {
         $this->setContext((int)$this->id_shop);
-        $address = new Address((int)$order->id_address_tax);
+        $address = new Address((int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
         $tax_manager = TaxManagerFactory::getManager($address, (int)Product::getIdTaxRulesGroupByIdProduct((int)$this->product_id, $this->context));
         $this->tax_calculator = $tax_manager->getTaxCalculator();
 
@@ -527,7 +509,7 @@ class OrderDetailCore extends ObjectModel
 
         $this->ecotax_tax_rate = 0;
         if (!empty($product['ecotax'])) {
-            $this->ecotax_tax_rate = Tax::getProductEcotaxRate($order->id_address_tax);
+            $this->ecotax_tax_rate = Tax::getProductEcotaxRate($order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
         }
     }
 
@@ -579,7 +561,7 @@ class OrderDetailCore extends ObjectModel
     protected function setDetailProductPrice(Order $order, Cart $cart, $product)
     {
         $this->setContext((int)$product['id_shop']);
-        Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 6, null, false, true, $product['cart_quantity'], false, (int)$order->id_customer, (int)$order->id_cart, null, $specific_price, true, true, $this->context);
+        Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 6, null, false, true, $product['cart_quantity'], false, (int)$order->id_customer, (int)$order->id_cart, (int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')}, $specific_price, true, true, $this->context);
         $this->specificPrice = $specific_price;
         $this->original_product_price = Product::getPriceStatic($product['id_product'], false, (int)$product['id_product_attribute'], 6, null, false, false, 1, false, null, null, null, $null, true, true, $this->context);
         $this->product_price = $this->original_product_price;
@@ -605,7 +587,7 @@ class OrderDetailCore extends ObjectModel
 
         $unit_price = Product::getPriceStatic((int)$product['id_product'], true,
             ($product['id_product_attribute'] ? intval($product['id_product_attribute']) : null),
-            2, null, false, true, 1, false, (int)$order->id_customer, null, null, $null, true, true, $this->context);
+            2, null, false, true, 1, false, (int)$order->id_customer, null, (int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')}, $null, true, true, $this->context);
         $this->product_quantity_discount = 0.00;
         if ($quantity_discount) {
             $this->product_quantity_discount = $unit_price;
@@ -656,13 +638,6 @@ class OrderDetailCore extends ObjectModel
         $this->product_quantity_in_stock = ($product_quantity - (int)$product['cart_quantity'] < 0) ?
             $product_quantity : (int)$product['cart_quantity'];
 
-        $this->is_booking_product = $product['booking_product'];
-        $this->product_service_type = $product['service_product_type'];
-        $this->product_auto_add = $product['auto_add_to_cart'];
-        $this->product_price_addition_type = $product['price_addition_type'];
-        $this->product_allow_multiple_quantity = $product['allow_multiple_quantity'];
-        $this->product_price_calculation_method = $product['price_calculation_method'];
-
         $this->setVirtualProductInformation($product);
         $this->checkProductStock($product, $id_order_state);
 
@@ -697,7 +672,7 @@ class OrderDetailCore extends ObjectModel
     */
     public function createList(Order $order, Cart $cart, $id_order_state, $product_list, $id_order_invoice = 0, $use_taxes = true, $id_warehouse = 0)
     {
-        $this->vat_address = new Address((int)$order->id_address_tax);
+        $this->vat_address = new Address((int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
         $this->customer = new Customer((int)$order->id_customer);
 
         $this->id_order = $order->id;
@@ -721,17 +696,6 @@ class OrderDetailCore extends ObjectModel
         return $this->outOfStock;
     }
 
-    public function getBookingProducts($id_order)
-    {
-        $orders = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS(
-            'SELECT *
-            FROM '._DB_PREFIX_.'order_detail od
-            WHERE od.`is_booking_product` = true and `id_order` = '.(int) $id_order
-        );
-
-        return $orders;
-    }
-
     /**
     * Set the additional shipping information
     *
@@ -744,7 +708,7 @@ class OrderDetailCore extends ObjectModel
 
         $carrier = OrderInvoice::getCarrier((int)$this->id_order_invoice);
         if (isset($carrier) && Validate::isLoadedObject($carrier)) {
-            $tax_rate = $carrier->getTaxesRate(new Address((int)$order->id_address_tax));
+            $tax_rate = $carrier->getTaxesRate(new Address((int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')}));
         }
 
         $this->total_shipping_price_tax_excl = (float)$product['additional_shipping_cost'];

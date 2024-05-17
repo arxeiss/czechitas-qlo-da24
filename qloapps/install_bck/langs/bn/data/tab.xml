@@ -22,8 +22,7 @@
   <tab id='Administration' name='প্রশাসন'/>
   <tab id='Stats' name='পরিসংখ্যান'/>
   <tab id='Stock' name='স্টক'/>
-  <tab id='Products' name='Manage Service Products'/>
-  <tab id='Room_Types' name='Manage Room Types'/>
+  <tab id='Products' name='পণ্য সমূহ'/>
   <tab id='Categories' name='শ্রেণি'/>
   <tab id='Monitoring' name='নিয়ন্ত্রণ'/>
   <tab id='Attributes_and_Values' name='বিভাগসমূহ এবং মান'/>
@@ -62,7 +61,6 @@
   <tab id='Tax_Rules' name='শুল্ক নিয়ম'/>
   <tab id='Translations' name='অনুবাদ'/>
   <tab id='Modules_1' name='মডিউল'/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id='Modules_Themes_Catalog' name='মডিউল এবং থইম ক্যাটআলগ'/>
   <tab id='Positions' name='অবস্থান'/>
   <tab id='Payment' name='পরিশোধ'/>

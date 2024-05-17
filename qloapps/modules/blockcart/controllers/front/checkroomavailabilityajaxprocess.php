@@ -31,22 +31,26 @@ class BlockcartCheckRoomAvailabilityAjaxProcessModuleFrontController extends Mod
                 )) {
                     if ($roomTypeInfo = $objRoomType->getRoomTypeInfoByIdProduct($idProduct)) {
                         if ($idHotel = $roomTypeInfo['id_hotel']) {
-                            $bookingParams = array(
-                                'date_from' => $dateFrom,
-                                'date_to' => $dateTo,
-                                'hotel_id' => $idHotel,
-                                'id_room_type' => $idProduct,
-                                'only_search_data' => 1,
-                                'id_cart' => $idCart,
-                                'id_guest' => $idGuest,
-                            );
-                            if ($hotelRoomData = $objBookingDetail->dataForFrontSearch($bookingParams)) {
+                            if ($hotelRoomData = $objBookingDetail->DataForFrontSearch(
+                                $dateFrom,
+                                $dateTo,
+                                $idHotel,
+                                $idProduct,
+                                1,
+                                0,
+                                0,
+                                -1,
+                                0,
+                                0,
+                                $idCart,
+                                $idGuest
+                            )) {
                                 $totalAvailRooms = $hotelRoomData['stats']['num_avail'];
                             }
                         }
                     }
                     die(
-                        json_encode(
+                        Tools::jsonEncode(
                             array(
                                 'status'=>'success',
                                 'msg'=>'successfully cart product updated.',
@@ -56,7 +60,7 @@ class BlockcartCheckRoomAvailabilityAjaxProcessModuleFrontController extends Mod
                     );
                 }
                 die(
-                    json_encode(
+                    Tools::jsonEncode(
                         array('status'=>'failed', 'msg'=>'error while deleting room from cart booking table.')
                     )
                 );

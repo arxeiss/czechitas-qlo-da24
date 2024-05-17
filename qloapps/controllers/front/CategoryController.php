@@ -53,12 +53,9 @@ class CategoryControllerCore extends FrontController
             $this->addCSS(array(
                 // _THEME_CSS_DIR_.'scenes.css'       => 'all',
                 _THEME_CSS_DIR_.'category.css' => 'all',
-                _THEME_CSS_DIR_.'product_list.css' => 'all',
+                // _THEME_CSS_DIR_.'product_list.css' => 'all',
             ));
         }
-
-        $this->addCSS(_THEME_CSS_DIR_.'occupancy.css');
-        $this->addJS(_THEME_JS_DIR_.'occupancy.js');
 
         $scenes = Scene::getScenes($this->category->id, $this->context->language->id, true, false);
         if ($scenes && count($scenes)) {
@@ -98,22 +95,6 @@ class CategoryControllerCore extends FrontController
             $this->errors[] = Tools::displayError('Missing category ID');
         }
 
-        // validate dates if available
-        $dateFrom = Tools::getValue('date_from');
-        $dateTo = Tools::getValue('date_to');
-
-        $currentTimestamp = strtotime(date('Y-m-d'));
-        $dateFromTimestamp = strtotime($dateFrom);
-        $dateToTimestamp = strtotime($dateTo);
-
-        if ($dateFrom != '' && ($dateFromTimestamp === false || ($dateFromTimestamp < $currentTimestamp))) {
-            Tools::redirect($this->context->link->getPageLink('pagenotfound'));
-        }
-
-        if ($dateTo != '' && ($dateToTimestamp === false || ($dateToTimestamp < $currentTimestamp))) {
-            Tools::redirect($this->context->link->getPageLink('pagenotfound'));
-        }
-
         // Instantiate category
         $this->category = new Category($id_category, $this->context->language->id);
 
@@ -123,7 +104,7 @@ class CategoryControllerCore extends FrontController
         if (!$this->category->active || !Validate::isLoadedObject($this->category) || !$this->category->inShop() || !$this->category->isAssociatedToShop() || in_array($this->category->id, array(Configuration::get('PS_HOME_CATEGORY'), Configuration::get('PS_ROOT_CATEGORY')))) {
             header('HTTP/1.1 404 Not Found');
             header('Status: 404 Not Found');
-            Tools::redirect($this->context->link->getPageLink('pagenotfound'));
+            $this->errors[] = Tools::displayError('Category not found');
         } else
             // Check if category can be accessible by current customer and return 403 if not
             if (!$this->category->checkAccess($this->context->customer->id)) {
@@ -147,7 +128,7 @@ class CategoryControllerCore extends FrontController
             return;
         }
 
-        $id_category = Tools::getValue('id_category');
+        $htl_id_category = Tools::getValue('id_category');
 
         if (!($date_from = Tools::getValue('date_from'))) {
             $date_from = date('Y-m-d');
@@ -157,45 +138,21 @@ class CategoryControllerCore extends FrontController
             $date_to = date('Y-m-d', strtotime($date_from) + 86400);
         }
 
-        // get occupancy of the search
-        $occupancy = Tools::getValue('occupancy');
-        if (!Validate::isOccupancy($occupancy)) {
-            $occupancy = array();
-        }
         $currency = new Currency($this->context->currency->id);
 
-        if ($id_hotel = HotelBranchInformation::getHotelIdByIdCategory($id_category)) {
+        if (Module::isInstalled('hotelreservationsystem')) {
+            require_once _PS_MODULE_DIR_.'hotelreservationsystem/define.php';
+
+            $id_hotel = HotelBranchInformation::getHotelIdByIdCategory($htl_id_category);
+
             $id_cart = $this->context->cart->id;
             $id_guest = $this->context->cookie->id_guest;
 
-            $objBookingDetail = new HotelBookingDetail();
-            $bookingParams = array(
-                'date_from' => $date_from,
-                'date_to' => $date_to,
-                'occupancy' => $occupancy,
-                'hotel_id' => $id_hotel,
-                'get_total_rooms' => 0,
-                'id_cart' => $id_cart,
-                'id_guest' => $id_guest,
-            );
+            $obj_booking_dtl = new HotelBookingDetail();
+            $booking_data = $obj_booking_dtl->DataForFrontSearch($date_from, $date_to, $id_hotel, 0, 0, 0, 0, -1, 0, 0, $id_cart, $id_guest);
 
-            $booking_data = $objBookingDetail->dataForFrontSearch($bookingParams);
-
-            // set default occupancies in required format
-            if (isset($booking_data['rm_data']) && $booking_data['rm_data']) {
-                foreach ($booking_data['rm_data'] as &$roomTypeData) {
-                    $occupancy = array(
-                        array(
-                            'adults' => $roomTypeData['adults'],
-                            'children' => 0,
-                            'child_ages' => array(),
-                        ),
-                    );
-
-                    $roomTypeData['occupancies'] = $occupancy;
-                    $roomTypeData['occupancy_adults'] = $roomTypeData['adults']; // only one room by default
-                }
-            }
+            $feat_img_dir = _PS_IMG_.'rf/';
+            $ratting_img = _MODULE_DIR_.'hotelreservationsystem/views/img/Slices/icons-sprite.png';
 
             $obj_booking_detail = new HotelBookingDetail();
             $num_days = $obj_booking_detail->getNumberOfDays($date_from, $date_to);
@@ -221,24 +178,13 @@ class CategoryControllerCore extends FrontController
                 'booking_date_from' => $date_from,
                 'booking_date_to' => $date_to,
                 'booking_data' => $booking_data,
+                'feat_img_dir' => $feat_img_dir,
+                'ratting_img' => $ratting_img,
+                'currency' => $currency,
                 'max_order_date' => $max_order_date,
                 'order_date_restrict' => $order_date_restrict
             ));
-        } else {
-            Tools::redirect($this->context->link->getPageLink('pagenotfound'));
         }
-
-        $feat_img_dir = _PS_IMG_.'rf/';
-        $ratting_img = _MODULE_DIR_.'hotelreservationsystem/views/img/Slices/icons-sprite.png';
-
-        $this->context->smarty->assign(array(
-            'id_hotel' => $id_hotel,
-            'currency' => $currency,
-            'feat_img_dir' => $feat_img_dir,
-            'ratting_img' => $ratting_img,
-        ));
-
-
 
         /*if (isset($this->context->cookie->id_compare))
             $this->context->smarty->assign('compareProducts', CompareProduct::getCompareProducts((int)$this->context->cookie->id_compare));
@@ -272,8 +218,6 @@ class CategoryControllerCore extends FrontController
 
     public function displayAjaxFilterResults()
     {
-        $response = array('status' => false);
-
         $this->display_header = false;
         $this->display_footer = false;
 
@@ -281,26 +225,24 @@ class CategoryControllerCore extends FrontController
         $date_to = Tools::getValue('date_to');
         $htl_id_category = Tools::getValue('id_category');
 
-        // occupancy of the search
-        $occupancy = Tools::getValue('occupancy');
-        if (!Validate::isOccupancy($occupancy)) {
-            $occupancy = array();
-        }
         $sort_by = Tools::getValue('sort_by');
         $sort_value = Tools::getValue('sort_value');
         $filter_data = Tools::getValue('filter_data');
 
-        $adults = 0;
-        $children = 0;
+        $adult = 0;
+        $child = 0;
+        $ratting = -1;
         $amenities = 0;
         $price = 0;
 
         if (!empty($filter_data)) {
             foreach ($filter_data as $key => $value) {
-                if ($key == 'adults') {
-                    $adults = min($value);
+                if ($key == 'adult') {
+                    $adult = min($value);
                 } elseif ($key == 'children') {
-                    $children = min($value);
+                    $child = min($value);
+                } elseif ($key == 'ratting') {
+                    $ratting = min($value);
                 } elseif ($key == 'amenities') {
                     $amenities = array();
                     foreach ($value as $a_k => $a_v) {
@@ -319,21 +261,11 @@ class CategoryControllerCore extends FrontController
 
             $id_hotel = HotelBranchInformation::getHotelIdByIdCategory($htl_id_category);
 
-            $objBookingDetail = new HotelBookingDetail();
+            $id_cart = $this->context->cart->id;
+            $id_guest = $this->context->cookie->id_guest;
 
-            $bookingParams = array(
-                'date_from' => $date_from,
-                'date_to' => $date_to,
-                'hotel_id' => $id_hotel,
-                'occupancy' => $occupancy,
-                'amenities' => $amenities,
-                'price' => $price,
-                'get_total_rooms' => 0,
-                'id_cart' => $this->context->cart->id,
-                'id_guest' => $this->context->cookie->id_guest,
-            );
-
-            $booking_data = $objBookingDetail->dataForFrontSearch($bookingParams);
+            $obj_booking_dtl = new HotelBookingDetail();
+            $booking_data = $obj_booking_dtl->DataForFrontSearch($date_from, $date_to, $id_hotel, 0, 0, $adult, $child, $ratting, $amenities, $price, $id_cart, $id_guest);
             // reset array keys from 0
             $booking_data['rm_data'] = array_values($booking_data['rm_data']);
             if ($sort_by && $sort_value) {
@@ -345,18 +277,18 @@ class CategoryControllerCore extends FrontController
                     $direction = SORT_DESC;
                 }
                 foreach ($booking_data['rm_data'] as $s_k => $s_v) {
-                    $indi_arr[$s_k] = $s_v['price'];
+                    if ($sort_by == 1) {
+                        $indi_arr[$s_k] = $s_v['ratting'];
+                    } elseif ($sort_by == 2) {
+                        $indi_arr[$s_k] = $s_v['price'];
+                    }
                 }
 
                 array_multisort($indi_arr, $direction, $booking_data['rm_data']);
             }
-
             $this->context->smarty->assign(array('booking_data' => $booking_data));
-            $html = $this->context->smarty->fetch('_partials/room_type_list.tpl');
-            $response['status'] = true;
-            $response['html_room_type_list'] = $html;
         }
-        $this->ajaxDie(json_encode($response));
+        die($this->context->smarty->fetch(_PS_THEME_DIR_.'_partials/room_type_list.tpl'));
     }
 
     /**

@@ -118,16 +118,7 @@ class AdminQuickAccessesControllerCore extends AdminController
             ),
             'submit' => array(
                 'title' => $this->l('Save'),
-            ),
-            'buttons' => array(
-                'save-and-stay' => array(
-                    'title' => $this->l('Save and stay'),
-                    'name' => 'submitAdd'.$this->table.'AndStay',
-                    'type' => 'submit',
-                    'class' => 'btn btn-default pull-right',
-                    'icon' => 'process-icon-save',
-                ),
-            ),
+            )
         );
 
         parent::__construct();
@@ -162,7 +153,7 @@ class AdminQuickAccessesControllerCore extends AdminController
     public function getQuickAccessesList()
     {
         $links = QuickAccess::getQuickAccesses($this->context->language->id);
-        return json_encode(array_map(array($this, 'getLinkToken'), $links));
+        return Tools::jsonEncode(array_map(array($this, 'getLinkToken'), $links));
     }
 
     public function getLinkToken($item)
@@ -204,7 +195,7 @@ class AdminQuickAccessesControllerCore extends AdminController
         $this->errors = array_unique($this->errors);
         if (!empty($this->errors)) {
             $this->errors['has_errors'] = true;
-            $this->ajaxDie(json_encode($this->errors));
+            $this->ajaxDie(Tools::jsonEncode($this->errors));
             return false;
         }
         return $this->getQuickAccessesList();

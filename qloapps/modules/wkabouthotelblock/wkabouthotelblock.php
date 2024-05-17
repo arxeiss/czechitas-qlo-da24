@@ -26,12 +26,13 @@ require_once dirname(__FILE__).'/define.php';
 
 class WkAboutHotelBlock extends Module
 {
+    const INSTALL_SQL_FILE = 'install.sql';
     public function __construct()
     {
         $this->name = 'wkabouthotelblock';
         $this->tab = 'front_office_features';
-        $this->version = '1.1.8';
-        $this->author = 'Webkul';
+        $this->version = '1.1.6';
+        $this->author = 'webkul';
         $this->need_instance = 0;
 
         $this->bootstrap = true;
@@ -44,11 +45,18 @@ class WkAboutHotelBlock extends Module
 
     public function hookDisplayHome()
     {
-        $this->context->controller->addCSS(_PS_JS_DIR_.'owl-carousel/assets/owl.carousel.min.css');
-        $this->context->controller->addCSS(_PS_JS_DIR_.'owl-carousel/assets/owl.theme.default.min.css');
-        $this->context->controller->addJS(_PS_JS_DIR_.'owl-carousel/owl.carousel.min.js');
-        $this->context->controller->addCSS($this->_path.'/views/css/WkAboutHotelBlockFront.css');
-        $this->context->controller->addJS($this->_path.'/views/js/WkAboutHotelBlockFront.js');
+        // owl.carousel Plug-in files
+        $this->context->controller->addCSS(
+            _PS_MODULE_DIR_.'hotelreservationsystem/libs/owl.carousel/assets/owl.carousel.min.css'
+        );
+        $this->context->controller->addCSS(
+            _PS_MODULE_DIR_.'hotelreservationsystem/libs/owl.carousel/assets/owl.theme.default.min.css'
+        );
+        $this->context->controller->addJS(
+            _PS_MODULE_DIR_.'hotelreservationsystem/libs/owl.carousel/owl.carousel.min.js'
+        );
+        $this->context->controller->addCSS(_PS_MODULE_DIR_.$this->name.'/views/css/WkAboutHotelBlockFront.css');
+        $this->context->controller->addJS(_PS_MODULE_DIR_.$this->name.'/views/js/WkAboutHotelBlockFront.js');
 
         $HOTEL_INTERIOR_HEADING = Configuration::get('HOTEL_INTERIOR_HEADING', $this->context->language->id);
         $HOTEL_INTERIOR_DESCRIPTION = Configuration::get('HOTEL_INTERIOR_DESCRIPTION', $this->context->language->id);
@@ -65,6 +73,11 @@ class WkAboutHotelBlock extends Module
         );
 
         return $this->display(__FILE__, 'hotelInteriorBlock.tpl');
+    }
+
+    public function hookDisplayAddModuleSettingLink()
+    {
+        return $this->display(__FILE__, 'aboutHotelBlockModuleSetting.tpl');
     }
 
     /**
@@ -84,31 +97,31 @@ class WkAboutHotelBlock extends Module
 
     public function install()
     {
-        $objAboutHotelBlockDb = new WkAboutHotelBlockDb();
-        if (!parent::install()
-            || !$objAboutHotelBlockDb->createTables()
-            || !$this->registerModuleHooks()
-            || !$this->callInstallTab()
-        ) {
+        if (!file_exists(dirname(__FILE__).'/'.self::INSTALL_SQL_FILE)) {
+            return false;
+        } elseif (!$sql = Tools::file_get_contents(dirname(__FILE__).'/'.self::INSTALL_SQL_FILE)) {
             return false;
         }
 
-        // if module should create demo data during installation
-        if (isset($this->populateData) && $this->populateData) {
-            $objHtlInteriorImg = new WkHotelInteriorImage();
-            if (!$objHtlInteriorImg->insertModuleDemoData()) {
-                return false;
+        $sql = str_replace(array('PREFIX_',  'ENGINE_TYPE'), array(_DB_PREFIX_, _MYSQL_ENGINE_), $sql);
+        $sql = preg_split("/;\s*[\r\n]+/", $sql);
+
+        foreach ($sql as $query) {
+            if ($query) {
+                if (!Db::getInstance()->execute(trim($query))) {
+                    return false;
+                }
             }
-        } else {
-            Tools::deleteDirectory($this->local_path.'views/img/dummy_img');
         }
-
+        $objHtlInteriorImg = new WkHotelInteriorImage();
+        if (!parent::install()
+            || !$this->registerModuleHooks()
+            || !$this->callInstallTab()
+            || !$objHtlInteriorImg->insertModuleDemoData()
+        ) {
+            return false;
+        }
         return true;
-    }
-
-    public function getContent()
-    {
-        Tools::redirectAdmin($this->context->link->getAdminLink('AdminAboutHotelBlockSetting'));
     }
 
     public function registerModuleHooks()
@@ -117,6 +130,7 @@ class WkAboutHotelBlock extends Module
             array(
                 'displayHome',
                 'displayFooterExploreSectionHook',
+                'displayAddModuleSettingLink',
                 'actionObjectLanguageAddAfter'
             )
         );
@@ -154,10 +168,9 @@ class WkAboutHotelBlock extends Module
 
     public function uninstall()
     {
-        $objAboutHotelBlockDb = new WkAboutHotelBlockDb();
         if (!parent::uninstall()
             || !$this->deleteHotelInterierImg()
-            || !$objAboutHotelBlockDb->dropTables()
+            || !$this->deleteTables()
             || !$this->deleteConfigKeys()
             || !$this->uninstallTab()
         ) {
@@ -200,5 +213,13 @@ class WkAboutHotelBlock extends Module
             }
         }
         return true;
+    }
+
+    public function deleteTables()
+    {
+        return Db::getInstance()->execute(
+            'DROP TABLE IF EXISTS
+            `'._DB_PREFIX_.'htl_interior_image`'
+        );
     }
 }

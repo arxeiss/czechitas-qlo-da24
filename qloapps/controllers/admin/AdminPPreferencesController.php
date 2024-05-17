@@ -43,7 +43,7 @@ class AdminPPreferencesControllerCore extends AdminController
 
         $this->fields_options = array(
             'products' => array(
-                'title' =>    $this->l('Room Types (General)'),
+                'title' =>    $this->l('Products (general)'),
                 'fields' =>    array(
                     'PS_CATALOG_MODE' => array(
                         'title' => $this->l('Catalog mode'),
@@ -62,12 +62,10 @@ class AdminPPreferencesControllerCore extends AdminController
                     //     'type' => 'text'
                     // ),
                     'PS_NB_DAYS_NEW_PRODUCT' => array(
-                        'title' => $this->l('Number of days for which a room type is considered \'new\''),
-                        'hint' => $this->l('The counting of days starts from room type creation date.'),
+                        'title' => $this->l('Number of days for which the product is considered \'new\''),
                         'validation' => 'isUnsignedInt',
                         'cast' => 'intval',
-                        'type' => 'text',
-                        'class' => 'fixed-width-xxl',
+                        'type' => 'text'
                     ),
                     /*'PS_CART_REDIRECT' => array(
                         'title' => $this->l('Redirect after adding product to cart'),
@@ -84,12 +82,11 @@ class AdminPPreferencesControllerCore extends AdminController
                     ),*/
                     'PS_PRODUCT_SHORT_DESC_LIMIT' => array(
                         'title' => $this->l('Max size of short description'),
-                        'hint' => $this->l('Set the maximum size of room type short description (in characters).'),
+                        'hint' => $this->l('Set the maximum size of product short description (in characters).'),
                         'validation' => 'isInt',
                         'cast' => 'intval',
                         'type' => 'text',
                         'suffix' => $this->l('characters'),
-                        'class' => 'fixed-width-xl',
                     ),
                     /*'PS_QTY_DISCOUNT_ON_COMBINATION' => array(
                         'title' => $this->l('Quantity discounts based on'),
@@ -111,142 +108,39 @@ class AdminPPreferencesControllerCore extends AdminController
                         'cast' => 'intval',
                         'required' => false,
                         'type' => 'bool'
-                    ),
-                    'PS_KPI_BEST_SELLING_ROOM_TYPE_NB_DAYS' => array(
-                        'title' => $this->l('Number of days to use to calculate best selling room type'),
-                        'hint' => $this->l('Set the number of days to use to calculate best selling room type.'),
-                        'validation' => 'isUnsignedInt',
-                        'cast' => 'intval',
-                        'type' => 'text',
-                        'suffix' => $this->l('days'),
-                        'class' => 'fixed-width-xl',
-                    ),
+                    )
                 ),
                 'submit' => array('title' => $this->l('Save'))
             ),
-            'search' => array(
-                'title' =>    $this->l('Search'),
-                'fields' =>    array(
-                    'PS_FRONT_SEARCH_TYPE' => array(
-                        'title' => $this->l('Front end search type'),
-                        'hint' => $this->l('Select search type for frontend. In "Occupancy wise search", occupancy field will be shown in the search panel and search will be based on required occupancy by the guest. In "Search without occupancy", All available room types will be shown for the search dates without any occupancy filter.'),
-                        'cast' => 'intval',
-                        'type' => 'select',
-                        'list' => array(
-                            array('id' => HotelBookingDetail::SEARCH_TYPE_OWS, 'name' => $this->l('Occupancy wise search')),
-                            array('id' => HotelBookingDetail::SEARCH_TYPE_NORMAL, 'name' => $this->l('Search without occupancy'))
-                        ),
-                        'identifier' => 'id',
-                        'desc' => $this->l('Choose "Occupancy wise search" or "Search without occupancy". Occupancy search restriction will depend on this option selection at front end.'),
-                    ),
-                    'PS_FRONT_OWS_SEARCH_ALGO_TYPE' => array(
-                        'title' => $this->l('Front end occupancy wise search algorithm'),
-                        'hint' => $this->l('In occupancy wise search at front end, you want to display only room types which are fully satisfying searched occupancy or you want to display all the available room types for the dates searched'),
-                        'cast' => 'intval',
-                        'type' => 'select',
-                        'list' => array(
-                            array('id' => HotelBookingDetail::SEARCH_EXACT_ROOM_TYPE_ALGO, 'name' => $this->l('Show room types satisfying required occupancy')),
-                            array('id' => HotelBookingDetail::SEARCH_ALL_ROOM_TYPE_ALGO, 'name' => $this->l('Show all available room types'))
-                        ),
-                        'identifier' => 'id',
-                        'desc' => $this->l('This option is only for fully available rooms. For partially available rooms, always all possible rooms will be displayed.'),
-                    ),
-                    'PS_FRONT_ROOM_UNIT_SELECTION_TYPE' => array(
-                        'title' => $this->l('In front-end, add rooms to cart with'),
-                        'hint' => $this->l('In Room occupancy, while adding rooms in cart customer has to select per room occupancy and in room quantity customer only has to select number of rooms.'),
-                        'cast' => 'intval',
-                        'type' => 'select',
-                        'list' => array(
-                            array('id' => HotelBookingDetail::PS_ROOM_UNIT_SELECTION_TYPE_OCCUPANCY, 'name' => $this->l('Room Occupancy')),
-                            array('id' => HotelBookingDetail::PS_ROOM_UNIT_SELECTION_TYPE_QUANTITY, 'name' => $this->l('Rooms Quantity (No. of rooms)'))
-                        ),
-                        'identifier' => 'id',
-                    ),
-                    'PS_BACKOFFICE_SEARCH_TYPE' => array(
-                        'title' => $this->l('Back-office search type'),
-                        'hint' => $this->l('Select search type for Back-office. In "Occupancy wise search", occupancy field will be shown in the search panel and search will be based on required occupancy by the employee. In "Search without occupancy", All available room types will be shown for the search dates without any occupancy filter.'),
-                        'cast' => 'intval',
-                        'type' => 'select',
-                        'list' => array(
-                            array('id' => HotelBookingDetail::SEARCH_TYPE_OWS, 'name' => $this->l('Occupancy wise search')),
-                            array('id' => HotelBookingDetail::SEARCH_TYPE_NORMAL, 'name' => $this->l('Search without occupancy'))
-                        ),
-                        'identifier' => 'id',
-                        'desc' => $this->l('Choose "Occupancy wise search" or "Search without occupancy". Occupancy search restriction will depend on this option selection at back-office.'),
-                    ),
-                    'PS_BACKOFFICE_OWS_SEARCH_ALGO_TYPE' => array(
-                        'title' => $this->l('Back-office occupancy wise search algorithm'),
-                        'hint' => $this->l('In occupancy wise search at back-office, you want to display only room types which are fully satisfying searched occupancy or you want to display all the available room types for the dates searched.'),
-                        'cast' => 'intval',
-                        'type' => 'select',
-                        'list' => array(
-                            array('id' => HotelBookingDetail::SEARCH_EXACT_ROOM_TYPE_ALGO, 'name' => $this->l('Show room types satisfying required occupancy')),
-                            array('id' => HotelBookingDetail::SEARCH_ALL_ROOM_TYPE_ALGO, 'name' => $this->l('Show all available room types'))
-                        ),
-                        'identifier' => 'id',
-                        'desc' => $this->l('This option is only for fully available rooms. For partially available rooms, always all possible rooms will be displayed.'),
-                    ),
-                    'PS_BACKOFFICE_ROOM_BOOKING_TYPE' => array(
-                        'title' => $this->l('In back-office, add rooms to cart with'),
-                        'hint' => $this->l('In Room occupancy, while adding rooms in cart customer has to select per room occupancy and in room quantity customer only has to select number of rooms.'),
-                        'cast' => 'intval',
-                        'type' => 'select',
-                        'list' => array(
-                            array('id' => HotelBookingDetail::PS_ROOM_UNIT_SELECTION_TYPE_OCCUPANCY, 'name' => $this->l('Room Occupancy')),
-                            array('id' => HotelBookingDetail::PS_ROOM_UNIT_SELECTION_TYPE_QUANTITY, 'name' => $this->l('Rooms Quantity (No. of rooms)'))
-                        ),
-                        'identifier' => 'id',
-                    ),
-                    'PS_LOS_RESTRICTION_BO' => array(
-                        'title' => $this->l('Apply Min and Max lenght of stay restrictions for back-office search'),
-                        'hint' => $this->l('While searching for available rooms from back-office, apply minimum and maximum lenght of stay restrictions'),
-                        'validation' => 'isBool',
-                        'cast' => 'intval',
-                        'required' => false,
-                        'type' => 'bool'
-                    ),
-                    'WK_ROOM_LEFT_WARNING_NUMBER' => array(
-                        'title' => $this->l('Display remaining Number of rooms when the rooms are lower than or equal to'),
-                        'hint' => $this->l('Mention the minimum quantity of rooms after which alert message of remaining rooms will get displayed to users.'),
-                        'validation' => 'isInt',
-                        'cast' => 'intval',
-                        'type' => 'text',
-                        'class' => 'fixed-width-xxl',
-                        'visibility' => Shop::CONTEXT_ALL,
-                    ),
-                ),
-                'submit' => array('title' => $this->l('Save'))
-            ),
-            /*'order_by_pagination' => array(
+            'order_by_pagination' => array(
                 'title' =>    $this->l('Pagination'),
                 'fields' =>    array(
                     'PS_PRODUCTS_PER_PAGE' => array(
-                        'title' => $this->l('Room types per page'),
-                        'hint' => $this->l('Number of room types displayed per page. Default is 10.'),
+                        'title' => $this->l('Products per page'),
+                        'hint' => $this->l('Number of products displayed per page. Default is 10.'),
                         'validation' => 'isUnsignedInt',
                         'cast' => 'intval',
-                        'type' => 'text',
-                        'class' => 'fixed-width-xxl',
+                        'type' => 'text'
                     ),
                     'PS_PRODUCTS_ORDER_BY' => array(
                         'title' => $this->l('Default order by'),
-                        'hint' => $this->l('The order in which room types are displayed in the room type list.'),
+                        'hint' => $this->l('The order in which products are displayed in the product list.'),
                         'type' => 'select',
                         'list' => array(
-                            array('id' => '0', 'name' => $this->l('Room type name')),
-                            array('id' => '1', 'name' => $this->l('Room type price')),
-                            array('id' => '2', 'name' => $this->l('Room type add date')),
-                            array('id' => '3', 'name' => $this->l('Room type modified date')),
-                            // array('id' => '4', 'name' => $this->l('Position inside category')),
-                            // array('id' => '5', 'name' => $this->l('Manufacturer')),
-                            // array('id' => '6', 'name' => $this->l('Product quantity')),
-                            // array('id' => '7', 'name' => $this->l('Product reference'))
+                            array('id' => '0', 'name' => $this->l('Product name')),
+                            array('id' => '1', 'name' => $this->l('Product price')),
+                            array('id' => '2', 'name' => $this->l('Product add date')),
+                            array('id' => '3', 'name' => $this->l('Product modified date')),
+                            array('id' => '4', 'name' => $this->l('Position inside category')),
+                            array('id' => '5', 'name' => $this->l('Manufacturer')),
+                            array('id' => '6', 'name' => $this->l('Product quantity')),
+                            array('id' => '7', 'name' => $this->l('Product reference'))
                         ),
                         'identifier' => 'id'
                     ),
                     'PS_PRODUCTS_ORDER_WAY' => array(
                         'title' => $this->l('Default order method'),
-                        'hint' => $this->l('Default order method for room type list.'),
+                        'hint' => $this->l('Default order method for product list.'),
                         'type' => 'select',
                         'list' => array(
                             array(
@@ -262,9 +156,9 @@ class AdminPPreferencesControllerCore extends AdminController
                     )
                 ),
                 'submit' => array('title' => $this->l('Save'))
-            ),*/
+            ),
             'fo_product_page' => array(
-                'title' =>    $this->l('Room type page'),
+                'title' =>    $this->l('Product page'),
                 'fields' =>    array(
                    /* 'PS_DISPLAY_QTIES' => array(
                         'title' => $this->l('Display available quantities on the product page'),
@@ -282,7 +176,7 @@ class AdminPPreferencesControllerCore extends AdminController
                         'type' => 'text'
                     ),*/
                     'PS_DISPLAY_JQZOOM' => array(
-                        'title' => $this->l('Enable JqZoom instead of Fancybox on room type page'),
+                        'title' => $this->l('Enable JqZoom instead of Fancybox on the product page'),
                         'validation' => 'isBool',
                         'cast' => 'intval',
                         'required' => false,
@@ -318,24 +212,6 @@ class AdminPPreferencesControllerCore extends AdminController
                         'cast' => 'intval',
                         'required' => false,
                         'type' => 'bool'
-                    ),
-
-                    'PS_SERVICE_PRODUCT_CATEGORY_FILTER' => array(
-                        'title' => $this->l('Display services by category'),
-                        'hint' => $this->l('If enabled, services will be grouped and displayed as per their default category. Else all services will be displayed together.'),
-                        'validation' => 'isBool',
-                        'cast' => 'intval',
-                        'required' => false,
-                        'type' => 'bool'
-                    ),
-
-                    'PS_HOTEL_IMAGES_PER_PAGE' => array(
-                        'title' => $this->l('Number of hotel images per page'),
-                        'hint' => $this->l('Number of hotel images displayed per page. Default is 9.'),
-                        'validation' => 'isUnsignedInt',
-                        'cast' => 'intval',
-                        'type' => 'text',
-                        'class' => 'fixed-width-xxl',
                     ),
                 ),
                 'submit' => array('title' => $this->l('Save'))
@@ -441,28 +317,9 @@ class AdminPPreferencesControllerCore extends AdminController
             Db::getInstance()->execute($sql);
         }
 
-        if (Tools::getValue('PS_FRONT_SEARCH_TYPE') == HotelBookingDetail::SEARCH_TYPE_OWS) {
-            $_POST['PS_FRONT_ROOM_UNIT_SELECTION_TYPE'] = HotelBookingDetail::PS_ROOM_UNIT_SELECTION_TYPE_OCCUPANCY;
-        }
-
-        if (Tools::getValue('PS_BACKOFFICE_SEARCH_TYPE') == HotelBookingDetail::SEARCH_TYPE_OWS) {
-            $_POST['PS_BACKOFFICE_ROOM_BOOKING_TYPE'] = HotelBookingDetail::PS_ROOM_UNIT_SELECTION_TYPE_OCCUPANCY;
-        }
-
         if (Tools::getIsset('PS_CATALOG_MODE')) {
             Tools::clearSmartyCache();
             Media::clearCache();
         }
-    }
-
-    public function setMedia()
-    {
-        parent::setMedia();
-
-        Media::addJsDef(array(
-            'SEARCH_TYPE_OWS' => HotelBookingDetail::SEARCH_TYPE_OWS
-        ));
-
-        $this->addJS(_PS_JS_DIR_.'admin/ppreferences.js');
     }
 }

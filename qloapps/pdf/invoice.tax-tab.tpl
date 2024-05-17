@@ -25,7 +25,9 @@
 
 <!--  TAX DETAILS -->
 
-{if (isset($tax_breakdowns) && $tax_breakdowns)}
+{if $tax_exempt}
+	{l s='Exempt of VAT according to section 259B of the General Tax Code.' pdf='true'}
+{elseif (isset($tax_breakdowns) && $tax_breakdowns)}
 	{assign var=th_rows value=3}
 	{if isset($showTaxName) && $showTaxName}
 		{assign var=th_rows value=$th_rows+1}
@@ -39,7 +41,7 @@
 				<th colspan="{$th_rows}" class="header">{l s='Tax Details' pdf='true'}</th>
 			</tr>
 			<tr>
-				<th class="header-left small">{l s='Taxable category' pdf='true'}</th>
+				<th class="header-left small">{l s='Tax Detail' pdf='true'}</th>
 				{if isset($showTaxName) && $showTaxName}
 					<th class="header-left small">{l s='Tax Name' pdf='true'}</th>
 				{/if}
@@ -65,16 +67,10 @@
 				<tr class="{if !$label_printed}tr-border-top{/if}">
 					{if !$label_printed}
 						<td class="white" rowspan="{$bd|count}">
-							{if $label == 'additional_services_tax'}
-								{l s='Services' pdf='true'}
-							{elseif $label == 'room_tax'}
+							{if $label == 'product_tax'}
 								{l s='Rooms' pdf='true'}
 							{elseif $label == 'extra_demands_tax'}
-								{l s='Facilities' pdf='true'}
-							{elseif $label == 'convenience_fee_tax'}
-								{l s='Convenience Fees' pdf='true'}
-							{elseif $label == 'service_products_tax'}
-								{l s='Service Products' pdf='true'}
+								{l s='Extra Demands' pdf='true'}
 							{elseif $label == 'shipping_tax'}
 								{l s='Shipping' pdf='true'}
 							{elseif $label == 'ecotax_tax'}

@@ -25,7 +25,6 @@ CREATE TABLE `PREFIX_address` (
   `id_manufacturer` int(10) unsigned NOT NULL DEFAULT '0',
   `id_supplier` int(10) unsigned NOT NULL DEFAULT '0',
   `id_warehouse` int(10) unsigned NOT NULL DEFAULT '0',
-  `id_hotel` int(10) unsigned NOT NULL DEFAULT '0',
   `alias` varchar(32) NOT NULL,
   `company` varchar(255) DEFAULT NULL,
   `lastname` varchar(32) NOT NULL,
@@ -673,31 +672,6 @@ CREATE TABLE `PREFIX_customer_thread` (
 	KEY `id_product` (`id_product`)
 ) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8 COLLATION;
 
-CREATE TABLE `PREFIX_order_customer_guest_detail` (
-  `id_order_customer_guest_detail` int(10) unsigned NOT NULL auto_increment,
-  `id_order` int(10) unsigned NOT NULL,
-  `id_gender` int(10) unsigned NOT NULL,
-  `firstname` varchar(32) NOT NULL,
-  `lastname` varchar(32) NOT NULL,
-  `email` varchar(128) NOT NULL,
-  `phone` varchar(32) DEFAULT NULL,
-  `date_add` datetime NOT NULL,
-  `date_upd` datetime NOT NULL,
-	PRIMARY KEY (`id_order_customer_guest_detail`)
-) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8 COLLATION;
-
-CREATE TABLE `PREFIX_cart_customer_guest_detail` (
-  `id_customer_guest_detail` int(10) unsigned NOT NULL auto_increment,
-  `id_cart` int(10) unsigned NOT NULL,
-  `id_gender` int(10) unsigned NOT NULL,
-  `firstname` varchar(32) NOT NULL,
-  `lastname` varchar(32) NOT NULL,
-  `email` varchar(128) NOT NULL,
-  `phone` varchar(32) DEFAULT NULL,
-  `date_add` datetime NOT NULL,
-  `date_upd` datetime NOT NULL,
-	PRIMARY KEY (`id_customer_guest_detail`)
-) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8 COLLATION;
 
 CREATE TABLE `PREFIX_customization` (
   `id_customization` int(10) unsigned NOT NULL auto_increment,
@@ -984,7 +958,6 @@ CREATE TABLE `PREFIX_image_type` (
   `height` int(10) unsigned NOT NULL,
   `products` tinyint(1) NOT NULL DEFAULT '1',
   `categories` tinyint(1) NOT NULL DEFAULT '1',
-  `hotels` tinyint(1) NOT NULL DEFAULT '1',
   `manufacturers` tinyint(1) NOT NULL DEFAULT '1',
   `suppliers` tinyint(1) NOT NULL DEFAULT '1',
   `scenes` tinyint(1) NOT NULL DEFAULT '1',
@@ -1128,11 +1101,9 @@ CREATE TABLE `PREFIX_orders` (
   `id_currency` int(10) unsigned NOT NULL,
   `id_address_delivery` int(10) unsigned NOT NULL,
   `id_address_invoice` int(10) unsigned NOT NULL,
-  `id_address_tax` int(10) unsigned NOT NULL,
   `current_state` int(10) unsigned NOT NULL,
   `secure_key` varchar(32) NOT NULL DEFAULT '-1',
   `payment` varchar(255) NOT NULL,
-  `payment_type` tinyint(10) UNSIGNED NOT NULL,
   `conversion_rate` decimal(13,6) NOT NULL DEFAULT 1,
   `module` varchar(255) DEFAULT NULL,
   `recyclable` tinyint(1) unsigned NOT NULL DEFAULT '0',
@@ -1166,7 +1137,6 @@ CREATE TABLE `PREFIX_orders` (
   `valid` int(1) unsigned NOT NULL DEFAULT '0',
   `is_advance_payment` tinyint(1) NOT NULL DEFAULT '0',
   `advance_paid_amount` decimal(20,6) NOT NULL DEFAULT '0.00',
-  `with_occupancy` tinyint(1) NOT NULL DEFAULT '0',
   `date_add` datetime NOT NULL,
   `date_upd` datetime NOT NULL,
   PRIMARY KEY (`id_order`),
@@ -1249,12 +1219,6 @@ CREATE TABLE `PREFIX_order_detail` (
   `reduction_amount_tax_excl` DECIMAL(20, 6) NOT NULL DEFAULT '0.000000',
   `group_reduction` DECIMAL(10, 2) NOT NULL DEFAULT '0.000000',
   `product_quantity_discount` decimal(20,6) NOT NULL DEFAULT '0.000000',
-  `is_booking_product` tinyint(1) NOT NULL DEFAULT '0',
-  `product_service_type` tinyint(1) NOT NULL DEFAULT '1',
-  `product_auto_add` tinyint(1) NOT NULL DEFAULT '0',
-  `product_price_addition_type` tinyint(1) NOT NULL DEFAULT '0',
-  `product_allow_multiple_quantity` tinyint(1) unsigned NOT NULL DEFAULT '1',
-  `product_price_calculation_method` tinyint(1) unsigned NOT NULL DEFAULT '1',
   `product_ean13` varchar(13) DEFAULT NULL,
   `product_upc` varchar(12) DEFAULT NULL,
   `product_reference` varchar(32) DEFAULT NULL,
@@ -1337,8 +1301,6 @@ CREATE TABLE `PREFIX_order_return` (
 	`refunded_amount` decimal(20,6) NOT NULL DEFAULT '0.000000',
   `question` text NOT NULL,
   `by_admin` tinyint(1) unsigned NOT NULL DEFAULT '0',
-  `id_return_type` tinyint(1) unsigned NOT NULL DEFAULT '0',
-  `return_type` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `date_add` datetime NOT NULL,
   `date_upd` datetime NOT NULL,
   PRIMARY KEY (`id_order_return`),
@@ -1393,8 +1355,6 @@ CREATE TABLE `PREFIX_order_slip` (
   `amount` DECIMAL(10,2) NOT NULL,
   `shipping_cost_amount` DECIMAL(10,2) NOT NULL,
   `partial` TINYINT(1) NOT NULL,
-  `redeem_status` TINYINT(1) NOT NULL DEFAULT '0',
-  `id_cart_rule` int(10) unsigned NOT NULL DEFAULT '0',
   `order_slip_type` TINYINT(1) unsigned NOT NULL DEFAULT '0',
   `date_add` datetime NOT NULL,
   `date_upd` datetime NOT NULL,
@@ -1484,7 +1444,6 @@ CREATE TABLE `PREFIX_order_payment` (
 	`id_currency` INT UNSIGNED NOT NULL,
 	`amount` DECIMAL(10,2) NOT NULL,
 	`payment_method` varchar(255) NOT NULL,
-	`payment_type` INT UNSIGNED NOT NULL,
 	`conversion_rate` decimal(13,6) NOT NULL DEFAULT 1,
 	`transaction_id` VARCHAR(254) NULL,
 	`card_number` VARCHAR(254) NULL,
@@ -1494,15 +1453,6 @@ CREATE TABLE `PREFIX_order_payment` (
 	`date_add` DATETIME NOT NULL,
 	PRIMARY KEY (`id_order_payment`),
 	KEY `order_reference`(`order_reference`)
-) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8 COLLATION;
-
-CREATE TABLE `PREFIX_order_payment_detail` (
-	`id_order_payment_detail` INT(10) unsigned NOT NULL auto_increment,
-	`id_order_payment` INT(10) unsigned NOT NULL,
-	`id_order` INT(10) unsigned NOT NULL,
-	`amount` DECIMAL(10,2) NOT NULL,
-	`date_add` DATETIME NOT NULL,
-	PRIMARY KEY (`id_order_payment_detail`)
 ) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8 COLLATION;
 
 CREATE TABLE `PREFIX_product` (
@@ -1519,9 +1469,6 @@ CREATE TABLE `PREFIX_product` (
   `ecotax` decimal(17,6) NOT NULL DEFAULT '0.00',
   `quantity` int(10) NOT NULL DEFAULT '0',
   `minimal_quantity` int(10) unsigned NOT NULL DEFAULT '1',
-  `allow_multiple_quantity` tinyint(1) unsigned NOT NULL DEFAULT '1',
-  `max_quantity` int(10) unsigned NOT NULL DEFAULT '1',
-  `price_calculation_method` tinyint(1) unsigned NOT NULL DEFAULT '1',
   `price` decimal(20,6) NOT NULL DEFAULT '0.000000',
   `wholesale_price` decimal(20,6) NOT NULL DEFAULT '0.000000',
   `unity` varchar(255) DEFAULT NULL,
@@ -1543,11 +1490,6 @@ CREATE TABLE `PREFIX_product` (
   `redirect_type` ENUM('', '404', '301', '302') NOT NULL DEFAULT '',
   `id_product_redirected` int(10) unsigned NOT NULL DEFAULT '0',
   `available_for_order` tinyint(1) NOT NULL DEFAULT '1',
-  `auto_add_to_cart` tinyint(1) NOT NULL DEFAULT '0',
-  `price_addition_type` tinyint(1) NOT NULL DEFAULT '1',
-  `show_at_front` tinyint(1) NOT NULL DEFAULT '1',
-  `service_product_type` tinyint(1) NOT NULL DEFAULT '1',
-  `price_display_method` tinyint(1) NOT NULL DEFAULT '1',
   `available_date` date NOT NULL DEFAULT '0000-00-00',
   `condition` ENUM('new', 'used', 'refurbished') NOT NULL DEFAULT 'new',
   `show_price` tinyint(1) NOT NULL DEFAULT '1',
@@ -1556,7 +1498,6 @@ CREATE TABLE `PREFIX_product` (
   `cache_is_pack` tinyint(1) NOT NULL DEFAULT '0',
   `cache_has_attachments` tinyint(1) NOT NULL DEFAULT '0',
   `is_virtual` tinyint(1) NOT NULL DEFAULT '0',
-  `booking_product` tinyint(1) NOT NULL DEFAULT '1',
   `cache_default_attribute` int(10) unsigned DEFAULT NULL,
   `date_add` datetime NOT NULL,
   `date_upd` datetime NOT NULL,
@@ -1579,9 +1520,6 @@ CREATE TABLE IF NOT EXISTS `PREFIX_product_shop` (
   `online_only` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `ecotax` decimal(17,6) NOT NULL DEFAULT '0.000000',
   `minimal_quantity` int(10) unsigned NOT NULL DEFAULT '1',
-  `allow_multiple_quantity` tinyint(1) unsigned NOT NULL DEFAULT '1',
-  `max_quantity` int(10) unsigned NOT NULL DEFAULT '1',
-  `price_calculation_method` tinyint(1) unsigned NOT NULL DEFAULT '1',
   `price` decimal(20,6) NOT NULL DEFAULT '0.000000',
   `wholesale_price` decimal(20,6) NOT NULL DEFAULT '0.000000',
   `unity` varchar(255) DEFAULT NULL,
@@ -1594,10 +1532,6 @@ CREATE TABLE IF NOT EXISTS `PREFIX_product_shop` (
   `redirect_type` ENUM('', '404', '301', '302') NOT NULL DEFAULT '',
   `id_product_redirected` int(10) unsigned NOT NULL DEFAULT '0',
   `available_for_order` tinyint(1) NOT NULL DEFAULT '1',
-  `auto_add_to_cart` tinyint(1) NOT NULL DEFAULT '0',
-  `price_addition_type` tinyint(1) NOT NULL DEFAULT '1',
-  `show_at_front` tinyint(1) NOT NULL DEFAULT '1',
-  `price_display_method` tinyint(1) NOT NULL DEFAULT '1',
   `available_date` date NOT NULL DEFAULT '0000-00-00',
   `condition` enum('new','used','refurbished') NOT NULL DEFAULT 'new',
   `show_price` tinyint(1) NOT NULL DEFAULT '1',
@@ -2661,7 +2595,7 @@ CREATE TABLE `PREFIX_tab_module_preference` (
   UNIQUE KEY `employee_module` (`id_employee`, `id_tab`, `module`)
 ) ENGINE=ENGINE_TYPE  DEFAULT CHARSET=utf8 COLLATION;
 
-CREATE TABLE `PREFIX_carrier_tax_rules_group_shop` (
+ CREATE TABLE `PREFIX_carrier_tax_rules_group_shop` (
 	`id_carrier` int( 11 ) unsigned NOT NULL,
 	`id_tax_rules_group` int(11) unsigned NOT NULL,
 	`id_shop` int(11) unsigned NOT NULL,
@@ -2671,7 +2605,6 @@ CREATE TABLE `PREFIX_carrier_tax_rules_group_shop` (
 CREATE TABLE `PREFIX_order_invoice_payment` (
 	`id_order_invoice` int(11) unsigned NOT NULL,
 	`id_order_payment` int(11) unsigned NOT NULL,
-	`id_order_payment_detail` int(11) unsigned NOT NULL,
 	`id_order` int(11) unsigned NOT NULL,
 	PRIMARY KEY (`id_order_invoice`,`id_order_payment`),
 	KEY `order_payment` (`id_order_payment`),
@@ -2754,11 +2687,3 @@ CREATE TABLE IF NOT EXISTS `PREFIX_cms_role_lang` (
   PRIMARY KEY (`id_cms_role`,`id_lang`, id_shop)
 ) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;
 
-
-CREATE TABLE IF NOT EXISTS `PREFIX_maintenance_access` (
-  `id_maintenance_access` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `ip_address` varchar(50) NOT NULL,
-  `email` varchar(128) NOT NULL,
-  `date_add` datetime NOT NULL,
-  PRIMARY KEY (`id_maintenance_access`)
-) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;

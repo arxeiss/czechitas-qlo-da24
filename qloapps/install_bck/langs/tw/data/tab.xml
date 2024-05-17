@@ -22,8 +22,7 @@
   <tab id="Administration" name="管理"/>
   <tab id="Stats" name="狀態"/>
   <tab id="Stock" name="庫存"/>
-  <tab id="Products" name="管理服務產品"/>
-  <tab id="Room_Types" name="管理房間類型"/>
+  <tab id="Products" name="產品"/>
   <tab id="Categories" name="分類"/>
   <tab id="Monitoring" name="追蹤"/>
   <tab id="Attributes_and_Values" name="屬性與數值"/>
@@ -64,7 +63,6 @@
   <tab id="Tax_Rules" name="稅務規則"/>
   <tab id="Translations" name="翻譯"/>
   <tab id="Modules_1" name="模組"/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id="Modules_Themes_Catalog" name="目錄模組與佈景"/>
   <tab id="Positions" name="位置"/>
   <tab id="Payment" name="付款"/>

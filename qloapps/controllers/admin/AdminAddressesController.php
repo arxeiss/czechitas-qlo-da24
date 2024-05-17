@@ -36,7 +36,7 @@ class AdminAddressesControllerCore extends AdminController
     {
         $this->bootstrap = true;
         $this->required_database = true;
-        $this->required_fields = array('company', 'address2', 'postcode', 'other', 'phone', 'phone_mobile', 'vat_number', 'dni');
+        $this->required_fields = array('company','address2', 'postcode', 'other', 'phone', 'phone_mobile', 'vat_number', 'dni');
         $this->table = 'address';
         $this->className = 'Address';
         $this->lang = false;
@@ -73,6 +73,16 @@ class AdminAddressesControllerCore extends AdminController
             'postcode' => array('title' => $this->l('Zip/Postal Code'), 'align' => 'right'),
             'city' => array('title' => $this->l('City')),
             'country' => array('title' => $this->l('Country'), 'type' => 'select', 'list' => $this->countries_array, 'filter_key' => 'cl!id_country'));
+
+
+        // START send access query information to the admin controller
+        $this->access_select = ' SELECT a.`id_address` FROM '._DB_PREFIX_.'address a';
+        $this->access_join = ' INNER JOIN '._DB_PREFIX_.'customer cust ON (cust.id_customer = a.id_customer)';
+        $this->access_join .= ' INNER JOIN '._DB_PREFIX_.'orders ord ON (cust.id_customer = ord.id_customer)';
+        $this->access_join .= ' INNER JOIN '._DB_PREFIX_.'htl_booking_detail hbd ON (hbd.id_order = ord.id_order)';
+        if ($acsHtls = HotelBranchInformation::getProfileAccessedHotels($this->context->employee->id_profile, 1, 1)) {
+            $this->access_where = ' WHERE hbd.id_hotel IN ('.implode(',', $acsHtls).')';
+        }
 
         parent::__construct();
 
@@ -166,18 +176,6 @@ class AdminAddressesControllerCore extends AdminController
                 'title' => $this->l('Save'),
             )
         );
-
-        if (!Tools::getValue('liteDisplaying')) {
-            $this->fields_form['buttons'] = array(
-                'save-and-stay' => array(
-                    'title' => $this->l('Save and stay'),
-                    'name' => 'submitAdd'.$this->table.'AndStay',
-                    'type' => 'submit',
-                    'class' => 'btn btn-default pull-right',
-                    'icon' => 'process-icon-save',
-                )
-            );
-        }
 
         $this->fields_value['address_type'] = (int)Tools::getValue('address_type', 1);
 
@@ -353,28 +351,11 @@ class AdminAddressesControllerCore extends AdminController
         return parent::renderForm();
     }
 
-    // public function postProcess()
-    // {
-
-    //     $address = new Address();
-    //     $this->errors = $address->validateController();
-
-    //     return parent::postProcess();
-    // }
-
     public function processSave()
     {
         if (Tools::getValue('submitFormAjax')) {
             $this->redirect_after = false;
         }
-
-        if ($idAddress = Tools::getValue('id_address')) {
-            $address = new Address($idAddress);
-        } else {
-            $address = new Address();
-        }
-
-        $this->errors = $address->validateController();
 
         // Transform e-mail in id_customer for parent processing
         if (Validate::isEmail(Tools::getValue('email'))) {
@@ -514,7 +495,7 @@ class AdminAddressesControllerCore extends AdminController
             $customer = Customer::searchByName($email);
             if (!empty($customer)) {
                 $customer = $customer['0'];
-                echo json_encode(array('infos' => pSQL($customer['firstname']).'_'.pSQL($customer['lastname']).'_'.pSQL($customer['company']).'_'.pSQL($customer['id_customer'])));
+                echo Tools::jsonEncode(array('infos' => pSQL($customer['firstname']).'_'.pSQL($customer['lastname']).'_'.pSQL($customer['company'])));
             }
         }
         die;

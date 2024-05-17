@@ -205,7 +205,6 @@ class AdminPdfControllerCore extends AdminController
     public function generatePDF($object, $template)
     {
         $pdf = new PDF($object, $template, Context::getContext()->smarty);
-        // @todo remove "I"
-        $pdf->render("I");
+        $pdf->render();
     }
 }

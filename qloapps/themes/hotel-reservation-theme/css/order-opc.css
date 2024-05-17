@@ -91,20 +91,6 @@
 
 /* By Webkul */
 
-.strikethrough {
-    width: 100%;
-    text-align: center;
-    border-bottom: 1px solid #777;
-    line-height: 0.1em;
-    margin: 10px 0 25px;
-}
-
-.strikethrough span {
-    background: #fff;
-    color: #333;
-    padding:0 10px;
-}
-
 #title {
 	font-size: 13px;
 	color: #3C3C3C;
@@ -229,26 +215,17 @@
 .order-detail-content .cart_product_summary_line .room_duration_block {
 	background-color: #fff;
 }
-.order-detail-content .room_price_detail_block, .order-detail-content .product_price_detail_block {
+.order-detail-content .room_price_detail_block {
 	font-size: 24px;
 	color: #333333;
 }
-.order-detail-content .room_price_detail_block .plus-sign, .order-detail-content .product_price_detail_block .plus-sign {
+.order-detail-content .room_price_detail_block .plus-sign {
 	color: #777;
 }
-.product_price_detail_block .product_quantity_block, .product_price_detail_block .price_block {
-	display: inline-block;
-    padding: 10px 15px 0px 0px;
-    border-radius: 6px;
-}
-.order-detail-content .product_quantity_detial {
-	font-size: 14px;
-	color: #777777;
-}
-.order-detail-content .total_price_detial {
+.order-detail-content .room_total_price_detial {
 	font-size: 14px;
 	color: #777777;}
-.room_price_detail_block .open_rooms_extra_services_panel, .product_price_detail_block .open_rooms_extra_services_panel  {
+.room_price_detail_block .open_rooms_extra_demands {
 	font-weight: 600;
 	color: #0000FF;}
 .order-detail-content .total_price_block {
@@ -257,7 +234,7 @@
     background-color: #f2f2f2f2;
     border-radius: 6px;
 }
-.order-detail-content .cart_section_title {
+.order-detail-content .room_info_text {
 	font-size: 12px;
 	color: #777777;
 	text-transform: uppercase;
@@ -278,17 +255,14 @@
 	font-size: 14px;
 	color: #777777;
 }
-.order-detail-content .room_remove_block, .order-detail-content .product_remove_block {
+.order-detail-content .room_remove_block {
 	font-size: 12px;
 	color: #555;
 	text-align: center;
 	margin-top: 20px
 }
-.order-detail-content .room_remove_block i, .order-detail-content .product_remove_block i {
+.order-detail-content .room_remove_block i {
 	font-size: 18px;
-}
-#order-opc #guest-info-block {
-	position: relative;
 }
 #order-opc #guest-info-block div.info-head {
 	font-size: 14px;
@@ -334,16 +308,6 @@
 	color: #333333;
 }
 #order-opc .already_registered_block #openLoginFormBlock {
-	color: #003AEF;
-	font-weight: 600;
-}
-
-#order-opc #login_form_content .text-secondary {
-	color: #333;
-	font-size: 14px;
-}
-
-#order-opc #login_form_content #idAccountChoice {
 	color: #003AEF;
 	font-weight: 600;
 }
@@ -409,6 +373,11 @@
     font-size: 14px;
     color: #0000FF;
 }
+#order-opc .avail_vouchers_block .avail_voucher_des {
+	font-size: 12px;
+	color: #777777;
+	margin-bottom: 2px;
+}
 #order-opc .avail_vouchers_block .seperator {
 	margin-top: 10px;
     margin-bottom: 10px;
@@ -434,56 +403,56 @@
 	font-weight: normal!important;
 }
 @media (max-width: 767px) {
-	.order-detail-content .room_price_detail_block .plus-sign, .order-detail-content .product_price_detail_block .plus-sign {
+	.order-detail-content .room_price_detail_block .plus-sign {
 		display: none;
 	}
 	#order-opc .cart_voucher_detail_block .submit_discount_div {
 		margin-top: 10px;
 	}
-	#order-opc .product-img-block {
+	#order-opc .room-type-img-block {
 		display: none;
 	}
 	#order-opc .cart_product_line .room-type-features {
 		display: none;
 	}
-	.order-detail-content .product-xs-img {
+	.order-detail-content .room-xs-img {
 		display: inline-block;
 	}
-	.order-detail-content .product-xs-info {
+	.order-detail-content .room-xs-info {
 		display: inline-block;
 	}
-	.order-detail-content .product-xs-img {
+	.order-detail-content .room-xs-img {
 		width: 9%;
 		margin-right: 2%;
 	}
-	.order-detail-content .product-xs-img img {
+	.order-detail-content .room-xs-img img {
 		width: 60px;
 	}
-	.order-detail-content .product-xs-info {
+	.order-detail-content .room-xs-info {
 		width: 88%;
 		vertical-align: top;
 	}
 	.order-detail-content .hotel-location {
 		padding: 4px 0px 0px 0px;
 	}
-	.order-detail-content .product-xs-remove {
+	.order-detail-content .room-xs-remove {
 		display: block;
 		font-size: 16px!important;
 		padding: 0px 4px;
 	}
 }
 @media (max-width: 480px) {
-	.order-detail-content .product-xs-info {
+	.order-detail-content .room-xs-info {
 		display: inline-block;
 		width: 76%;
 		vertical-align: top;
 	}
-	.order-detail-content .product-xs-img {
+	.order-detail-content .room-xs-img {
 		display: inline-block;
 		width: 20%;
 		margin-right: 2%;
 	}
-	.order-detail-content .product-xs-img img {
+	.order-detail-content .room-xs-img img {
 		width: 60px;
 	}
 	.order-detail-content .hotel-location {
@@ -491,25 +460,25 @@
 	}
 }
 @media (min-width: 481px) and (max-width: 650px) {
-	.order-detail-content .product-xs-info {
+	.order-detail-content .room-xs-info {
 		display: inline-block;
 		width: 85%;
 		vertical-align: top;
 	}
-	.order-detail-content .product-xs-img {
+	.order-detail-content .room-xs-img {
 		display: inline-block;
 		width: 12%;
 		margin-right: 2%;
 	}
-	.order-detail-content .product-xs-img img {
+	.order-detail-content .room-xs-img img {
 		width: 60px;
 	}
 }
 @media (min-width: 768px) {
-	.order-detail-content .product-xs-img {
+	.order-detail-content .room-xs-img {
 		display: none;
 	}
-	.order-detail-content .product-xs-remove {
+	.order-detail-content .room-xs-remove {
 		display: none;
 	}
 }
@@ -583,10 +552,6 @@
 	padding-top: 0px;
 }
 
-#order-opc #opc_account_errors {
-    margin-top: 10px
-}
-
 /* buttons css */
 #order-opc .opc-button-small {
 	border: none;
@@ -605,7 +570,7 @@
 	color: #1292FF;
 }
 #order-opc .opc-button {
-	padding: 2px 0 0 0;
+	padding: 11px 0 0 0;
 }
 #order-opc .button-medium {
 	background-color: #1292FF;
@@ -622,33 +587,57 @@
 
 
 /* Fancy-box for extra demands Css */
-.room_extra_demands .open_rooms_extra_services_panel {
+#rooms_extra_demands {
+	font-size: 16px;}
+.room_extra_demands .open_rooms_extra_demands {
 	font-size:12px;
 	font-weight: 600;
 	color: #0000FF;}
-
-.btn-edit-guest-info {
-	padding: 0px 50px;
-	font-size: 17px;
-	line-height: 23px;
-	border-radius: 2px;
-	background-color: #D9D9D9;
-	border: 1px solid #D9D9D9;
-	margin-right: 10px; }
-
-.btn-edit-guest-info span {
-	display: block;
+#rooms_extra_demands .demand_header {
+	padding-bottom: 15px;}
+#rooms_extra_demands .room_demand_detail .demand_detail_price_block {
 	font-size: 14px;
-	padding: 11px;
-	font-weight: 600;
-	text-transform: uppercase;
-	text-align: center; }
+	margin-bottom: 15px;}
+#rooms_extra_demands .rooms_extra_demands_head {
+	margin-bottom: 18px;}
+#rooms_extra_demands .card {
+	padding-bottom: 0px;}
+#rooms_extra_demands .room_demand_block {
+	margin-bottom: 15px;
+	color: #333;
+	font-size: 14px;}
+#rooms_extra_demands .checkbox {
+	margin-top: 3px;}
+#rooms_extra_demands label {
+	opacity: 0.5;
+	margin-bottom: 15px;
+	text-transform: uppercase;}
 
-.transform-to-customer-block {
-    margin-top: 25px; }
+/* fancybox accordian css */
+#rooms_extra_demands .accordion, #rooms_extra_demands .accordion * {
+	-webkit-box-sizing:border-box;
+	-moz-box-sizing:border-box;
+	box-sizing:border-box;}
+#rooms_extra_demands .accordion {
+	overflow:hidden;
+	border-bottom: 1px solid #CCCCCC;}
+#rooms_extra_demands .accordion-section-title {
+	width:100%;
+	display:inline-block;
+	transition:all linear 0.15s;
+	color:#252525 !important;
+	text-decoration:none !important;}
+#rooms_extra_demands .accordion-section-content {
+	display:none;
+	border-top: 1px solid #eee;
+	padding: 15px;}
 
-.transform-to-customer-block .text-secondary {
-    font-size: 14px;
-    line-height: 19px;
-    color: #333;
-    margin-bottom: 15px; }
+/* fancybox changes */
+#order-opc .fancybox-overlay {
+	background: rgba(255, 255, 255, 0.95)!important;}
+	#order-opc .fancybox-skin {
+	box-shadow: none!important;}
+	#order-opc .fancybox-skin .fancybox-close:after {
+	content: "";}
+	#order-opc .fancybox-skin .fancybox-close {
+	background-image: url(../img/icon/icon-close.svg);}

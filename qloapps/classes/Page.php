@@ -75,7 +75,7 @@ class PageCore extends ObjectModel
 				FROM `'._DB_PREFIX_.'page`
 				WHERE `id_page_type` = '.(int)$page_type_id.$where;
         $result = Db::getInstance()->getRow($sql);
-        if (isset($result['id_page']) && $result['id_page']) {
+        if ($result['id_page']) {
             return $result['id_page'];
         }
 
@@ -126,22 +126,6 @@ class PageCore extends ObjectModel
                 'id_shop' =>        (int)$context->shop->id,
                 'id_shop_group' =>    (int)$context->shop->id_shop_group,
             ));
-        }
-    }
-
-    public static function getPageTypeAlias($pageName)
-    {
-        $pageTypeAlias = array(
-			'index' => 'home',
-			'category' => 'hotel',
-			'product' => 'room-type',
-			'orderopc' => 'checkout'
-		);
-
-        if (isset($pageTypeAlias[$pageName])) {
-            return $pageTypeAlias[$pageName];
-        } else {
-            return $pageName;
         }
     }
 }

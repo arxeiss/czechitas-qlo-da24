@@ -24,20 +24,50 @@ class HotelHelper
     {
         $objModule = new HotelreservationSystem();
         $jsVars = array(
-                'display_name' => $objModule->l('Display', 'HotelHelper', false, true),
-                'records_name' => $objModule->l('records per page', 'HotelHelper', false, true),
-                'no_product' => $objModule->l('No records found', 'HotelHelper', false, true),
-                'show_page' => $objModule->l('Showing page', 'HotelHelper', false, true),
-                'show_of' => $objModule->l('of', 'HotelHelper', false, true),
-                'no_record' => $objModule->l('No records available', 'HotelHelper', false, true),
-                'filter_from' => $objModule->l('filtered from', 'HotelHelper', false, true),
-                't_record' => $objModule->l('total records', 'HotelHelper', false, true),
-                'search_item' => $objModule->l('Search', 'HotelHelper', false, true),
-                'p_page' => $objModule->l('Previous', 'HotelHelper', false, true),
-                'n_page' => $objModule->l('Next', 'HotelHelper', false, true),
+                'display_name' => $objModule->l('Display', 'HotelHelper'),
+                'records_name' => $objModule->l('records per page', 'HotelHelper'),
+                'no_product' => $objModule->l('No records found', 'HotelHelper'),
+                'show_page' => $objModule->l('Showing page', 'HotelHelper'),
+                'show_of' => $objModule->l('of', 'HotelHelper'),
+                'no_record' => $objModule->l('No records available', 'HotelHelper'),
+                'filter_from' => $objModule->l('filtered from', 'HotelHelper'),
+                't_record' => $objModule->l('total records', 'HotelHelper'),
+                'search_item' => $objModule->l('Search', 'HotelHelper'),
+                'p_page' => $objModule->l('Previous', 'HotelHelper'),
+                'n_page' => $objModule->l('Next', 'HotelHelper'),
             );
 
         Media::addJsDef($jsVars);
+    }
+
+    public function initCurl($params)
+    {
+        if (!$params) {
+            return false;
+        }
+        if ($params['contentType'] == 'JSON') {
+            $header = array('Content-Type: application/json');
+            if (isset($params['postData'])) {
+                $header[] = 'Content-Length: '.strlen($params['postData']);
+            }
+        }
+
+        $curlInit = curl_init();
+        curl_setopt($curlInit, CURLOPT_URL, $params['url']);
+        curl_setopt($curlInit, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+        curl_setopt($curlInit, CURLOPT_HTTPHEADER,  $header);
+        curl_setopt($curlInit, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curlInit, CURLOPT_CUSTOMREQUEST, $params['method']);
+        curl_setopt($curlInit, CURLOPT_RETURNTRANSFER, 1);
+        if (isset($params['postData'])) {
+            curl_setopt($curlInit, CURLOPT_POSTFIELDS, $params['postData']);
+        }
+        $response = curl_exec($curlInit);
+
+        // Close handle
+        curl_close($curlInit);
+
+        return $response;
     }
 
     public function insertHotelCommonFeatures()
@@ -195,7 +225,8 @@ class HotelHelper
     {
         //from setting tab
         $home_banner_default_title = 'Four Lessons Hotel Greshon Palace';
-        $home_banner_default_content = 'Tofu helvetica leggings tattooed. Skateboard blue bottle green juice, brooklyn cardigan kitsch fap narwhal organic flexitarian.';
+        $home_banner_default_content = 'Tofu helvetica leggings tattooed. Skateboard blue bottle green juice,
+        brooklyn cardigan kitsch fap narwhal organic flexitarian.';
 
         Configuration::updateValue('WK_HOTEL_LOCATION_ENABLE', 1);
         Configuration::updateValue('WK_HOTEL_NAME_ENABLE', 1);
@@ -208,8 +239,6 @@ class HotelHelper
         );
         Configuration::updateValue('WK_HOTEL_GLOBAL_CONTACT_NUMBER', '0987654321');
         Configuration::updateValue('WK_HOTEL_GLOBAL_CONTACT_EMAIL', 'hotelprime@htl.com');
-        Configuration::updateValue('WK_CUSTOMER_SUPPORT_PHONE_NUMBER', '0987654321');
-        Configuration::updateValue('WK_CUSTOMER_SUPPORT_EMAIL', 'hotelprime@htl.com');
 
         Configuration::updateValue('WK_TITLE_HEADER_BLOCK', $home_banner_default_title);
         Configuration::updateValue('WK_CONTENT_HEADER_BLOCK', $home_banner_default_content);
@@ -218,15 +247,10 @@ class HotelHelper
         Configuration::updateValue('WK_ADVANCED_PAYMENT_GLOBAL_MIN_AMOUNT', 10);
         Configuration::updateValue('WK_ADVANCED_PAYMENT_INC_TAX', 1);
 
-        Configuration::updateValue('WK_GLOBAL_CHILD_MAX_AGE', 15);
-        Configuration::updateValue('WK_GLOBAL_MAX_CHILD_IN_ROOM', 3);
-
         Configuration::updateValue(
             'MAX_GLOBAL_BOOKING_DATE',
             date('d-m-Y', strtotime(date('Y-m-d', time()).' + 1 year'))
         );
-
-        Configuration::updateValue('GLOBAL_PREPARATION_TIME', 0);
 
         Configuration::updateValue('HTL_FEATURE_PRICING_PRIORITY', 'specific_date;special_day;date_range');
         Configuration::updateValue('WK_GOOGLE_ACTIVE_MAP', 0);
@@ -245,20 +269,50 @@ class HotelHelper
         $WK_HTL_SHORT_DESC = array();
         foreach ($languages as $lang) {
             $WK_HTL_CHAIN_NAME[$lang['id_lang']] = 'Hotel Dominic Parks';
-            $WK_HTL_TAG_LINE[$lang['id_lang']] = 'Tofu helvetica leggings tattooed. Skateboard blue bottle green juice, brooklyn cardigan kitsch fap narwhal organic flexitarian.';
-            $WK_HTL_SHORT_DESC[$lang['id_lang']] = 'Tofu helvetica leggings tattooed. Skateboard blue bottle green juice, brooklyn cardigan kitsch fap narwhal organic flexitarian.';
+            $WK_HTL_TAG_LINE[$lang['id_lang']] = 'Tofu helvetica leggings tattooed. Skateboard blue
+            bottle green juice, brooklyn cardigan kitsch fap narwhal organic flexitarian.';
+            $WK_HTL_SHORT_DESC[$lang['id_lang']] = 'Tofu helvetica leggings tattooed. Skateboard blue bottle green
+            juice, brooklyn cardigan kitsch fap narwhal organic flexitarian.';
         }
         Configuration::updateValue('WK_HTL_CHAIN_NAME', $WK_HTL_CHAIN_NAME);
         Configuration::updateValue('WK_HTL_TAG_LINE', $WK_HTL_TAG_LINE);
         Configuration::updateValue('WK_HTL_SHORT_DESC', $WK_HTL_SHORT_DESC);
 
-        // Search Fields
-        Configuration::updateValue('PS_FRONT_SEARCH_TYPE', HotelBookingDetail::SEARCH_TYPE_OWS);
-        Configuration::updateValue('PS_FRONT_OWS_SEARCH_ALGO_TYPE', HotelBookingDetail::SEARCH_EXACT_ROOM_TYPE_ALGO);
-        Configuration::updateValue('PS_FRONT_ROOM_UNIT_SELECTION_TYPE', HotelBookingDetail::PS_ROOM_UNIT_SELECTION_TYPE_OCCUPANCY);
-        Configuration::updateValue('PS_BACKOFFICE_SEARCH_TYPE', HotelBookingDetail::SEARCH_TYPE_OWS);
-        Configuration::updateValue('PS_BACKOFFICE_OWS_SEARCH_ALGO_TYPE', HotelBookingDetail::SEARCH_ALL_ROOM_TYPE_ALGO);
-        Configuration::updateValue('PS_BACKOFFICE_ROOM_BOOKING_TYPE', HotelBookingDetail::PS_ROOM_UNIT_SELECTION_TYPE_OCCUPANCY);
+        return true;
+    }
+
+    public function insertHotelRoomsStatus()
+    {
+        $room_status_arr = array('Active','Inactive','temporarily Inactive');
+        foreach ($room_status_arr as $key => $value) {
+            $obj_room_status = new HotelRoomStatus();
+            $obj_room_status->status = $value;
+            $obj_room_status->save();
+        }
+
+        return true;
+    }
+
+    public function insertHotelOrderStatus()
+    {
+        $order_status_arr = array('Alloted','Checked In','Checked Out');
+        foreach ($order_status_arr as $key => $value) {
+            $obj_order_status = new HotelOrderStatus();
+            $obj_order_status->status = $value;
+            $obj_order_status->save();
+        }
+
+        return true;
+    }
+
+    public function insertHotelRoomAllotmentType()
+    {
+        $altment_type_arr = array('Random Allotment','Manual Allotment');
+        foreach ($altment_type_arr as $key => $value) {
+            $obj_allotmanet_type = new HotelRoomAllotmentType();
+            $obj_allotmanet_type->type = $value;
+            $obj_allotmanet_type->save();
+        }
 
         return true;
     }
@@ -307,24 +361,25 @@ class HotelHelper
         return true;
     }
 
-    public static function getPsProducts($id_lang, $start = 0, $limit = 0, $booking_product = null)
+    public static function getPsProducts($id_lang, $start = 0, $limit = 0)
     {
-        $sql = 'SELECT p.`id_product`, pl.`name`, p.`booking_product`
+        $sql = 'SELECT p.`id_product`, pl.`name`
             FROM `'._DB_PREFIX_.'product` p
             '.Shop::addSqlAssociation('product', 'p').'
             LEFT JOIN `'._DB_PREFIX_.'product_lang` pl ON (p.`id_product` = pl.`id_product` '.
             Shop::addSqlRestrictionOnLang('pl').')
             WHERE pl.`id_lang` = '.(int)$id_lang.
-            (isset($booking_product) ? ' AND p.`booking_product` = '.(int) $booking_product : '').'
-            ORDER BY pl.`name`'.
+            ' ORDER BY pl.`name`'.
             ($limit > 0 ? ' LIMIT '.(int)$start.','.(int)$limit : '');
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
     }
 
     public function saveDummyHotelBranchInfo()
     {
+        $def_cont_id = Country::getDefaultCountryId();
         $obj_hotel_info = new HotelBranchInformation();
         $obj_hotel_info->active = 1;
+        $obj_hotel_info->phone = '0987654321';
         $obj_hotel_info->email = 'hotelprime@htl.com';
         $obj_hotel_info->check_in = '12:00';
         $obj_hotel_info->check_out = '11:00';
@@ -342,31 +397,19 @@ class HotelHelper
         }
 
         $obj_hotel_info->rating = 3;
-
-        $obj_hotel_info->save();
-        $htl_id = $obj_hotel_info->id;
-
-        // add hotel address info
-        $def_cont_id = Configuration::get('PS_COUNTRY_DEFAULT');
-
+        $obj_hotel_info->city = 'DefCity';
         if ($states = State::getStatesByIdCountry($def_cont_id)) {
             $state_id = $states[0]['id_state'];
         } else {
             $state_id = 0;
         }
-        $objAddress = new Address();
-        $objAddress->id_hotel = $htl_id;
-        $objAddress->phone = '0987654321';
-        $objAddress->city = 'Demo City';
-        $objAddress->id_state = $state_id;
-        $objAddress->id_country = $def_cont_id;
-        $objAddress->postcode = Tools::generateRandomZipcode($def_cont_id);
-        $objAddress->address1 = 'Monticello Dr, Montgomery, AL 36117, USA';
-        $objAddress->alias = 'The Hotel Prime';
-        $objAddress->lastname = 'The Hotel Prime';
-        $objAddress->firstname = 'The Hotel Prime';
+        $obj_hotel_info->state_id = $state_id;
+        $obj_hotel_info->country_id = $def_cont_id;
+        $obj_hotel_info->zipcode = self::getRandomZipcodeByForCountry($def_cont_id);
+        $obj_hotel_info->address = 'Monticello Dr, Montgomery, AL 36117, USA';
+        $obj_hotel_info->save();
 
-        $objAddress->save();
+        $htl_id = $obj_hotel_info->id;
 
         $grp_ids = array();
         $obj_grp = new Group();
@@ -388,10 +431,10 @@ class HotelHelper
         }
         if (count($states) > 0) {
             if ($cat_state) {
-                $cat_city = $this->addCategory('Demo City', $cat_state, $grp_ids);
+                $cat_city = $this->addCategory('DefCity', $cat_state, $grp_ids);
             }
         } else {
-            $cat_city = $this->addCategory('Demo City', $cat_country, $grp_ids);
+            $cat_city = $this->addCategory('DefCity', $cat_country, $grp_ids);
         }
         if ($cat_city) {
             $cat_hotel = $this->addCategory('The Hotel Prime', $cat_city, $grp_ids, 1, $htl_id);
@@ -401,8 +444,6 @@ class HotelHelper
             $obj_hotel_info->id_category = $cat_hotel;
             $obj_hotel_info->save();
         }
-        // save dummy hotel as primary hotel
-        Configuration::updateValue('WK_PRIMARY_HOTEL', $htl_id);
 
         return $htl_id;
     }
@@ -420,7 +461,7 @@ class HotelHelper
 
     public function saveDummyProductsAndRelatedInfo($id_hotel)
     {
-        $prod_arr = array('General Rooms', 'Delux Rooms', 'Executive Rooms', 'Luxury Rooms');
+        $prod_arr = array('General Rooms', 'Delux Rooms', 'Executive Rooms', 'luxury Rooms');
         $prod_price_arr = array(1000, 1500, 2000, 2500);
         foreach ($prod_arr as $key => $value_prod) {
             // Add Product
@@ -437,15 +478,13 @@ class HotelHelper
                 $product->description_short[$lang['id_lang']] = 'Fashion axe kogi yuccie, ramps shabby chic direct
                 trade before they sold out distillery bicycle rights. Slow-carb +1 quinoa VHS. +1 brunch trust fund,
                 meggings chartreuse sustainable everyday carry tumblr hoodie tacos tilde ramps post-ironic fixie.';
-                $product->link_rewrite[$lang['id_lang']] = Tools::link_rewrite($value_prod);
+                $product->link_rewrite[$lang['id_lang']] = Tools::link_rewrite('Super Delux Rooms');
             }
             $product->id_shop_default = Context::getContext()->shop->id;
             $product->id_category_default = 2;
             $product->price = $prod_price_arr[$key];
             $product->active = 1;
             $product->quantity = 999999999;
-            $product->booking_product = true;
-            $product->show_at_front = 1;
             $product->is_virtual = 1;
             $product->indexed = 1;
             $product->save();
@@ -519,212 +558,28 @@ class HotelHelper
                 $htl_room_info_obj = new HotelRoomInformation();
                 $htl_room_info_obj->id_product = $product_id;
                 $htl_room_info_obj->id_hotel = $id_hotel;
-                $htl_room_info_obj->room_num = $value_prod[0].'R-10'.$k;
+                $htl_room_info_obj->room_num = 'A-10'.$k;
                 $htl_room_info_obj->id_status = 1;
-                $htl_room_info_obj->floor = 'First';
+                $htl_room_info_obj->floor = 'first';
                 $htl_room_info_obj->save();
             }
 
             $htl_rm_type = new HotelRoomType();
             $htl_rm_type->id_product = $product_id;
             $htl_rm_type->id_hotel = $id_hotel;
-            $htl_rm_type->adults = 2;
+            $htl_rm_type->adult = 2;
             $htl_rm_type->children = 2;
-            $htl_rm_type->max_adults = 2;
-            $htl_rm_type->max_children = 2;
-            $htl_rm_type->max_guests = 4;
-
             $htl_rm_type->save();
 
             // Add features to the product
-            $ftr_arr = array(0 => 1, 1 => 2, 2 => 3, 3 => 4);
-            $ftr_val_arr = array(0 => 1, 1 => 2, 2 => 3, 3 => 4);
+            $ftr_arr = array(0 => 8, 1 => 9, 2 => 10, 3 => 11);
+            $ftr_val_arr = array(0 => 34, 1 => 35, 2 => 36, 3 => 37);
             foreach ($ftr_arr as $key_htl_ftr => $val_htl_ftr) {
                 $product->addFeaturesToDB($val_htl_ftr, $ftr_val_arr[$key_htl_ftr]);
             }
 
             // save advance payment information
             $this->saveAdvancedPaymentInfo($product_id);
-        }
-    }
-
-    public function saveDummyServiceProductsAndRelatedInfo()
-    {
-        $idCategoryServices = (int) Configuration::get('PS_SERVICE_CATEGORY');
-        $idsGroup = array_column(Group::getGroups(Context::getContext()->language->id), 'id_group');
-
-        // create service categories
-        $categories = array(
-            'restaurant' => array(
-                'name' => 'Restaurant',
-                'id_category' => 'to_be_set_below',
-            ),
-            'transfers' => array(
-                'name' => 'Transfers',
-                'id_category' => 'to_be_set_below',
-            ),
-            'activities' => array(
-                'name' => 'Activities',
-                'id_category' => 'to_be_set_below',
-            ),
-            'charges' => array(
-                'name' => 'Operational charges',
-                'id_category' => 'to_be_set_below',
-            ),
-        );
-
-        foreach ($categories as &$category) {
-            $idCategory = $this->addCategory($category['name'], $idCategoryServices, $idsGroup);
-            $category['id_category'] = $idCategory;
-        }
-
-        // create service products
-        $serviceProducts = array(
-            array(
-                'name' => 'Room Maintenance Fees',
-                'id_category_default' => $categories['charges']['id_category'],
-                'description' => 'Ensure a comfortable stay with our room maintenance service, keeping your accommodation pristine and hassle-free throughout your visit.',
-                'price' => '250',
-                'auto_add_to_cart' => 1,
-                'show_at_front' => 0,
-                'price_calculation_method' => Product::PRICE_CALCULATION_METHOD_PER_DAY,
-                'price_addition_type' => Product::PRICE_ADDITION_TYPE_WITH_ROOM,
-            ),
-            array(
-                'name' => 'Internet Handling Charges',
-                'id_category_default' => $categories['charges']['id_category'],
-                'description' => 'Navigate our website effortlessly with seamless handling, ensuring reliable, high-speed access for an enjoyable browsing experience throughout your online journey.',
-                'price' => '250',
-                'auto_add_to_cart' => 1,
-                'show_at_front' => 0,
-                'price_calculation_method' => Product::PRICE_CALCULATION_METHOD_PER_BOOKING,
-                'price_addition_type' => Product::PRICE_ADDITION_TYPE_INDEPENDENT,
-            ),
-            array(
-                'name' => 'Airport Shuttle',
-                'id_category_default' => $categories['transfers']['id_category'],
-                'description' => 'Experience convenience from touchdown to check-in with our efficient airport shuttle service, whisking you to your accommodation with ease and comfort.',
-                'price' => '50',
-                'auto_add_to_cart' => 0,
-                'show_at_front' => 1,
-                'price_calculation_method' => Product::PRICE_CALCULATION_METHOD_PER_BOOKING,
-                'price_addition_type' => Product::PRICE_ADDITION_TYPE_WITH_ROOM,
-            ),
-            array(
-                'name' => 'Cab on Demand',
-                'id_category_default' => $categories['transfers']['id_category'],
-                'description' => 'Explore the city conveniently with our cab-on-demand service, giving you the freedom to travel and discover local attractions at your own pace.',
-                'price' => '200',
-                'auto_add_to_cart' => 0,
-                'show_at_front' => 1,
-                'price_calculation_method' => Product::PRICE_CALCULATION_METHOD_PER_BOOKING,
-                'price_addition_type' => Product::PRICE_ADDITION_TYPE_WITH_ROOM,
-            ),
-            array(
-                'name' => 'Breakfast',
-                'id_category_default' => $categories['restaurant']['id_category'],
-                'description' => 'Start your day right with a delicious and hearty breakfast, thoughtfully prepared to fuel your adventures and make your mornings exceptional.',
-                'price' => '350',
-                'auto_add_to_cart' => 0,
-                'show_at_front' => 1,
-                'price_calculation_method' => Product::PRICE_CALCULATION_METHOD_PER_DAY,
-                'price_addition_type' => Product::PRICE_ADDITION_TYPE_WITH_ROOM,
-            ),
-            array(
-                'name' => 'Dinner',
-                'id_category_default' => $categories['restaurant']['id_category'],
-                'description' => 'Wind down in the evening with a delectable dinner spread, offering a culinary journey that delights your taste buds and completes your day with satisfaction.',
-                'price' => '450',
-                'auto_add_to_cart' => 0,
-                'show_at_front' => 1,
-                'price_calculation_method' => Product::PRICE_CALCULATION_METHOD_PER_DAY,
-                'price_addition_type' => Product::PRICE_ADDITION_TYPE_WITH_ROOM,
-            ),
-        );
-
-        foreach ($serviceProducts as $serviceProduct) {
-            $objProduct = new Product();
-            $objProduct->name = array();
-            $objProduct->description = array();
-            $objProduct->description_short = array();
-            $objProduct->link_rewrite = array();
-
-            // copy lang values
-            foreach (Language::getLanguages(true) as $language) {
-                $objProduct->name[$language['id_lang']] = $serviceProduct['name'];
-                $objProduct->description[$language['id_lang']] = $serviceProduct['description'];
-                $objProduct->description_short[$language['id_lang']] = $serviceProduct['description'];
-                $objProduct->link_rewrite[$language['id_lang']] = Tools::link_rewrite($serviceProduct['name']);
-            }
-
-            $objProduct->id_shop_default = Context::getContext()->shop->id;
-            $objProduct->id_category_default = $serviceProduct['id_category_default'];
-            $objProduct->price = $serviceProduct['price'];
-            $objProduct->active = 1;
-            $objProduct->quantity = 999999999;
-            $objProduct->booking_product = 0;
-            $objProduct->service_product_type = Product::SERVICE_PRODUCT_WITH_ROOMTYPE;
-            $objProduct->auto_add_to_cart = $serviceProduct['auto_add_to_cart'];
-            $objProduct->show_at_front = $serviceProduct['show_at_front'];
-            $objProduct->available_for_order = 1;
-            $objProduct->price_addition_type = $serviceProduct['price_addition_type'];
-            $objProduct->price_calculation_method = $serviceProduct['price_calculation_method'];
-            $objProduct->is_virtual = 1;
-            $objProduct->indexed = 1;
-            $objProduct->save();
-            $idProduct = $objProduct->id;
-
-            // add to applicable categories
-            $objCategory = new Category($serviceProduct['id_category_default']);
-            if ($categories = $objCategory->getParentsCategories()) {
-                $idsCategory = array();
-                foreach ($categories as $category) {
-                    $idsCategory[] = $category['id_category'];
-                }
-                $objProduct->addToCategories($idsCategory);
-            }
-
-            Search::indexation(Tools::link_rewrite($serviceProduct['name']), $idProduct);
-
-            StockAvailable::updateQuantity($idProduct, null, 999999999);
-
-            // save service product images
-            $imagesBasePath = _PS_MODULE_DIR_.'hotelreservationsystem/views/img/prod_imgs/'.$idProduct.'/';
-            $imagesTypes = ImageType::getImagesTypes('products');
-            if (is_dir($imagesBasePath) && $opendir = opendir($imagesBasePath)) {
-                while (($image = readdir($opendir)) !== false) {
-                    $sourceImagePath = $imagesBasePath.$image;
-
-                    if (ImageManager::isRealImage($sourceImagePath)
-                        && ImageManager::isCorrectImageFileExt($sourceImagePath)
-                    ) {
-                        $objImage = new Image();
-                        $objImage->id_product = $idProduct;
-                        $objImage->position = Image::getHighestPosition($idProduct) + 1;
-                        $objImage->cover = 1;
-                        $objImage->add();
-                        $destinationPath = $objImage->getPathForCreation();
-                        foreach ($imagesTypes as $imageType) {
-                            ImageManager::resize(
-                                $sourceImagePath,
-                                $destinationPath.'-'.$imageType['name'].'.jpg',
-                                $imageType['width'],
-                                $imageType['height']
-                            );
-                        }
-                        ImageManager::resize($sourceImagePath, $destinationPath.'.jpg');
-                    }
-                }
-                closedir($opendir);
-            }
-
-            // link to all demo room types
-            $objRoomTypeServiceProduct = new RoomTypeServiceProduct();
-            $objRoomTypeServiceProduct->addRoomProductLink(
-                $idProduct,
-                array(1, 2, 3, 4),
-                RoomTypeServiceProduct::WK_ELEMENT_TYPE_ROOM_TYPE
-            );
         }
     }
 
@@ -744,19 +599,25 @@ class HotelHelper
     public function saveDummyHotelImages($idHotel)
     {
         if ($idHotel) {
-            $objHotelImage = new HotelImage();
-            if (is_dir(_PS_HOTEL_IMG_DIR_)) {
-                foreach(scandir(_PS_HOTEL_IMG_DIR_) as $file) {
-                    if ($file === '.' || $file === '..') {
-                        continue;
+            $hotelImgPath = _PS_MODULE_DIR_.'hotelreservationsystem/views/img/hotel_img/';
+            if (is_dir($hotelImgPath)) {
+                if ($dir = opendir($hotelImgPath)) {
+                    while (($file = readdir($dir)) !== false) {
+                        $explodeFile = explode('.', $file);
+                        if ($explodeFile[1] == 'jpg') {
+                            $coverImgExist = HotelImage::getCover($idHotel);
+                            $objHtlImage = new HotelImage();
+                            $objHtlImage->id_hotel = $idHotel;
+                            $objHtlImage->hotel_image_id = $explodeFile[0];
+                            if (!$coverImgExist) {
+                                $objHtlImage->cover = 1;
+                            } else {
+                                $objHtlImage->cover = 0;
+                            }
+                            $objHtlImage->add();
+                        }
                     }
-                    if (preg_match('/[^\\s]+\.jpg$/', $file)) {
-                        $imageDetail = $objHotelImage->uploadHotelImages(
-                            array('tmp_name' => _PS_HOTEL_IMG_DIR_.$file),
-                            $idHotel
-                        );
-                        unlink(_PS_HOTEL_IMG_DIR_.$file);
-                    }
+                    closedir($dir);
                 }
             }
         }
@@ -768,7 +629,6 @@ class HotelHelper
         $this->saveDummyHotelImages($htl_id);
         $this->saveDummyHotelFeatures($htl_id);
         $this->saveDummyProductsAndRelatedInfo($htl_id);
-        $this->saveDummyServiceProductsAndRelatedInfo();
 
         return true;
     }
@@ -776,7 +636,7 @@ class HotelHelper
     public function addCategory($name, $parent_cat = false, $group_ids, $ishotel = false, $hotel_id = false)
     {
         if (!$parent_cat) {
-            $parent_cat = Configuration::get('PS_LOCATIONS_CATEGORY');
+            $parent_cat = Category::getRootCategory()->id;
         }
 
         if ($ishotel && $hotel_id) {
@@ -827,6 +687,16 @@ class HotelHelper
         }
     }
 
+    public function validImageExt($image_name)
+    {
+        if (!empty($image_name)) {
+            if (ImageManager::isCorrectImageFileExt($image_name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static function generateRandomCode($length = 8)
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyz';
@@ -847,6 +717,33 @@ class HotelHelper
 
         $startUrl = $forceSsl ? $baseDirSsl : $baseDir;
         return $startUrl;
+    }
+
+    public static function getQloNativeModules()
+    {
+        $qloModXml = _PS_ROOT_DIR_.'/config/xml/qlo_mod_list.xml';
+        if (!file_exists($qloModXml)) {
+            return false;
+        }
+        $qloNativeMods = @simplexml_load_file($qloModXml);
+
+        if ($qloNativeMods) {
+            $qloNativeMods = $qloNativeMods->modules;
+        }
+        $modules = array();
+        if (is_object($qloNativeMods)) {
+            foreach ($qloNativeMods as $qloNativeModsType) {
+                if (in_array($qloNativeModsType['type'], array('native'))) {
+                    foreach ($qloNativeModsType->module as $module) {
+                        $modules[] = $module['name'];
+                    }
+                }
+            }
+        }
+        if ($modules) {
+            return $modules;
+        }
+        return false;
     }
 
     // update lang values of Configuration lang type keys when importing new language from localization
@@ -900,7 +797,22 @@ class HotelHelper
 
     public static function getRandomZipcodeByForCountry($idCountry)
     {
-        return Tools::generateRandomZipcode($idCountry);
+        $randZipCode = '';
+        $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        if (Validate::isLoadedObject($objCountry = new Country($idCountry))) {
+            if ($objCountry->need_zip_code) {
+                if ($randZipCode = $objCountry->zip_code_format) {
+                    $randZipCode = str_replace('N', mt_rand(0, 9), $randZipCode);
+                    $randZipCode = str_replace('L', $alphabet[mt_rand(0, Tools::strlen($alphabet) - 1)], $randZipCode);
+                    $randZipCode = str_replace('C', $objCountry->iso_code, $randZipCode);
+                } else {
+                    for ($i = 0; $i < 5; ++$i) {
+                        $randZipCode .= mt_rand(0, 9);
+                    }
+                }
+            }
+        }
+        return $randZipCode;
     }
 
     /**
@@ -919,14 +831,5 @@ class HotelHelper
         }
 
         return false;
-    }
-
-    public static function getNumberOfDays($dateFrom, $dateTo)
-    {
-        $startDate = new DateTime($dateFrom);
-        $endDate = new DateTime($dateTo);
-        $daysDifference = $startDate->diff($endDate)->days;
-
-        return $daysDifference;
     }
 }

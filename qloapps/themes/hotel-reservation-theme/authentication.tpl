@@ -50,19 +50,11 @@
 	</div>
 	{/if}-->
 	<div class="row">
-		{if isset($smarty.get.guest_transform_success) && $smarty.get.guest_transform_success}
-			<div class="col-xs-12">
-				<div class="alert alert-success">
-					{l s='Your guest account has been transformed into a customer account successfully and the login credentials have been sent to you. Please make sure to change the password for security.'}
-				</div>
-			</div>
-		{/if}
 		<div class="col-xs-12 col-sm-6">
 			<form action="{$link->getPageLink('authentication', true)|escape:'html':'UTF-8'}" method="post" id="create-account_form" class="box">
 				<h3 class="page-subheading">{l s='Create an account'}</h3>
 				<div class="form_content clearfix">
 					<p class="content">{l s='Please enter your email address to create an account.'}</p>
-					<div class="alert alert-info" id="create_account_information" style="display:none"></div>
 					<div class="alert alert-danger" id="create_account_error" style="display:none"></div>
 					<div class="form-group">
 						<label for="email_create" class="">{l s='Email address'}</label>
@@ -76,6 +68,7 @@
 								{l s='Create an account'}
 							</span>
 						</button>
+						<input type="hidden" class="hidden" name="SubmitCreate" value="{l s='Create an account'}" />
 					</div>
 				</div>
 			</form>
@@ -102,7 +95,6 @@
 							</span>
 						</button>
 					</p>
-					{hook h="displayLoginFormBottom"}
 				</div>
 			</form>
 		</div>
@@ -207,7 +199,7 @@
 									<input id="vat-number" type="text" class="form-control" name="vat_number" value="{if isset($smarty.post.vat_number)}{$smarty.post.vat_number}{/if}" />
 								</div>
 							</div>
-						{elseif $field_name eq "dni"}
+							{elseif $field_name eq "dni"}
 							{assign var='dniExist' value=true}
 							<div class="required dni form-group">
 								<label for="dni">{l s='Identification number'} <sup>*</sup></label>
@@ -291,7 +283,7 @@
 						{assign var=stateExist value=false}
 						{assign var=postCodeExist value=false}
 						{assign var=dniExist value=false}
-						<h3 class="page-subheading top-indent">{l s='Invoice address'}</h3>
+						<h3 class="page-subheading top-indent htl-reservation-page-sub-heading">{l s='Invoice address'}</h3>
 						{foreach from=$inv_all_fields item=field_name}
 						{if $field_name eq "company"}
 						<div class="form-group">
@@ -299,12 +291,12 @@
 							<input type="text" class="text form-control" id="company_invoice" name="company_invoice" value="{if isset($smarty.post.company_invoice) && $smarty.post.company_invoice}{$smarty.post.company_invoice}{/if}" />
 						</div>
 						{elseif $field_name eq "vat_number"}
-							<div id="vat_number_block_invoice" style="display:none;">
-								<div class="form-group">
-									<label for="vat_number_invoice">{l s='VAT number'}{if in_array($field_name, $required_fields)} <sup>*</sup>{/if}</label>
-									<input type="text" class="form-control" id="vat_number_invoice" name="vat_number_invoice" value="{if isset($smarty.post.vat_number_invoice) && $smarty.post.vat_number_invoice}{$smarty.post.vat_number_invoice}{/if}" />
-								</div>
+						<div id="vat_number_block_invoice" style="display:none;">
+							<div class="form-group">
+								<label for="vat_number_invoice">{l s='VAT number'}{if in_array($field_name, $required_fields)} <sup>*</sup>{/if}</label>
+								<input type="text" class="form-control" id="vat_number_invoice" name="vat_number_invoice" value="{if isset($smarty.post.vat_number_invoice) && $smarty.post.vat_number_invoice}{$smarty.post.vat_number_invoice}{/if}" />
 							</div>
+						</div>
 						{elseif $field_name eq "dni"}
 						{assign var=dniExist value=true}
 						<div class="required form-group dni_invoice">
@@ -435,7 +427,7 @@
 	<form action="{$link->getPageLink('authentication', true)|escape:'html':'UTF-8'}" method="post" id="account-creation_form" class="std box">
 		{$HOOK_CREATE_ACCOUNT_TOP}
 		<div class="account_creation">
-			<h3 class="page-subheading">{l s='Your personal information'}</h3>
+			<h3 class="page-subheading htl-reservation-page-sub-heading">{l s='Your personal information'}</h3>
 			<div class="clearfix">
 				<label>{l s='Title'}</label>
 				<br />
@@ -465,51 +457,49 @@
 				<input type="password" class="is_required validate form-control" data-validate="isPasswd" name="passwd" id="passwd" />
 				<span class="form_info">{l s='(Five characters minimum)'}</span>
 			</div>
-			{if isset($birthday) && $birthday}
-				<div class="form-group">
-					<label>{l s='Date of Birth'}</label>
-					<div class="row">
-						<div class="col-xs-4">
-							<select id="days" name="days" class="form-control">
-								<option value="">-</option>
-								{foreach from=$days item=day}
-									<option value="{$day}" {if ($sl_day == $day)} selected="selected"{/if}>{$day}&nbsp;&nbsp;</option>
-								{/foreach}
-							</select>
-							{*
-								{l s='January'}
-								{l s='February'}
-								{l s='March'}
-								{l s='April'}
-								{l s='May'}
-								{l s='June'}
-								{l s='July'}
-								{l s='August'}
-								{l s='September'}
-								{l s='October'}
-								{l s='November'}
-								{l s='December'}
-							*}
-						</div>
-						<div class="col-xs-4">
-							<select id="months" name="months" class="form-control">
-								<option value="">-</option>
-								{foreach from=$months key=k item=month}
-									<option value="{$k}" {if ($sl_month == $k)} selected="selected"{/if}>{l s=$month}&nbsp;</option>
-								{/foreach}
-							</select>
-						</div>
-						<div class="col-xs-4">
-							<select id="years" name="years" class="form-control">
-								<option value="">-</option>
-								{foreach from=$years item=year}
-									<option value="{$year}" {if ($sl_year == $year)} selected="selected"{/if}>{$year}&nbsp;&nbsp;</option>
-								{/foreach}
-							</select>
-						</div>
+			<div class="form-group">
+				<label>{l s='Date of Birth'}</label>
+				<div class="row">
+					<div class="col-xs-4">
+						<select id="days" name="days" class="form-control">
+							<option value="">-</option>
+							{foreach from=$days item=day}
+								<option value="{$day}" {if ($sl_day == $day)} selected="selected"{/if}>{$day}&nbsp;&nbsp;</option>
+							{/foreach}
+						</select>
+						{*
+							{l s='January'}
+							{l s='February'}
+							{l s='March'}
+							{l s='April'}
+							{l s='May'}
+							{l s='June'}
+							{l s='July'}
+							{l s='August'}
+							{l s='September'}
+							{l s='October'}
+							{l s='November'}
+							{l s='December'}
+						*}
+					</div>
+					<div class="col-xs-4">
+						<select id="months" name="months" class="form-control">
+							<option value="">-</option>
+							{foreach from=$months key=k item=month}
+								<option value="{$k}" {if ($sl_month == $k)} selected="selected"{/if}>{l s=$month}&nbsp;</option>
+							{/foreach}
+						</select>
+					</div>
+					<div class="col-xs-4">
+						<select id="years" name="years" class="form-control">
+							<option value="">-</option>
+							{foreach from=$years item=year}
+								<option value="{$year}" {if ($sl_year == $year)} selected="selected"{/if}>{$year}&nbsp;&nbsp;</option>
+							{/foreach}
+						</select>
 					</div>
 				</div>
-			{/if}
+			</div>
 			{if isset($newsletter) && $newsletter}
 				<div class="checkbox">
 					<input type="checkbox" name="newsletter" id="newsletter" value="1" {if isset($smarty.post.newsletter) AND $smarty.post.newsletter == 1} checked="checked"{/if} />
@@ -531,7 +521,7 @@
 		</div>
 		{if $b2b_enable}
 			<div class="account_creation">
-				<h3 class="page-subheading">{l s='Your company information'}</h3>
+				<h3 class="page-subheading htl-reservation-page-sub-heading">{l s='Your company information'}</h3>
 				<p class="form-group">
 					<label for="">{l s='Company'}</label>
 					<input type="text" class="form-control" id="company" name="company" value="{if isset($smarty.post.company)}{$smarty.post.company}{/if}" />
@@ -552,7 +542,7 @@
 		{/if}
 		{if isset($PS_REGISTRATION_PROCESS_TYPE) && $PS_REGISTRATION_PROCESS_TYPE}
 			<div class="account_creation">
-				<h3 class="page-subheading">{l s='Your address'}</h3>
+				<h3 class="page-subheading htl-reservation-page-sub-heading">{l s='Your address'}</h3>
 				{foreach from=$dlv_all_fields item=field_name}
 					{if $field_name eq "company"}
 						{if !$b2b_enable}
@@ -704,6 +694,9 @@
 {/if}
 {if isset($countries)}
 	{addJsDef countries=$countries}
+{/if}
+{if isset($vatnumber_ajax_call) && $vatnumber_ajax_call}
+	{addJsDef vatnumber_ajax_call=$vatnumber_ajax_call}
 {/if}
 {if isset($email_create) && $email_create}
 	{addJsDef email_create=$email_create|boolval}

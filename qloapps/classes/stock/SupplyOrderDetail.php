@@ -338,7 +338,7 @@ class SupplyOrderDetailCore extends ObjectModel
             $this->id = $data[$this->def['primary']];
         }
         foreach ($data as $key => $value) {
-            if (property_exists($this, $key)) {
+            if (array_key_exists($key, $this)) {
                 // formats prices and floats
                 if ($this->def['fields'][$key]['validate'] == 'isFloat' ||
                     $this->def['fields'][$key]['validate'] == 'isPrice') {

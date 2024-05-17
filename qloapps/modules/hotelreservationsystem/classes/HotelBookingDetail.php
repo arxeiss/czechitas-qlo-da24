@@ -44,7 +44,6 @@ class HotelBookingDetail extends ObjectModel
     public $is_back_order;
     public $id_status;
     public $is_refunded;
-    public $is_cancelled;
     // public $available_for_order;
 
     // hotel information/location/contact
@@ -59,74 +58,51 @@ class HotelBookingDetail extends ObjectModel
     public $check_in_time;
     public $check_out_time;
     public $room_num;
-    public $adults;
+    public $adult;
     public $children;
-    public $child_ages;
 
     public $date_add;
     public $date_upd;
-
-    const STATUS_ALLOTED = 1;
-    const STATUS_CHECKED_IN = 2;
-    const STATUS_CHECKED_OUT = 3;
-
-    // booking allotment types
-    const ALLOTMENT_AUTO = 1;
-    const ALLOTMENT_MANUAL = 2;
-
-    // Search algorithm: Exact room types reults, All room types
-    const SEARCH_EXACT_ROOM_TYPE_ALGO = 1;
-    const SEARCH_ALL_ROOM_TYPE_ALGO = 2;
-
-    // Search Type: Occupancy wise search, Normal search
-    const SEARCH_TYPE_OWS = 1;
-    const SEARCH_TYPE_NORMAL = 2;
-
-    //
-    const PS_ROOM_UNIT_SELECTION_TYPE_OCCUPANCY = 1;
-    const PS_ROOM_UNIT_SELECTION_TYPE_QUANTITY = 2;
 
     public static $definition = array(
         'table' => 'htl_booking_detail',
         'primary' => 'id',
         'fields' => array(
-            'id_product' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
-            'id_order' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
-            'id_order_detail' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
-            'id_cart' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
-            'id_room' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
-            'id_hotel' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
-            'id_customer' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
-            'booking_type' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
-            'id_status' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
+            'id_product' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
+            'id_order' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
+            'id_order_detail' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
+            'id_cart' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
+            'id_room' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
+            'id_hotel' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
+            'id_customer' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
+            'booking_type' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
+            'id_status' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
             'comment' => array('type' => self::TYPE_STRING),
             'check_in' => array('type' => self::TYPE_DATE),
             'check_out' => array('type' => self::TYPE_DATE),
-            'date_from' => array('type' => self::TYPE_DATE, 'validate' => 'isDate', 'required' => true),
-            'date_to' => array('type' => self::TYPE_DATE, 'validate' => 'isDate', 'required' => true),
-            'total_price_tax_excl' => array('type' => self::TYPE_FLOAT, 'validate' => 'isPrice', 'required' => true),
-            'total_price_tax_incl' => array('type' => self::TYPE_FLOAT, 'validate' => 'isPrice', 'required' => true),
-            'total_paid_amount' => array('type' => self::TYPE_FLOAT, 'validate' => 'isPrice', 'default' => 0, 'required' => true),
+            'date_from' => array('type' => self::TYPE_DATE, 'validate' => 'isDate'),
+            'date_to' => array('type' => self::TYPE_DATE, 'validate' => 'isDate'),
+            'total_price_tax_excl' => array('type' => self::TYPE_FLOAT, 'validate' => 'isPrice'),
+            'total_price_tax_incl' => array('type' => self::TYPE_FLOAT, 'validate' => 'isPrice'),
+            'total_paid_amount' => array('type' => self::TYPE_FLOAT, 'validate' => 'isPrice', 'default' => 0),
             'is_refunded' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
-            'is_cancelled' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
             // 'available_for_order' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
             'is_back_order' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
 
             // hotel information/location/contact
-            'room_num' => array('type' => self::TYPE_STRING, 'required' => true),
-            'room_type_name' => array('type' => self::TYPE_STRING, 'required' => true),
-            'hotel_name' => array('type' => self::TYPE_STRING, 'required' => true),
-            'city' => array('type' => self::TYPE_STRING, 'validate' => 'isCityName', 'size' => 64, 'required' => true),
+            'room_num' => array('type' => self::TYPE_STRING),
+            'room_type_name' => array('type' => self::TYPE_STRING),
+            'hotel_name' => array('type' => self::TYPE_STRING),
+            'city' => array('type' => self::TYPE_STRING, 'validate' => 'isCityName', 'size' => 64),
             'state' => array('type' => self::TYPE_STRING),
-            'country' => array('type' => self::TYPE_STRING, 'required' => true),
+            'country' => array('type' => self::TYPE_STRING),
             'zipcode' => array('type' => self::TYPE_STRING),
-            'phone' => array('type' => self::TYPE_STRING, 'validate' => 'isPhoneNumber', 'size' => 32, 'required' => true),
-            'email' => array('type' => self::TYPE_STRING, 'validate' => 'isEmail', 'size' => 255, 'required' => true),
-            'check_in_time' => array('type' => self::TYPE_STRING, 'required' => true),
-            'check_out_time' => array('type' => self::TYPE_STRING, 'required' => true),
-            'adults' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true),
+            'phone' => array('type' => self::TYPE_STRING, 'validate' => 'isPhoneNumber', 'size' => 32),
+            'email' => array('type' => self::TYPE_STRING, 'validate' => 'isEmail', 'size' => 255),
+            'check_in_time' => array('type' => self::TYPE_STRING),
+            'check_out_time' => array('type' => self::TYPE_STRING),
+            'adult' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
             'children' => array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
-            'child_ages' => array('type' => self::TYPE_STRING),
 
             'date_add' => array('type' => self::TYPE_DATE, 'validate' => 'isDate'),
             'date_upd' => array('type' => self::TYPE_DATE, 'validate' => 'isDate'),
@@ -168,33 +144,22 @@ class HotelBookingDetail extends ObjectModel
         parent::__construct($id);
     }
 
-    public function update($null_values = false)
-    {
-        $result = parent::update($null_values);
-
-        // if automatic overbooking resolution is enabled
-        if (Configuration::get('PS_OVERBOOKING_AUTO_RESOLVE')) {
-            // if room is getting free and this room is not already in back order then resolve the overbookings for this free room
-            // $this->is_cancelled == 1 is not checked because currently we always set is_refunded to 1 when room is free
-            // $this->is_back_order == 0 is checked because $this->is_back_order == 1 is used as room is free
-            if ($this->is_refunded == 1 && $this->is_back_order == 0) {
-                $this->resolveOverBookings();
-            }
-        }
-
-        return $result;
-    }
-
     public function getBookingDataParams($params)
     {
-        if (!isset($params['id_room_type'])) {
-            $params['id_room_type'] = 0;
+        if (!isset($params['room_type'])) {
+            $params['room_type'] = 0;
         }
-        if (!isset($params['id_cart'])) {
-            $params['id_cart'] = 0;
+        if (!isset($params['adult'])) {
+            $params['adult'] = 0;
         }
-        if (!isset($params['id_guest'])) {
-            $params['id_guest'] = 0;
+        if (!isset($params['children'])) {
+            $params['children'] = 0;
+        }
+        if (!isset($params['num_rooms'])) {
+            $params['num_rooms'] = 1;
+        }
+        if (!isset($params['for_calendar'])) {
+            $params['for_calendar'] = 0;
         }
         if (!isset($params['search_available'])) {
             $params['search_available'] = 1;
@@ -208,34 +173,21 @@ class HotelBookingDetail extends ObjectModel
         if (!isset($params['search_unavai'])) {
             $params['search_unavai'] = 1;
         }
+        if (!isset($params['id_cart'])) {
+            $params['id_cart'] = 0;
+        }
+        if (!isset($params['id_guest'])) {
+            $params['id_guest'] = 0;
+        }
         if (!isset($params['search_cart_rms'])) {
             $params['search_cart_rms'] = 0;
         }
-
         if (!isset($params['only_active_roomtype'])) {
             $params['only_active_roomtype'] = 1;
         }
         if (!isset($params['only_active_hotel'])) {
             $params['only_active_hotel'] = 1;
         }
-        if (!isset($params['occupancy'])) {
-            $params['occupancy'] = array();
-        }
-
-        if (!isset($params['ratting'])) {
-            $params['ratting'] = -1;
-        }
-        if (!isset($params['amenities'])) {
-            $params['amenities'] = 0;
-        }
-        if (!isset($params['price'])) {
-            $params['price'] = 0;
-        }
-
-        if (!isset($params['only_search_data'])) {
-            $params['only_search_data'] = 0;
-        }
-
         return $params;
     }
 
@@ -244,9 +196,12 @@ class HotelBookingDetail extends ObjectModel
      *
      * @param [type] $date_from        [Start date of booking]
      * @param [type] $date_to          [End date of booking]
-     * @param int    $hotel_id         [Id of the hotel to which the room belongs]
-     * @param int    $id_room_type     [Id of the product to which the room belongs]
+     * @param [type] $hotel_id         [Id of the hotel to which the room belongs]
+     * @param [type] $room_type        [Id of the product to which the room belongs]
+     * @param int    $adult            []
+     * @param int    $children         []
      * @param int    $num_rooms        [Number of rooms booked for the period $date_from to $date_to]
+     * @param int    $for_calendar     [Used for calender and also for getting stats of rooms]
      * @param int    $search_available [If you want only data information for available rooms]
      * @param int    $search_partial   [If you want only data information for partial rooms]
      * @param int    $search_booked    [If you want only data information for booked rooms]
@@ -254,1036 +209,397 @@ class HotelBookingDetail extends ObjectModel
      * @param int    $id_cart          [Id of the cart to which the room belongs at the time of booking]
      * @param int    $id_guest         [Id guest of the customer Who booked the rooms]
      * @param int    $search_cart_rms  [If you want data of the current cart in the admin office]
-     * @param array  $occupancy        [search occupancy for room]
      *
      * @return [array] [Returns Array of rooms data ]
      *
+     * Note: Adult and children both are used for front category page only in available rooms
+     * Note :: $for_calendar is used both for calender and also for getting stats of rooms
      */
     public function getBookingData($params)
     {
-        $this->context = Context::getContext();
-
         // extract all keys and values of the array [$params] into variables and values
         extract($this->getBookingDataParams($params));
-
         if ($date_from && $date_to && $hotel_id) {
             $date_from = date('Y-m-d H:i:s', strtotime($date_from));
-            $stayStartDate = date('Y-m-d', strtotime($date_from));
             $date_to = date('Y-m-d H:i:s', strtotime($date_to));
 
-            $objRoomType = new HotelRoomType();
-            $lengthOfStay = $this->getNumberOfDays($date_from, $date_to);
+            $obj_room_info = new HotelRoomInformation();
+            $obj_rm_type = new HotelRoomType();
 
-            // Check LOS restriction for back-office
-            $applyLosRestriction = true;
-            if (isset($this->context->employee->id)) {
-                if (!Configuration::get('PS_LOS_RESTRICTION_BO')) {
-                    $applyLosRestriction = false;
-                }
-            }
-
-            if ($room_types = $objRoomType->getIdProductByHotelId(
+            if ($room_types = $obj_rm_type->getIdProductByHotelId(
                 $hotel_id,
-                $id_room_type,
+                $room_type,
                 $only_active_roomtype,
                 $only_active_hotel
             )) {
-                $allowedIdRoomTypes = implode(",", array_column($room_types, 'id_product'));
+                $total_rooms = 0;
+                $num_booked = 0;
+                $num_unavail = 0;
+                $num_avail = 0;
+                $num_part_avai = 0;
+                $num_cart = 0;
+                $new_part_arr = array();
+                $booking_data = array();
 
-                // Unavailable Rooms
-                if ($search_unavai) {
-                    $params = array(
-                        'idHotel' => $hotel_id,
-                        'dateFrom' => $date_from,
-                        'dateTo' => $date_to,
-                        'idRoomType' => $id_room_type,
-                        'allowedIdRoomTypes' => $allowedIdRoomTypes,
-                        'applyLosRestriction' => $applyLosRestriction,
-                    );
-                    $unavailRoomTypes = $this->getSearchUnavailableRooms($params);
-                }
-
-                // Cart Rooms
-                if ($search_cart_rms) {
-                    $params = array(
-                        'idHotel' => $hotel_id,
-                        'idCart' => $id_cart,
-                        'idGuest' => $id_guest,
-                        'idRoomType' => $id_room_type,
-                        'allowedIdRoomTypes' => $allowedIdRoomTypes,
-                    );
-                    $cartRoomTypes = $this->getSearchCartRooms($params);
-                }
-
-                // Available Rooms
-                if ($search_available) {
-                    $params = array(
-                        'idHotel' => $hotel_id,
-                        'dateFrom' => $date_from,
-                        'dateTo' => $date_to,
-                        'idCart' => $id_cart,
-                        'idGuest' => $id_guest,
-                        'idRoomType' => $id_room_type,
-                        'searchOccupancy' => $occupancy,
-                        'allowedIdRoomTypes' => $allowedIdRoomTypes,
-                        'applyLosRestriction' => $applyLosRestriction,
-                    );
-                    $availableRoomTypes = $this->getSearchAvailableRooms($params);
-                    if ($availableRoomTypes['unavailableRoomTypes'] && $search_unavai) {
-                        foreach ($availableRoomTypes['unavailableRoomTypes'] as $idProduct => $roomTypeDetail) {
-                            if (!isset($unavailRoomTypes[$idProduct])) {
-                                $unavailRoomTypes[$idProduct] = array();
-                            }
-
-                            // FYI: used array_merge because we have int index
-                            $unavailRoomTypes[$idProduct] = array_merge($unavailRoomTypes[$idProduct], $roomTypeDetail);
-                        }
-                    }
-
-                    $availableRoomTypes = $availableRoomTypes['availableRoomTypes'];
-                }
-
-                // Booked Rooms
-                if ($search_booked) {
-                    $params = array(
-                        'idHotel' => $hotel_id,
-                        'dateFrom' => $date_from,
-                        'dateTo' => $date_to,
-                        'idRoomType' => $id_room_type,
-                        'allowedIdRoomTypes' => $allowedIdRoomTypes,
-                    );
-                    $bookedRoomTypes = $this->getSearchBookedRooms($params);
-                }
-
-                // Partially available Rooms
                 if ($search_partial) {
-                    $params = array(
-                        'idHotel' => $hotel_id,
-                        'dateFrom' => $date_from,
-                        'dateTo' => $date_to,
-                        'idCart' => $id_cart,
-                        'idGuest' => $id_guest,
-                        'idRoomType' => $id_room_type,
-                        'searchOccupancy' => $occupancy,
-                        'allowedIdRoomTypes' => $allowedIdRoomTypes,
-                    );
+                    $this->partAvaiDates = array();
+                    $this->allReqDates = $this->createDateRangeArray($date_from, $date_to, 1);
+                }
 
-                    $partiallyAvailRoomTypes = $this->getSearchPartiallyAvailRooms($params);
-
-                    if ($partiallyAvailRoomTypes['unavailableRoomTypes'] && $search_unavai) {
-                        foreach ($partiallyAvailRoomTypes['unavailableRoomTypes'] as $idProduct => $roomTypeDetail) {
-                            if (!isset($unavailRoomTypes[$idProduct])) {
-                                $unavailRoomTypes[$idProduct] = array();
-                            }
-
-                            // FYI: used array_merge because we have int index
-                            $unavailRoomTypes[$idProduct] = array_merge($unavailRoomTypes[$idProduct], $roomTypeDetail);
-                        }
+                foreach ($room_types as $key => $room_type) {
+                    if ($search_partial) {
+                        $this->dltDates = array();
                     }
 
-                    $partiallyAvailRoomsCount = $partiallyAvailRoomTypes['partiallyAvailRoomsCount'];
-                    $partiallyAvailRoomTypes = $partiallyAvailRoomTypes['partiallyAvailRooms'];
-                }
-
-                // Now we will formate the data after geting search result according to search type
-                $roomTypesDetail = $objRoomType->getRoomTypeDetailByRoomTypeIds($allowedIdRoomTypes);
-                if ($roomTypesDetail) {
-                    // Formate data for response
-                    $finalSearchResponse = array(
-                        'rm_data' => array(),
-                        'stats' => array(
-                            'total_room_type' => count($room_types),
-                            'total_rooms' => 0,
-                            'max_avail_occupancy' => 0
-                        ),
-                    );
-                    foreach ($roomTypesDetail as $roomTypeDetail) {
-                        $finalSearchResponse['stats']['total_rooms'] += $roomTypeDetail['numberOfRooms'];
-                        $idProduct = $roomTypeDetail['id_product'];
-
-                        $roomTypeSearchData = array(
-                            'name' => (new Product((int) $idProduct, false, $this->context->cookie->id_lang))->name,
-                            'id_product' => $idProduct,
-                            'adults' => $roomTypeDetail['adults'],
-                            'children' => $roomTypeDetail['children'],
-                            'max_adults' => $roomTypeDetail['max_adults'],
-                            'max_children' => $roomTypeDetail['max_children'],
-                            'max_guests' => $roomTypeDetail['max_guests'],
-                            'data' => array(),
-                        );
-
-                        if ($search_unavai) {
-                            $roomTypeSearchData['data']['unavailable'] = isset($unavailRoomTypes[$idProduct]) ? $unavailRoomTypes[$idProduct] : array();
-
-                            if (!isset($finalSearchResponse['stats']['num_unavail'])) {
-                                $finalSearchResponse['stats']['num_unavail'] = 0;
-                            }
-                            $finalSearchResponse['stats']['num_unavail'] += count($roomTypeSearchData['data']['unavailable']);
-                        }
-
-                        if ($search_cart_rms) {
-                            $roomTypeSearchData['data']['cart_rooms'] = isset($cartRoomTypes[$idProduct]) ? $cartRoomTypes[$idProduct] : array();
-
-                            if (!isset($finalSearchResponse['stats']['num_cart'])) {
-                                $finalSearchResponse['stats']['num_cart'] = 0;
-                            }
-                            $finalSearchResponse['stats']['num_cart'] += count($roomTypeSearchData['data']['cart_rooms']);
-                        }
-
-                        if ($search_booked) {
-                            $roomTypeSearchData['data']['booked'] = isset($bookedRoomTypes[$idProduct]) ? $bookedRoomTypes[$idProduct] : array();
-
-                            if (!isset($finalSearchResponse['stats']['num_booked'])) {
-                                $finalSearchResponse['stats']['num_booked'] = 0;
-                            }
-                            $finalSearchResponse['stats']['num_booked'] += count($roomTypeSearchData['data']['booked']);
-                        }
-
-                        if ($search_available) {
-                            $roomTypeSearchData['data']['available'] = array();
-                            if (!isset($finalSearchResponse['stats']['num_avail'])) {
-                                $finalSearchResponse['stats']['num_avail'] = 0;
-                            }
-                            if (isset($availableRoomTypes['roomTypes'][$idProduct])) {
-
-                                $roomTypeSearchData['data']['available'] = $availableRoomTypes['roomTypes'][$idProduct]['rooms'];
-
-                                $finalSearchResponse['stats']['num_avail'] += count($roomTypeSearchData['data']['available']);
-
-                                $finalSearchResponse['stats']['max_avail_occupancy'] += count($roomTypeSearchData['data']['available']) * (int)$availableRoomTypes['roomTypes'][$idProduct]['maxOccupancy'];
-                            }
-                        }
-
-                        if ($search_partial) {
-                            $roomTypeSearchData['data']['partially_available'] = isset($partiallyAvailRoomTypes[$idProduct]) ? $partiallyAvailRoomTypes[$idProduct] : array();
-
-                            $finalSearchResponse['stats']['num_part_avai'] = $partiallyAvailRoomsCount;
-                        }
-
-                        $finalSearchResponse['rm_data'][$idProduct] = $roomTypeSearchData;
-                    }
-                    unset($roomTypesDetail);
-
-                    return $finalSearchResponse;
-                }
-            }
-        }
-
-        return array();
-    }
-
-    /**
-     * $params = array(
-     *      'idHotel' => ...,
-     *      'dateFrom' => ...,
-     *      'dateTo' => ...,
-     *      'idRoomType' => ...,
-     *      'allowedIdRoomTypes' => ...,
-     *      'applyLosRestriction' => ...,
-     * );
-     */
-    protected function getSearchUnavailableRooms($params)
-    {
-        $this->context = Context::getContext();
-        // Check LOS restriction for back-office
-        if (!isset($params['applyLosRestriction'])) {
-            $applyLosRestriction = true;
-            if (isset($this->context->employee->id)) {
-                if (!Configuration::get('PS_LOS_RESTRICTION_BO')) {
-                    $applyLosRestriction = false;
-                }
-            }
-        }
-
-        extract($params);
-
-        $lengthOfStay = $this->getNumberOfDays($dateFrom, $dateTo);
-        $stayStartDate = date('Y-m-d', strtotime($dateFrom));
-
-        // Room status inactive
-        $sql1 = 'SELECT `id` AS `id_room`, `id_product`, `id_hotel`, `room_num`, `comment` AS `room_comment`
-                FROM `'._DB_PREFIX_.'htl_room_information`
-                WHERE `id_hotel`='.(int)$idHotel.' AND `id_status` = '. HotelRoomInformation::STATUS_INACTIVE.' AND IF('.(int)$idRoomType.' > 0, `id_product` = '.(int)$idRoomType.', 1) AND `id_product` IN ('.$allowedIdRoomTypes.')';
-
-        // check room is temperory inactive
-        $sql2 = 'SELECT hri.`id` AS `id_room`, hri.`id_product`, hri.`id_hotel`, hri.`room_num`, hri.`comment` AS `room_comment`
-                FROM `'._DB_PREFIX_.'htl_room_information` AS hri
-                INNER JOIN `'._DB_PREFIX_.'htl_room_disable_dates` AS hrdd ON (hrdd.`id_room_type` = hri.`id_product` AND hrdd.	id_room = hri.`id`)
-                WHERE hri.`id_hotel`='.$idHotel.' AND hri.`id_status` = '. HotelRoomInformation::STATUS_TEMPORARY_INACTIVE .' AND hrdd.`date_from` <= \''.pSql($dateFrom).'\' AND hrdd.`date_to` >= \''.pSql($dateTo).'\' AND IF('.(int)$idRoomType.' > 0, hri.`id_product` = '.(int)$idRoomType.', 1) AND hri.`id_product` IN ('.$allowedIdRoomTypes.')';
-
-        $sql = $sql1.' UNION '.$sql2;
-
-        if ($applyLosRestriction) {
-            $sql3 = 'SELECT hri.`id` AS `id_room`, hri.`id_product`, hri.`id_hotel`, hri.`room_num`, hri.`comment` AS `room_comment`
-                    FROM `'._DB_PREFIX_.'htl_room_information` AS hri
-                    INNER JOIN `'._DB_PREFIX_.'htl_room_type` AS hrt ON (hrt.`id_product` = hri.`id_product`)
-                    LEFT JOIN `'._DB_PREFIX_.'htl_room_type_restriction_date_range` AS hrtr ON (hrt.`id_product` = hrtr.`id_product` AND (hrtr.`date_from` <= \''.pSQL($stayStartDate).'\' AND hrtr.`date_to` > \''.pSQL($stayStartDate).'\'))
-                    WHERE hri.`id_hotel`='.(int)$idHotel.' AND (IFNULL(hrtr.`min_los`, hrt.`min_los`) >'. (int)$lengthOfStay.' OR IF(IFNULL(hrtr.`max_los`, hrt.`max_los`) > 0, IFNULL(hrtr.`max_los`, hrt.`max_los`) < '.(int)$lengthOfStay.', 0)) AND IF('.(int)$idRoomType.' > 0, hri.`id_product` = '.(int)$idRoomType.', 1) AND hri.`id_product` IN ('.$allowedIdRoomTypes.')';
-
-            $sql = $sql.' UNION '.$sql3;
-        }
-
-        $sql .= ' ORDER BY id_room ASC';
-
-        $unavailRoomTypes = array();
-        if ($unavailRooms = Db::getInstance()->executeS($sql)) {
-            foreach ($unavailRooms as $unavailRoomDetail) {
-                $unavailRoomTypes[$unavailRoomDetail['id_product']][] = $unavailRoomDetail;
-            }
-        }
-
-        return $unavailRoomTypes;
-    }
-
-    /**
-     * $params = array(
-     *      'idHotel' => ...,
-     *      'idCart' => ...,
-     *      'idGuest' => ...,
-     *      'idRoomType' => ...,
-     *      'allowedIdRoomTypes' => ...,
-     *  );
-     */
-    protected function getSearchCartRooms($params)
-    {
-        extract($params);
-
-        $cartRoomTypes = array();
-        if ($idCart && $idGuest) {
-            $sql = 'SELECT cbd.`id_product`, cbd.`id_room`, cbd.`id_hotel`, cbd.`booking_type`, cbd.`comment`, rf.`room_num`, cbd.`date_from`, cbd.`date_to`
-                FROM `'._DB_PREFIX_.'htl_cart_booking_data` AS cbd
-                INNER JOIN `'._DB_PREFIX_.'htl_room_information` AS rf ON (rf.`id` = cbd.`id_room`)
-                WHERE cbd.`id_hotel`= '.(int)$idHotel.' AND cbd.`id_cart` = '.(int)$idCart.' AND cbd.`id_guest` ='.(int)$idGuest.' AND cbd.`is_refunded` = 0 AND cbd.`is_back_order` = 0 AND IF('.(int)$idRoomType.' > 0, rf.`id_product` = '.(int)$idRoomType.', 1) AND rf.`id_product` IN ('.$allowedIdRoomTypes.')';
-
-            if ($cartRooms = Db::getInstance()->executeS($sql)) {
-                foreach ($cartRooms as $cartRoomDetail) {
-                    $cartRoomTypes[$cartRoomDetail['id_product']][] = $cartRoomDetail;
-                }
-            }
-        }
-
-        return $cartRoomTypes;
-    }
-
-
-    /**
-     * $params = array(
-     *          'idHotel' => ...,
-     *          'dateFrom' => ...,
-     *          'dateTo' => ...,
-     *          'idCart' => ...,
-     *          'idGuest' => ...,
-     *          'idRoomType' => ...,
-     *          'searchOccupancy' => ...,
-     *          'allowedIdRoomTypes' => ...,
-     *          'applyLosRestriction' => ...,
-     * );
-     */
-    protected function getSearchAvailableRooms($params)
-    {
-        $this->context = Context::getContext();
-        // Check LOS restriction for back-office
-        if (!isset($params['applyLosRestriction'])) {
-            $applyLosRestriction = true;
-            if (isset($this->context->employee->id)) {
-                if (!Configuration::get('PS_LOS_RESTRICTION_BO')) {
-                    $applyLosRestriction = false;
-                }
-            }
-        }
-
-        extract($params);
-
-        $stayStartDate = date('Y-m-d', strtotime($dateFrom));
-        $lengthOfStay = $this->getNumberOfDays($dateFrom, $dateTo);
-
-        if (isset($this->context->employee->id)) {
-            $QLO_OWS_SEARCH_ALGO_TYPE = Configuration::get('PS_BACKOFFICE_OWS_SEARCH_ALGO_TYPE');
-            $QLO_SEARCH_TYPE = Configuration::get('PS_BACKOFFICE_SEARCH_TYPE');
-        } else {
-            $QLO_OWS_SEARCH_ALGO_TYPE = Configuration::get('PS_FRONT_OWS_SEARCH_ALGO_TYPE');
-            $QLO_SEARCH_TYPE = Configuration::get('PS_FRONT_SEARCH_TYPE');
-        }
-
-        // Exculde Booked rooms
-        $exclude_ids = 'SELECT `id_room`
-        FROM `'._DB_PREFIX_.'htl_booking_detail`
-        WHERE `id_hotel` = '.(int)$idHotel.' AND `is_back_order` = 0 AND `is_refunded` = 0 AND IF(`id_status` = '. self::STATUS_CHECKED_OUT.', (
-            (DATE_FORMAT(`check_out`,  "%Y-%m-%d") > \''.pSQL($dateFrom).'\' AND DATE_FORMAT(`check_out`,  "%Y-%m-%d") <= \''.PSQL($dateTo).'\') AND (
-                (`date_from` <= \''.pSQL($dateFrom).'\' AND `check_out` > \''.pSQL($dateFrom).'\' AND `check_out` <= \''.PSQL($dateTo).'\') OR
-                (`date_from` >= \''.pSQL($dateFrom).'\' AND `check_out` > \''.pSQL($dateFrom).'\' AND `check_out` <= \''.pSQL($dateTo).'\') OR
-                (`date_from` >= \''.pSQL($dateFrom).'\' AND `date_from` < \''.pSQL($dateTo).'\' AND `check_out` >= \''.pSQL($dateTo).'\') OR
-                (`date_from` <= \''.pSQL($dateFrom).'\' AND `check_out` >= \''.pSQL($dateTo).'\')
-            )
-        ), (
-            (`date_from` <= \''.pSQL($dateFrom).'\' AND `date_to` > \''.pSQL($dateFrom).'\' AND `date_to` <= \''.PSQL($dateTo).'\') OR
-            (`date_from` >= \''.pSQL($dateFrom).'\' AND `date_to` <= \''.pSQL($dateTo).'\') OR
-            (`date_from` >= \''.pSQL($dateFrom).'\' AND `date_from` < \''.pSQL($dateTo).'\' AND `date_to` >= \''.pSQL($dateTo).'\') OR
-            (`date_from` <= \''.pSQL($dateFrom).'\' AND `date_to` >= \''.pSQL($dateTo).'\')
-        )) AND IF('.(int)$idRoomType.' > 0, `id_product` = '.(int)$idRoomType.', 1) AND `id_product` IN ('.$allowedIdRoomTypes.')';
-
-        // We have removed cart rooms after finally getting available rooms from booking
-        // Exclude temporary disable rooms
-        $exclude_ids .= ' UNION
-            SELECT hri.`id` AS id_room
-            FROM `'._DB_PREFIX_.'htl_room_information` AS hri
-            INNER JOIN `'._DB_PREFIX_.'htl_room_disable_dates` AS hrdd ON (hrdd.`id_room_type` = hri.`id_product` AND hrdd.`id_room` = hri.`id`)
-            WHERE hri.`id_hotel`='.(int)$idHotel.' AND hri.`id_status` = '. HotelRoomInformation::STATUS_TEMPORARY_INACTIVE .' AND (hrdd.`date_from` < \''.pSql($dateTo).'\' AND hrdd.`date_to` > \''.pSql($dateFrom).'\') AND IF('.(int)$idRoomType.' > 0, hri.`id_product` = '.(int)$idRoomType.', 1) AND hri.`id_product` IN ('.$allowedIdRoomTypes.')';
-
-        // LOS Restriction. Also, Remember to check max LOS restriction is greater than zero
-        if ($applyLosRestriction) {
-            $exclude_ids .= ' UNION
-                SELECT hri.`id` AS `id_room`
-                FROM `'._DB_PREFIX_.'htl_room_information` AS hri
-                INNER JOIN `'._DB_PREFIX_.'htl_room_type` AS hrt ON (hrt.`id_product` = hri.`id_product`)
-                LEFT JOIN `'._DB_PREFIX_.'htl_room_type_restriction_date_range` AS hrtr ON (hrt.`id_product` = hrtr.`id_product` AND (hrtr.`date_from` <= \''.pSQL($stayStartDate).'\' AND hrtr.`date_to` > \''.pSQL($stayStartDate).'\'))
-                WHERE hri.`id_hotel`='.(int)$idHotel.' AND (IFNULL(hrtr.`min_los`, hrt.`min_los`) >'. (int)$lengthOfStay.' OR IF(IFNULL(hrtr.`max_los`, hrt.`max_los`) > 0, IFNULL(hrtr.`max_los`, hrt.`max_los`) < '.(int)$lengthOfStay.', 0)) AND IF('.(int)$idRoomType.' > 0, hri.`id_product` = '.(int)$idRoomType.', 1) AND hri.`id_product` IN ('.$allowedIdRoomTypes.')';
-        }
-
-        $selectAvailRoomSearch = 'SELECT ri.`id` AS `id_room`, ri.`id_product`, ri.`id_hotel`, ri.`room_num`, ri.`comment` AS `room_comment`, hrt.`max_adults` AS max_adult, hrt.`max_children`, hrt.`max_guests` AS max_occupancy';
-
-        $joinAvailRoomSearch = 'INNER JOIN `'._DB_PREFIX_.'htl_room_type` AS hrt ON (hrt.`id_product` = ri.`id_product`)';
-
-        $whereAvailRoomSearch = 'WHERE ri.`id_hotel`='.(int)$idHotel.' AND ri.`id_status` != '. HotelRoomInformation::STATUS_INACTIVE.' AND ri.`id` NOT IN ('.$exclude_ids.') AND IF('.(int)$idRoomType.' > 0, ri.`id_product` = '.(int)$idRoomType.', 1) AND ri.`id_product` IN ('.$allowedIdRoomTypes.')';
-
-        $groupByAvailRoomSearch = '';
-        $orderByAvailRoomSearch = 'ORDER BY ri.`id`';
-        $orderWayAvailRoomSearch = 'ASC';
-
-        Hook::exec('actionAvailRoomSearchSqlModifier',
-            array(
-                'select' => $selectAvailRoomSearch,
-                'join' => &$joinAvailRoomSearch,
-                'where' => &$whereAvailRoomSearch,
-                'group_by' => &$groupByAvailRoomSearch,
-                'order_by' => &$orderByAvailRoomSearch,
-                'order_way' => &$orderWayAvailRoomSearch,
-                'params' => array(
-                    'id_hotel' => $idHotel,
-                    'id_product' => $idRoomType,
-                    'date_from' => $dateFrom,
-                    'date_to' => $dateTo
-                )
-            )
-        );
-
-        $sql = $selectAvailRoomSearch;
-        $sql .= ' FROM `'._DB_PREFIX_.'htl_room_information` AS ri';
-        $sql .= ' '.$joinAvailRoomSearch;
-        $sql .= ' '.$whereAvailRoomSearch;
-        $sql .= ' '.$groupByAvailRoomSearch;
-        $sql .= ' '.$orderByAvailRoomSearch;
-        $sql .= ' '.$orderWayAvailRoomSearch;
-
-        $availableRoomTypes = array();
-        $unavailableRoomTypes = array();
-
-        $avai_rooms = Db::getInstance()->executeS($sql);
-        if ($avai_rooms) {
-            $availableRoomTypes = array(
-                'roomTypes' => array(),
-                'maxTotalOccupancy' => 0,
-                // 'totalRooms' => 0,
-            );
-            foreach ($avai_rooms as $avaiRoom) {
-                if(!isset($availableRoomTypes['roomTypes'][$avaiRoom['id_product']])) {
-                    $availableRoomTypes['roomTypes'][$avaiRoom['id_product']] = array(
-                        'rooms' => array(),
-                        'maxAdult' => 0,
-                        'maxChildren' => 0,
-                        'maxOccupancy' => 0,
-                        'roomCount' => 0,
-                    );
-                }
-
-                $availableRoomTypes['roomTypes'][$avaiRoom['id_product']]['rooms'][$avaiRoom['id_room']] = $avaiRoom;
-                $availableRoomTypes['roomTypes'][$avaiRoom['id_product']]['maxAdult'] = $avaiRoom['max_adult'];
-                $availableRoomTypes['roomTypes'][$avaiRoom['id_product']]['maxChildren'] = $avaiRoom['max_children'];
-                $availableRoomTypes['roomTypes'][$avaiRoom['id_product']]['maxOccupancy'] = $avaiRoom['max_occupancy'];
-                $availableRoomTypes['roomTypes'][$avaiRoom['id_product']]['roomCount'] += 1;
-
-                $availableRoomTypes['maxTotalOccupancy'] += (int)$avaiRoom['max_occupancy'];
-                // $availableRoomTypes['totalRooms'] += 1;
-            }
-
-            if ($QLO_SEARCH_TYPE == HotelBookingDetail::SEARCH_TYPE_OWS && $searchOccupancy) {
-                $availableRoomTypes = $this->getAvailableRoomSatisfingOccupancy($searchOccupancy, $availableRoomTypes, $QLO_OWS_SEARCH_ALGO_TYPE);
-                $unavailableRoomTypes = $availableRoomTypes['unavailableRoomTypes'];
-                $availableRoomTypes = $availableRoomTypes['availableRoomTypes'];
-            }
-
-            if ($availableRoomTypes && !empty($idCart) && !empty($idGuest)) {
-                $sql = 'SELECT `id_product`, `id_room`
-                    FROM `'._DB_PREFIX_.'htl_cart_booking_data`
-                    WHERE `id_hotel` = '.(int)$idHotel.' AND `id_cart` = '.(int)$idCart.' AND `id_guest` = '.(int)$idGuest.' AND `is_refunded` = 0 AND  `is_back_order` = 0 AND ((`date_from` <= \''.pSQL($dateFrom).'\' AND `date_to` > \''.pSQL($dateFrom).'\' AND `date_to` <= \''.pSQL($dateTo).'\') OR (`date_from` > \''.pSQL($dateFrom).'\' AND `date_to` < \''.pSQL($dateTo).'\') OR (`date_from` >= \''.pSQL($dateFrom).'\' AND `date_from` < \''.pSQL($dateTo).'\' AND `date_to` >= \''.pSQL($dateTo).'\') OR (`date_from` < \''.pSQL($dateFrom).'\' AND `date_to` > \''.pSQL($dateTo).'\')) AND IF('.(int)$idRoomType.' > 0, `id_product` = '.(int)$idRoomType.', 1) AND `id_product` IN ('.$allowedIdRoomTypes.')';
-
-                $availCartRooms = Db::getInstance()->executeS($sql);
-                // Also, don't forget to remove cart rooms, because we didn't remove cart rooms from sql query
-                if ($availCartRooms) {
-                    foreach ($availCartRooms as $cartRoomDetail) {
-                        unset($availableRoomTypes['roomTypes'][$cartRoomDetail['id_product']]['rooms'][$cartRoomDetail['id_room']]);
-
-                        if (isset($availableRoomTypes['roomTypes'][$cartRoomDetail['id_product']]) && !$availableRoomTypes['roomTypes'][$cartRoomDetail['id_product']]['rooms']) {
-                            unset($availableRoomTypes['roomTypes'][$cartRoomDetail['id_product']]);
-                        }
-                    }
-                    unset($availCartRooms);
-                }
-            }
-
-            // there might be a change maxTotalOccupancy will give wrong information
-            // because of all process might have changed the available roooms data/count
-            // So further it is no use for us
-            unset($availableRoomTypes['maxTotalOccupancy']);
-        }
-
-        return array(
-            'unavailableRoomTypes' => $unavailableRoomTypes,
-            'availableRoomTypes' => $availableRoomTypes,
-        );
-    }
-
-    protected function getAvailableRoomSatisfingOccupancy($searchOccupancy, $availableRoomTypes, $QLO_OWS_SEARCH_ALGO_TYPE, $cartRooms = array())
-    {
-        $unavailableRoomTypes = array();
-        if ($searchOccupancy && $availableRoomTypes) {
-            // TODO: Try to merge with the next loop
-            $totalReqOccupancy = 0;
-            foreach ($searchOccupancy as $reqRoomOccupancy) {
-                $totalReqOccupancy += (int)$reqRoomOccupancy['adults'] + (int)$reqRoomOccupancy['children'];
-            }
-
-            // Check total required occupancy must be <= hotel total available occupancy
-            if ($totalReqOccupancy > $availableRoomTypes['maxTotalOccupancy']) {
-                // This means hotel cannot take the booking of uncoming no. of guest
-                // Move all the rooms to unavailable rooms and show no available room on front
-                foreach ($availableRoomTypes['roomTypes'] as $idProduct => $roomTypeDetail) {
-                    $unavailableRoomTypes[$idProduct] = $roomTypeDetail['rooms'];
-                }
-
-                // instead of unset each room type index, we will completely override the array to empty
-                $availableRoomTypes = array();
-            }
-
-            // if total Required Occupancy can be fulfilled by hotel. So, now following step need to check
-            // step 1: First, assign room type according to the respective required occupancy
-            // Step 2: required occupancy with minimum available room type will be selected first for assiging room type
-            // and if multiple required occupancies have same no. of available room types then we will take the weightage of maxOccupancy
-            // Step 3: After sorting and selecting req occupancy in ascending order according to step 2,
-            // now we need to select which available room type should be selected in case multiple room types are satisfing required occupancy
-            // So, for this the weightage which have less MaxOccupancy allowred and having more rooms available if maximumOccupancy is also same.
-            // Also, for better understanding we have writen step no. where they are executed.
-            if ($availableRoomTypes && $QLO_OWS_SEARCH_ALGO_TYPE == HotelBookingDetail::SEARCH_EXACT_ROOM_TYPE_ALGO) {
-                $reqOccupancies = array();
-
-                $eligibleRoomTypes = array();
-                $ineligibleRoomTypes = array();
-
-                foreach ($searchOccupancy as $reqRoomOccupancy) {
-                    if (!isset($reqRoomOccupancy['roomTypes'])) {
-                        $reqRoomOccupancy['roomTypes'] = array();
-                    }
-
-                    foreach ($availableRoomTypes['roomTypes'] as $idProduct => $roomsDetail) {
-                        // below is STEP 1
-                        if (($reqRoomOccupancy['adults'] <= $roomsDetail['maxAdult']) &&
-                        ($reqRoomOccupancy['children'] <= $roomsDetail['maxChildren']) &&
-                        ((int)$reqRoomOccupancy['adults'] + (int)$reqRoomOccupancy['children'] <= $roomsDetail['maxOccupancy'])) {
-
-                            // below is STEP 3
-                            $reqRoomOccupancy['roomTypes'][$idProduct] = ($roomsDetail['maxOccupancy']*100 - $roomsDetail['roomCount']);
-
-                            $eligibleRoomTypes[$idProduct] = $idProduct;
-                            if (isset($ineligibleRoomTypes[$idProduct])) {
-                                unset($ineligibleRoomTypes[$idProduct]);
-                            }
+                    $total_rooms += $obj_room_info->getHotelRoomInfo($room_type['id_product'], $hotel_id, 1);
+
+                    $obj_product = new Product((int) $room_type['id_product']);
+                    $product_name = $obj_product->name[Configuration::get('PS_LANG_DEFAULT')];
+
+                    if ($search_cart_rms) {
+                        if ($id_cart && $id_guest) {
+                            $sql = 'SELECT cbd.`id_product`, cbd.`id_room`, cbd.`id_hotel`, cbd.`booking_type`, cbd.`comment`, rf.`room_num`, cbd.`date_from`, cbd.`date_to`
+                                FROM `'._DB_PREFIX_.'htl_cart_booking_data` AS cbd
+                                INNER JOIN `'._DB_PREFIX_.'htl_room_information` AS rf ON (rf.`id` = cbd.`id_room`)
+                                WHERE cbd.`id_hotel`='.(int)$hotel_id.' AND cbd.`id_product` ='.(int)$room_type['id_product'].' AND cbd.`id_cart` = '.(int)$id_cart.' AND cbd.`id_guest` ='.(int)$id_guest.' AND cbd.`is_refunded` = 0 AND cbd.`is_back_order` = 0';
+                            $cart_rooms = Db::getInstance()->executeS($sql);
                         } else {
-                            if (!isset($eligibleRoomTypes[$idProduct])) {
-                                $ineligibleRoomTypes[$idProduct] = $idProduct;
-                            }
+                            $cart_rooms = array();
                         }
+                        $num_cart += count($cart_rooms);
                     }
 
-                    // Sort accordind to weight
-                    asort($reqRoomOccupancy['roomTypes']);
+                    if ($search_booked) {
+                        $sql = 'SELECT bd.`id_product`, bd.`id_room`, bd.`id_hotel`, bd.`id_customer`, bd.`booking_type`, bd.`id_status` AS booking_status, bd.`comment`, rf.`room_num`, bd.`date_from`, bd.`date_to`
+                            FROM `'._DB_PREFIX_.'htl_booking_detail` AS bd
+                            INNER JOIN `'._DB_PREFIX_.'htl_room_information` AS rf ON (rf.`id` = bd.`id_room`)
+                            WHERE bd.`id_hotel`='.(int)$hotel_id.' AND bd.`id_product` ='.(int)$room_type['id_product'].' AND bd.`is_refunded` = 0 AND bd.`is_back_order` = 0 AND IF(bd.`id_status` = 3, bd.`date_from` <= \''.pSQL($date_from).'\' AND bd.`check_out` >= \''.pSQL($date_to).'\', bd.`date_from` <= \''.pSQL($date_from).'\' AND bd.date_to >= \''.pSQL($date_to).'\')';
 
-                    if ($reqRoomOccupancy['roomTypes']) {
-                        // Room occupancy weight index will tell us which required occupancy (search) should be selected first for assigning roomtype
-                        // below is STEP 2
-                        $reqRoomOccupancyWt = $this->generateRoomOccupancyWeight(
-                            count($reqRoomOccupancy['roomTypes']),
-                            (int)$reqRoomOccupancy['adults'] + (int)$reqRoomOccupancy['children'],
-                            $reqRoomOccupancy['adults'],
-                            $reqRoomOccupancy['children']
-                        );
+                        $booked_rooms = Db::getInstance()->executeS($sql);
 
-                        // In case avail rooms, required adults and required childers are same
-                        // then to overcome the loose of required occupancy array
-                        while (isset($reqOccupancies[$reqRoomOccupancyWt])) {
-                            $reqRoomOccupancyWt += 1;
-                        }
-
-                        $reqOccupancies[$reqRoomOccupancyWt] = $reqRoomOccupancy;
-                    } else {
-                        // In case no room type satisfies specific occupancy
-                        // check if exact search, move all room types to unavailable and break loop
-                        if ($QLO_OWS_SEARCH_ALGO_TYPE == HotelBookingDetail::SEARCH_EXACT_ROOM_TYPE_ALGO) {
-                            foreach ($availableRoomTypes['roomTypes'] as $idProduct => $roomTypeDetail) {
-                                $unavailableRoomTypes[$idProduct] = $roomTypeDetail['rooms'];
-                            }
-
-                            // instead of unset each room type index, we will completely override the array to empty
-                            $availableRoomTypes = array();
-                            break;
-                        }
-                    }
-                }
-                unset($eligibleRoomTypes);
-
-                if ($availableRoomTypes && $QLO_OWS_SEARCH_ALGO_TYPE == HotelBookingDetail::SEARCH_EXACT_ROOM_TYPE_ALGO) {
-                    // Sort accordind to weight
-                    ksort($reqOccupancies);
-
-                    $usedRoomTypeQty = array();
-                    foreach ($reqOccupancies as &$reqRoomOccupancy) {
-                        while (count($reqRoomOccupancy['roomTypes']) > 0) {
-                            $selectedRoomTypeId = key($reqRoomOccupancy['roomTypes']);
-                            unset($reqRoomOccupancy['roomTypes'][$selectedRoomTypeId]);
-
-                            if (!isset($usedRoomTypeQty[$selectedRoomTypeId])) {
-                                $usedRoomTypeQty[$selectedRoomTypeId] = 0;
-                            }
-
-                            if (((int)$availableRoomTypes['roomTypes'][$selectedRoomTypeId]['roomCount'] - (int)$usedRoomTypeQty[$selectedRoomTypeId]) > 0) {
-                                $reqRoomOccupancy['selectedRoomType'] = $selectedRoomTypeId;
-                                $usedRoomTypeQty[$selectedRoomTypeId] += 1;
-                                break;
-                            }
-                        }
-
-                        // if no room type is selected, that means we cannot fulfill the the guest requiremtn if exact search
-                        if (!isset($reqRoomOccupancy['selectedRoomType'])) {
-
-                            // if exact search, move all room types to unavailable and break loop
-                            if ($QLO_OWS_SEARCH_ALGO_TYPE == HotelBookingDetail::SEARCH_EXACT_ROOM_TYPE_ALGO) {
-                                foreach ($availableRoomTypes['roomTypes'] as $idProduct => $roomTypeDetail) {
-                                    $unavailableRoomTypes[$idProduct] = $roomTypeDetail['rooms'];
-                                }
-
-                                // instead of unset each room type index, we will completely override the array to empty
-                                $availableRoomTypes = array();
-                                break;
-                            }
-
-                        }
-                    }
-                    unset($usedRoomTypeQty);
-                }
-            }
-
-            // If we are here than hotel can fulfill the required rooms with there respective occupancies
-            // So, formate according to output data
-            // but first check HotelBookingDetail::SEARCH_EXACT_ROOM_TYPE_ALGO,
-            // if true, then only return rooms which satisfy search requirment
-            if ($availableRoomTypes && $QLO_OWS_SEARCH_ALGO_TYPE == HotelBookingDetail::SEARCH_EXACT_ROOM_TYPE_ALGO && count($ineligibleRoomTypes) > 0) {
-                foreach ($ineligibleRoomTypes as $idProduct) {
-                    // Move ineligibleRoomTypes to unavailable rooms
-                    if (!isset($unavailableRoomTypes[$idProduct])) {
-                            $unavailableRoomTypes[$idProduct] = array();
-                    }
-                    $unavailableRoomTypes[$idProduct] = $availableRoomTypes['roomTypes'][$idProduct]['rooms'];
-
-                    unset($availableRoomTypes['roomTypes'][$idProduct]);
-                }
-            }
-            unset($ineligibleRoomTypes);
-        }
-
-        return array(
-            'unavailableRoomTypes' => $unavailableRoomTypes,
-            'availableRoomTypes' => $availableRoomTypes && isset($availableRoomTypes['roomTypes']) ? $availableRoomTypes : array(),
-        );
-    }
-
-    /**
-     * $params = array(
-     *      'idHotel' => ...,
-     *      'dateFrom' => ...,
-     *      'dateTo' => ...,
-     *      'idCart' => ...,
-     *      'idGuest' => ...,
-     *      'idRoomType' => ...,
-     *      'searchOccupancy' => ...,
-     *      'allowedIdRoomTypes' => ...,
-     * );
-     */
-    protected function getSearchPartiallyAvailRooms($params)
-    {
-        extract($params);
-
-        $sql1 = 'SELECT bd.`id_product`, bd.`id_room`, bd.`id_hotel`, bd.`id_customer`, bd.`booking_type`, bd.`id_status` AS booking_status, bd.`comment` AS `room_comment`, rf.`room_num`, bd.`date_from`, IF(bd.`id_status` = '. self::STATUS_CHECKED_OUT .', bd.`check_out`, bd.`date_to`) AS `date_to`, hrt.`max_adults` AS `max_adult`, hrt.`max_children`, hrt.`max_guests` AS `max_occupancy`
-            FROM `'._DB_PREFIX_.'htl_booking_detail` AS bd
-            INNER JOIN `'._DB_PREFIX_.'htl_room_information` AS rf ON (rf.`id` = bd.`id_room`)
-            INNER JOIN `'._DB_PREFIX_.'htl_room_type` AS hrt ON (hrt.`id_product` = rf.`id_product`)
-            WHERE bd.`id_hotel`='.(int)$idHotel.' AND rf.`id_status` != '. HotelRoomInformation::STATUS_INACTIVE .' AND bd.`is_back_order` = 0 AND bd.`is_refunded` = 0 AND IF(bd.`id_status` = '. self::STATUS_CHECKED_OUT .', (
-                (DATE_FORMAT(`check_out`,  "%Y-%m-%d") > \''.pSQL($dateFrom).'\' AND DATE_FORMAT(`check_out`,  "%Y-%m-%d") < \''.PSQL($dateTo).'\') AND (
-                    (bd.`date_from` <= \''.pSQL($dateFrom).'\' AND bd.`check_out` > \''.pSQL($dateFrom).'\' AND bd.`check_out` < \''.pSQL($dateTo).'\') OR
-                    (bd.`date_from` > \''.pSQL($dateFrom).'\' AND bd.`date_from` < \''.pSQL($dateTo).'\' AND bd.`check_out` >= \''.pSQL($dateTo).'\') OR
-                    (bd.`date_from` > \''.pSQL($dateFrom).'\' AND bd.`date_from` < \''.pSQL($dateTo).'\' AND bd.`check_out` > \''.pSQL($dateFrom).'\' AND bd.`check_out` < \''.pSQL($dateTo).'\')
-                )
-            ), (
-                (bd.`date_from` <= \''.pSQL($dateFrom).'\' AND bd.`date_to` > \''.pSQL($dateFrom).'\' AND bd.`date_to` < \''.pSQL($dateTo).'\') OR
-                (bd.`date_from` > \''.pSQL($dateFrom).'\' AND bd.`date_from` < \''.pSQL($dateTo).'\' AND bd.`date_to` >= \''.pSQL($dateTo).'\') OR
-                (bd.`date_from` > \''.pSQL($dateFrom).'\' AND bd.`date_from` < \''.pSQL($dateTo).'\' AND bd.`date_to` < \''.pSQL($dateTo).'\')
-            )) AND IF('.(int)$idRoomType.' > 0, rf.`id_product` = '.(int)$idRoomType.', 1) AND rf.`id_product` IN ('.$allowedIdRoomTypes.')';
-
-        $sql2 = 'SELECT hri.`id_product`, hrdd.`id_room`, hri.`id_hotel`, 0 AS `id_customer`, 0 AS `booking_type`, 0 AS `booking_status`, 0 AS `room_comment`, hri.`room_num`, hrdd.`date_from`, hrdd.`date_to`, hrt.`max_adults` AS `max_adult`, hrt.`max_children`, hrt.`max_guests` AS `max_occupancy`
-            FROM `'._DB_PREFIX_.'htl_room_information` AS hri
-            INNER JOIN `'._DB_PREFIX_.'htl_room_type` AS hrt ON (hrt.`id_product` = hri.`id_product`)
-            INNER JOIN `'._DB_PREFIX_.'htl_room_disable_dates` AS hrdd ON (hrdd.`id_room_type` = hri.`id_product` AND hrdd.`id_room` = hri.`id`)
-            WHERE hri.`id_hotel`='.(int)$idHotel.' AND hri.`id_status` = '. HotelRoomInformation::STATUS_TEMPORARY_INACTIVE .' AND (
-                (hrdd.`date_from` <= \''.pSQL($dateFrom).'\' AND hrdd.`date_to` > \''.pSQL($dateFrom).'\' AND hrdd.`date_to` < \''.pSQL($dateTo).'\') OR
-                (hrdd.`date_from` > \''.pSQL($dateFrom).'\' AND hrdd.`date_from` < \''.pSQL($dateTo).'\' AND hrdd.`date_to` >= \''.pSQL($dateTo).'\') OR
-                (hrdd.`date_from` > \''.pSQL($dateFrom).'\' AND hrdd.`date_from` < \''.pSQL($dateTo).'\' AND hrdd.`date_to` < \''.pSQL($dateTo).'\')
-            ) AND IF('.(int)$idRoomType.' > 0, hri.`id_product` = '.(int)$idRoomType.', 1) AND hri.`id_product` IN ('.$allowedIdRoomTypes.')';
-
-        $sql = $sql1.' UNION '.$sql2.' ORDER BY id_room ASC';
-        $part_arr = Db::getInstance()->executeS($sql);
-
-        // Get date wise available rooms
-        $dateWiseRoomTypes = array();
-
-        // Below variables will be used for formating
-        $partialAvailRoomType = array();
-        $partialRoomsList = array();
-
-
-        $unavailableRoomTypes = array();
-
-        if ($part_arr) {
-            // Occupancy Wise Search OR Normal Search
-            if (isset($this->context->employee->id)) {
-                $QLO_SEARCH_TYPE = Configuration::get('PS_BACKOFFICE_SEARCH_TYPE');
-            } else {
-                $QLO_SEARCH_TYPE = Configuration::get('PS_FRONT_SEARCH_TYPE');
-            }
-
-            $period = new DatePeriod(
-                new DateTime($dateFrom),
-                new DateInterval('P1D'),
-                new DateTime($dateTo)
-            );
-
-            // FYI:: Last date not included
-            // Get all dates to be covered in booking
-            $searchDates = array();
-            foreach ($period as $objDate) {
-                $searchDates[$objDate->getTimestamp()] = array(
-                    'date_from' => $objDate->format('Y-m-d'),
-                    'date_to' => $objDate->modify('+1 day')->format('Y-m-d'),
-                );
-            }
-
-            $partiallyAvailRooms = array();
-            foreach ($part_arr as $roomDetail) {
-                if (!isset($partiallyAvailRooms[$roomDetail['id_room']])) {
-                    $availableDates = $searchDates;
-                } else {
-                    $availableDates = $partiallyAvailRooms[$roomDetail['id_room']]['availableDates'];
-                }
-
-                $period = new DatePeriod(
-                    new DateTime($roomDetail['date_from']),
-                    new DateInterval('P1D'),
-                    new DateTime($roomDetail['date_to'])
-                );
-                foreach ($period as $objDate) {
-                    if (isset($availableDates[$objDate->getTimestamp()])) {
-                        unset($availableDates[$objDate->getTimestamp()]);
-                    }
-                }
-
-                // If room is available for booking
-                if ($availableDates) {
-                    if (!isset($partiallyAvailRooms[$roomDetail['id_room']])) {
-                        $partiallyAvailRooms[$roomDetail['id_room']] = array(
-                            'id_product' => $roomDetail['id_product'],
-                            'id_room' => $roomDetail['id_room'],
-                            'id_hotel' => $roomDetail['id_hotel'],
-                            'room_num' => $roomDetail['room_num'],
-                            'max_adult' => $roomDetail['max_adult'],
-                            'max_children' => $roomDetail['max_children'],
-                            'max_occupancy' => $roomDetail['max_occupancy'],
-                            // 'booked_dates' => array(),
-                        );
-                    }
-                    $partiallyAvailRooms[$roomDetail['id_room']]['availableDates'] = $availableDates;
-
-                    // FYI:: For backward compatibility (will help in formating)
-                    // $partiallyAvailRooms[$roomDetail['id_room']]['avai_dates'] = $availableDates;
-                    // $partiallyAvailRooms[$roomDetail['id_room']]['booked_dates'][] = array(
-                    //     'date_from' => $roomDetail['date_from'],
-                    //     'date_to' => $roomDetail['date_to'],
-                    //     'id_customer' => $roomDetail['id_customer'],
-                    //     'booking_type' => $roomDetail['booking_type'],
-                    //     'booking_status' => $roomDetail['booking_status'],
-                    //     'comment' => $roomDetail['room_comment'],
-                    // );
-                } else {
-                    if (!isset($unavailableRoomTypes[$roomDetail['id_product']][$roomDetail['id_room']])) {
-                        $unavailableRoomTypes[$roomDetail['id_product']][$roomDetail['id_room']] = array(
-                            'id_room' => $roomDetail['id_room'],
-                            'id_product' => $roomDetail['id_product'],
-                            'id_hotel' => $roomDetail['id_hotel'],
-                            'room_num' => $roomDetail['room_num'],
-                            'room_comment' => ''
-                        );
-                    }
-
-                    if (isset($partiallyAvailRooms[$roomDetail['id_room']])) {
-                        unset($partiallyAvailRooms[$roomDetail['id_room']]);
-                    }
-                }
-            }
-
-            // will be used to check all dates are covered by partially avail rooms
-            $datesToCover = $searchDates;
-
-            // Will be used to generate query to find partially avail rooms in cart
-            $timeStampWiseRooms = array();
-
-            // Arrange available rooms, date wise
-            $datetimeObj = new DateTime();
-            foreach ($partiallyAvailRooms as $idRoom => &$roomDetail) {
-                foreach ($roomDetail['availableDates'] as $dateTimeStamp => $dateOnRoomAvail) {
-                    unset($datesToCover[$dateTimeStamp]);
-
-                    $timeStampWiseRooms[$dateTimeStamp][] = $idRoom;
-
-                    if (!isset($dateWiseRoomTypes[$dateTimeStamp])) {
-                        $dateWiseRoomTypes[$dateTimeStamp] = array(
-                            // 'date' => $dateOnRoomAvail,
-                            'dateFrom' => $datetimeObj->setTimestamp($dateTimeStamp)->format('Y-m-d'),
-                            'dateTo' => $datetimeObj->modify('+1 day')->format('Y-m-d'),
-                            'roomTypes' => array(),
-                            'maxTotalOccupancy' => 0,
-                            // 'roomTotalCount' => 0
-                        );
-                    }
-                    if (!isset($dateWiseRoomTypes[$dateTimeStamp]['roomTypes'][$roomDetail['id_product']])) {
-                        $dateWiseRoomTypes[$dateTimeStamp]['roomTypes'][$roomDetail['id_product']] = array(
-                            'rooms' => array(),
-                            'maxAdult' => 0,
-                            'maxChildren' => 0,
-                            'maxOccupancy' => 0,
-                            'roomCount' => 0,
-                        );
-                    }
-                    // not needed any further
-                    unset($roomDetail['availableDates']);
-
-                    $dateWiseRoomTypes[$dateTimeStamp]['roomTypes'][$roomDetail['id_product']]['rooms'][$idRoom] = $roomDetail;
-                    $dateWiseRoomTypes[$dateTimeStamp]['roomTypes'][$roomDetail['id_product']]['maxAdult'] = $roomDetail['max_adult'];
-                    $dateWiseRoomTypes[$dateTimeStamp]['roomTypes'][$roomDetail['id_product']]['maxChildren'] = $roomDetail['max_children'];
-                    $dateWiseRoomTypes[$dateTimeStamp]['roomTypes'][$roomDetail['id_product']]['maxOccupancy'] = $roomDetail['max_occupancy'];
-                    $dateWiseRoomTypes[$dateTimeStamp]['roomTypes'][$roomDetail['id_product']]['roomCount'] += 1;
-
-                    $dateWiseRoomTypes[$dateTimeStamp]['maxTotalOccupancy'] += $roomDetail['max_occupancy'];
-                    // $dateWiseRoomTypes[$dateTimeStamp]['roomTotalCount'] += 1;
-                }
-            }
-            unset($datetimeObj);
-
-            // If all dates are covered
-            if (!$datesToCover) {
-                // array in ascending order of dates
-                ksort($dateWiseRoomTypes);
-
-                $dateWiseCartRooms = array();
-                // get cart partially available rooms
-                if (!empty($idCart) && !empty($idGuest)) {
-                    $sql = 'SELECT `id_product`, `id_room`, `date_from`
-                        FROM `'._DB_PREFIX_.'htl_cart_booking_data`
-                        WHERE `id_hotel` = '.(int)$idHotel.' AND `id_cart` = '.(int)$idCart.' AND `id_guest` = '.(int)$idGuest.' AND `is_refunded` = 0 AND  `is_back_order` = 0 AND IF('.(int)$idRoomType.' > 0, `id_product` = '.(int)$idRoomType.', 1) AND `id_product` IN ('.$allowedIdRoomTypes.') AND (';
-
-                    $datetimeObj = new DateTime();
-                    $countIteration = 0;
-                    foreach ($timeStampWiseRooms as $timeStamp => $roomList) {
-                        $countIteration++;
-
-                        $datetimeObj->setTimestamp($timeStamp);
-                        $partialDateFrom = $datetimeObj->format('Y-m-d H:i:s');
-
-                        $datetimeObj->modify('+1 day');
-                        $partialDateTo = $datetimeObj->format('Y-m-d H:i:s');
-
-                        $sql .= '(`date_from` = \''.pSQL($partialDateFrom).'\' AND `date_to` = \''.pSQL($partialDateTo).'\' AND `id_room` IN ('.implode(",", $roomList).'))';
-
-                        if (count($timeStampWiseRooms) > $countIteration) {
-                            $sql .= ' OR ';
-                        }
-                    }
-                    $sql .= ')';
-
-                    unset($datetimeObj, $countIteration);
-
-                    $partiallyAvailCartRooms = Db::getInstance()->executeS($sql);
-                    if ($partiallyAvailCartRooms) {
-                        foreach ($partiallyAvailCartRooms as $cartRoomDetail) {
-                            $dateWiseCartRooms[strtotime($cartRoomDetail['date_from'])][] = array(
-                                'id_product' => $cartRoomDetail['id_product'],
-                                'id_room' => $cartRoomDetail['id_room']
+                        foreach ($booked_rooms as $booked_k => $booked_v) {
+                            $booked_rooms[$booked_k]['detail'][] = array(
+                                'date_from' => $booked_v['date_from'],
+                                'date_to' => $booked_v['date_to'],
+                                'id_customer' => $booked_v['id_customer'],
+                                'booking_type' => $booked_v['booking_type'],
+                                'booking_status' => $booked_v['booking_status'],
+                                'comment' => $booked_v['comment'],
                             );
-                        }
-                    }
-                }
 
-                foreach ($dateWiseRoomTypes as $timeStamp => &$roomTypeDetail) {
-                    if ($QLO_SEARCH_TYPE == HotelBookingDetail::SEARCH_TYPE_OWS && $searchOccupancy) {
-                        $dateWiseAvailableRooms = $this->getAvailableRoomSatisfingOccupancy(
-                            $searchOccupancy,
-                            $roomTypeDetail,
-                            HotelBookingDetail::SEARCH_ALL_ROOM_TYPE_ALGO // All options for partial rooms
+                            unset($booked_rooms[$booked_k]['date_from']);
+                            unset($booked_rooms[$booked_k]['date_to']);
+                            unset($booked_rooms[$booked_k]['id_customer']);
+                            unset($booked_rooms[$booked_k]['booking_type']);
+                            unset($booked_rooms[$booked_k]['booking_status']);
+                            unset($booked_rooms[$booked_k]['comment']);
+                        }
+
+                        $num_booked += count($booked_rooms);
+                    }
+
+                    if ($search_unavai) {
+                        $sql1 = 'SELECT `id_product`, `id_hotel`, `room_num`, `comment` AS `room_comment`
+                                FROM `'._DB_PREFIX_.'htl_room_information`
+                                WHERE `id_hotel`='.(int)$hotel_id.' AND `id_product` ='.(int)$room_type['id_product'].' AND `id_status` = 2';
+
+                        $sql2 = 'SELECT hri.`id_product`, hri.`id_hotel`, hri.`room_num`, hri.`comment` AS `room_comment`
+                                FROM `'._DB_PREFIX_.'htl_room_information` AS hri
+                                INNER JOIN `'._DB_PREFIX_.'htl_room_disable_dates` AS hrdd ON (hrdd.`id_room_type` = hri.`id_product` AND hrdd.	id_room = hri.`id`)
+                                WHERE hri.`id_hotel`='.$hotel_id.' AND hri.`id_product` ='.$room_type['id_product'].' AND hri.`id_status` = 3 AND hrdd.`date_from` <= \''.pSql($date_from).'\' AND hrdd.`date_to` >= \''.pSql($date_to).'\'';
+
+                        $sql = $sql1.' UNION '.$sql2;
+
+                        $unavail_rooms = Db::getInstance()->executeS($sql);
+                        $num_unavail += count($unavail_rooms);
+                    }
+
+                    if ($search_available) {
+                        $exclude_ids = 'SELECT `id_room`
+                        FROM `'._DB_PREFIX_.'htl_booking_detail`
+                        WHERE `is_back_order` = 0 AND `is_refunded` = 0 AND IF(`id_status` = 3, (
+                            (DATE_FORMAT(`check_out`,  "%Y-%m-%d") > \''.pSQL($date_from).'\' AND DATE_FORMAT(`check_out`,  "%Y-%m-%d") <= \''.PSQL($date_to).'\') AND (
+                                (`date_from` <= \''.pSQL($date_from).'\' AND `check_out` > \''.pSQL($date_from).'\' AND `check_out` <= \''.PSQL($date_to).'\') OR
+                                (`date_from` >= \''.pSQL($date_from).'\' AND `check_out` > \''.pSQL($date_from).'\' AND `check_out` <= \''.pSQL($date_to).'\') OR
+                                (`date_from` >= \''.pSQL($date_from).'\' AND `date_from` < \''.pSQL($date_to).'\' AND `check_out` >= \''.pSQL($date_to).'\') OR
+                                (`date_from` <= \''.pSQL($date_from).'\' AND `check_out` >= \''.pSQL($date_to).'\')
+                            )
+                        ), (
+                            (`date_from` <= \''.pSQL($date_from).'\' AND `date_to` > \''.pSQL($date_from).'\' AND `date_to` <= \''.PSQL($date_to).'\') OR
+                            (`date_from` >= \''.pSQL($date_from).'\' AND `date_to` <= \''.pSQL($date_to).'\') OR
+                            (`date_from` >= \''.pSQL($date_from).'\' AND `date_from` < \''.pSQL($date_to).'\' AND `date_to` >= \''.pSQL($date_to).'\') OR
+                            (`date_from` <= \''.pSQL($date_from).'\' AND `date_to` >= \''.pSQL($date_to).'\')
+                        ))';
+
+                        if (!empty($id_cart) && !empty($id_guest)) {
+                            $exclude_ids .= ' UNION
+                                SELECT `id_room`
+                                FROM `'._DB_PREFIX_.'htl_cart_booking_data`
+                                WHERE id_cart='.(int)$id_cart.' AND id_guest='.(int)$id_guest.' AND is_refunded = 0 AND  is_back_order = 0 AND ((date_from <= \''.pSQL($date_from).'\' AND date_to > \''.pSQL($date_from).'\' AND date_to <= \''.pSQL($date_to).'\') OR (date_from > \''.pSQL($date_from).'\' AND date_to < \''.pSQL($date_to).'\') OR (date_from >= \''.pSQL($date_from).'\' AND date_from < \''.pSQL($date_to).'\' AND date_to >= \''.pSQL($date_to).'\') OR (date_from < \''.pSQL($date_from).'\' AND date_to > \''.pSQL($date_to).'\'))';
+                        }
+
+                        // For excludes temporary disable rooms
+                        $exclude_ids .= ' UNION
+                            SELECT hri.`id` AS id_room
+                            FROM `'._DB_PREFIX_.'htl_room_information` AS hri
+                            INNER JOIN `'._DB_PREFIX_.'htl_room_disable_dates` AS hrdd ON (hrdd.`id_room_type` = hri.`id_product` AND hrdd.`id_room` = hri.`id`)
+                            WHERE hri.`id_hotel`='.(int)$hotel_id.' AND hri.`id_product` ='.(int)$room_type['id_product'].' AND hri.`id_status` = 3 AND (hrdd.`date_from` <= \''.pSql($date_to).'\' AND hrdd.`date_to` >= \''.pSql($date_from).'\')';
+
+                        $selectAvailRoomSearch = 'SELECT ri.`id` AS `id_room`, ri.`id_product`, ri.`id_hotel`, ri.`room_num`, ri.`comment` AS `room_comment`';
+
+                        $joinAvailRoomSearch = '';
+
+                        $whereAvailRoomSearch = 'WHERE ri.`id_hotel`='.(int)$hotel_id.' AND ri.`id_product`='.(int)$room_type['id_product'].' AND ri.`id_status` != 2 AND ri.`id` NOT IN ('.$exclude_ids.')';
+
+                        $groupByAvailRoomSearch = '';
+                        $orderByAvailRoomSearch = '';
+                        $orderWayAvailRoomSearch = '';
+
+                        Hook::exec('actionAvailRoomSearchSqlModifier',
+                            array(
+                                'select' => &$selectAvailRoomSearch,
+                                'join' => &$joinAvailRoomSearch,
+                                'where' => &$whereAvailRoomSearch,
+                                'group_by' => &$groupByAvailRoomSearch,
+                                'order_by' => &$orderByAvailRoomSearch,
+                                'order_way' => &$orderWayAvailRoomSearch,
+                                'params' => array(
+                                    'id_hotel' => $hotel_id,
+                                    'id_product' => $room_type['id_product'],
+                                    'date_from' => $date_from,
+                                    'date_to' => $date_to
+                                )
+                            )
                         );
 
-                        // Case: Unavailables rooms should be check, if they are available for anyother date range
-                        // Above case is not needed to be checked for now beacuse either the date is completely unavailable for booking
-                        // or we will get available rooms because of "HotelBookingDetail::SEARCH_ALL_ROOM_TYPE_ALGO" variable)
+                        $sql = $selectAvailRoomSearch;
+                        $sql .= ' FROM `'._DB_PREFIX_.'htl_room_information` AS ri';
+                        $sql .= ' '.$joinAvailRoomSearch;
+                        $sql .= ' '.$whereAvailRoomSearch;
+                        $sql .= ' '.$groupByAvailRoomSearch;
+                        $sql .= ' '.$orderByAvailRoomSearch;
+                        $sql .= ' '.$orderWayAvailRoomSearch;
 
-                        if ($dateWiseAvailableRooms['availableRoomTypes'] && isset($dateWiseAvailableRooms['availableRoomTypes']['roomTypes'])) {
-                            $roomTypeDetail = $dateWiseAvailableRooms['availableRoomTypes'];
+                        $avai_rooms = Db::getInstance()->executeS($sql);
+                        $num_avail += count($avai_rooms);
+                    }
 
-                            // there might be a change maxTotalOccupancy will give wrong information
-                            // because of all process might have changed the available roooms data/count
-                            // So further it is no use for us
-                            unset($roomTypeDetail['maxTotalOccupancy']);
-                        } else {
-                            // Partial rooms are not availble for this date
-                            // Move all the rooms to unavailable rooms
-                            // Break the loop
-                            foreach ($partiallyAvailRooms as $roomDetail) {
-                                if (!isset($unavailableRoomTypes[$roomDetail['id_product']][$roomDetail['id_room']])) {
-                                    $unavailableRoomTypes[$roomDetail['id_product']][$roomDetail['id_room']] = array(
-                                        'id_room' => $roomDetail['id_room'],
-                                        'id_product' => $roomDetail['id_product'],
-                                        'id_hotel' => $roomDetail['id_hotel'],
-                                        'room_num' => $roomDetail['room_num'],
-                                        'room_comment' => ''
-                                    );
+                    if ($search_partial) {
+                        $sql1 = 'SELECT bd.`id_product`, bd.`id_room`, bd.`id_hotel`, bd.`id_customer`, bd.`booking_type`, bd.`id_status` AS booking_status, bd.`comment` AS `room_comment`, rf.`room_num`, bd.`date_from`, IF(bd.`id_status` = 3, bd.`check_out`, bd.`date_to`) AS `date_to`
+                            FROM `'._DB_PREFIX_.'htl_booking_detail` AS bd
+                            INNER JOIN `'._DB_PREFIX_.'htl_room_information` AS rf ON (rf.`id` = bd.`id_room`)
+                            WHERE bd.`id_hotel`='.(int)$hotel_id.' AND bd.`id_product`='.(int)$room_type['id_product'].' AND rf.`id_status` != 2 AND bd.`is_back_order` = 0 AND bd.`is_refunded` = 0 AND IF(bd.`id_status` = 3, (
+                                (DATE_FORMAT(`check_out`,  "%Y-%m-%d") > \''.pSQL($date_from).'\' AND DATE_FORMAT(`check_out`,  "%Y-%m-%d") < \''.PSQL($date_to).'\') AND (
+                                    (bd.`date_from` <= \''.pSQL($date_from).'\' AND bd.`check_out` > \''.pSQL($date_from).'\' AND bd.`check_out` < \''.pSQL($date_to).'\') OR
+                                    (bd.`date_from` > \''.pSQL($date_from).'\' AND bd.`date_from` < \''.pSQL($date_to).'\' AND bd.`check_out` >= \''.pSQL($date_to).'\') OR
+                                    (bd.`date_from` > \''.pSQL($date_from).'\' AND bd.`date_from` < \''.pSQL($date_to).'\' AND bd.`check_out` > \''.pSQL($date_from).'\' AND bd.`check_out` < \''.pSQL($date_to).'\')
+                                )
+                            ), (
+                                (bd.`date_from` <= \''.pSQL($date_from).'\' AND bd.`date_to` > \''.pSQL($date_from).'\' AND bd.`date_to` < \''.pSQL($date_to).'\') OR
+                                (bd.`date_from` > \''.pSQL($date_from).'\' AND bd.`date_from` < \''.pSQL($date_to).'\' AND bd.`date_to` >= \''.pSQL($date_to).'\') OR
+                                (bd.`date_from` > \''.pSQL($date_from).'\' AND bd.`date_from` < \''.pSQL($date_to).'\' AND bd.`date_to` < \''.pSQL($date_to).'\')
+                            ))';
+
+                        $sql2 = 'SELECT hri.`id_product`, hrdd.`id_room`, hri.`id_hotel`, 0 AS `id_customer`, 0 AS `booking_type`, 0 AS `booking_status`, 0 AS `room_comment`, hri.`room_num`, hrdd.`date_from`, hrdd.`date_to`
+                            FROM `'._DB_PREFIX_.'htl_room_information` AS hri
+                            INNER JOIN `'._DB_PREFIX_.'htl_room_disable_dates` AS hrdd ON (hrdd.`id_room_type` = hri.`id_product` AND hrdd.`id_room` = hri.`id`)
+                            WHERE hri.`id_hotel`='.(int)$hotel_id.' AND hri.`id_product`='.(int)$room_type['id_product'].' AND
+                            hri.`id_status` = 3 AND (
+                                (hrdd.`date_from` <= \''.pSQL($date_from).'\' AND hrdd.`date_to` > \''.pSQL($date_from).'\' AND hrdd.`date_to` < \''.pSQL($date_to).'\') OR
+                                (hrdd.`date_from` > \''.pSQL($date_from).'\' AND hrdd.`date_from` < \''.pSQL($date_to).'\' AND hrdd.`date_to` >= \''.pSQL($date_to).'\') OR
+                                (hrdd.`date_from` > \''.pSQL($date_from).'\' AND hrdd.`date_from` < \''.pSQL($date_to).'\' AND hrdd.`date_to` < \''.pSQL($date_to).'\')
+                            )';
+                        // $part_arr2 = Db::getInstance()->executeS($sql2);
+                        // $part_arr = array_merge($part_arr1 ? $part_arr1 : array(), $part_arr2 ? $part_arr2 : array());
+
+                        $sql = $sql1.' UNION '.$sql2;
+                        // NOTE:: Before code if written to use "ORDER BY" with union
+                        $sql = 'SELECT s.*
+                                FROM ('.$sql.') AS s
+                                ORDER BY s.`id_room`';
+                        $part_arr = Db::getInstance()->executeS($sql);
+
+                        $partial_avai_rooms = array();
+                        foreach ($part_arr as $pr_val) {
+                            $partial_avai_rooms[$pr_val['id_room']]['id_product'] = $pr_val['id_product'];
+                            $partial_avai_rooms[$pr_val['id_room']]['id_room'] = $pr_val['id_room'];
+                            $partial_avai_rooms[$pr_val['id_room']]['id_hotel'] = $pr_val['id_hotel'];
+                            $partial_avai_rooms[$pr_val['id_room']]['room_num'] = $pr_val['room_num'];
+
+                            if ($pr_val['id_customer']) {
+                                $partial_avai_rooms[$pr_val['id_room']]['booked_dates'][] = array(
+                                    'date_from' => $pr_val['date_from'],
+                                    'date_to' => $pr_val['date_to'],
+                                    'id_customer' => $pr_val['id_customer'],
+                                    'booking_type' => $pr_val['booking_type'],
+                                    'booking_status' => $pr_val['booking_status'],
+                                    'comment' => $pr_val['room_comment']
+                                );
+                            }
+
+                            if (!isset($partial_avai_rooms[$pr_val['id_room']]['avai_dates'])) {
+                                if (($pr_val['date_from'] <= $date_from) && ($pr_val['date_to'] > $date_from) && ($pr_val['date_to'] < $date_to)) {
+                                    // from lower to middle range
+
+                                    $forRange = $this->createDateRangeArray($pr_val['date_to'], $date_to, 0, $pr_val['id_room']);
+                                    $available_dates = $this->getPartialRange($forRange, $pr_val['id_room'], $key);
+                                } elseif (($pr_val['date_from'] > $date_from) && ($pr_val['date_from'] < $date_to) && ($pr_val['date_to'] >= $date_to)) {
+                                    // from middle to higher range
+
+                                    $forRange = $this->createDateRangeArray($date_from, $pr_val['date_from'], 0, $pr_val['id_room']);
+                                    $available_dates = $this->getPartialRange($forRange, $pr_val['id_room'], $key);
+                                } elseif (($pr_val['date_from'] > $date_from) && ($pr_val['date_from'] < $date_to) && ($pr_val['date_to'] > $date_from) && ($pr_val['date_to'] < $date_to)) {
+                                    // between range
+
+                                    $forRange1 = $this->createDateRangeArray($date_from, $pr_val['date_from'], 0, $pr_val['id_room']);
+                                    $init_range = $this->getPartialRange($forRange1, $pr_val['id_room'], $key);
+
+                                    $forRange2 = $this->createDateRangeArray($pr_val['date_to'], $date_to, 0, $pr_val['id_room']);
+                                    $last_range = $this->getPartialRange($forRange2, $pr_val['id_room'], $key);
+
+                                    $available_dates = $init_range + $last_range;
                                 }
-                                // $unavailableRoomTypes[$roomDetail['id_product']][$roomDetail['id_room']] = $roomDetail;
+
+                                $partial_avai_rooms[$pr_val['id_room']]['avai_dates'] = $available_dates;
+                            } else {
+                                /*
+                                    * Note :: createDateRangeArray function check and unset dates from allReqDates(array) but below it will only return array of date because dates already been removed from "if" condition
+                                    */
+                                $bk_dates = $this->createDateRangeArray($pr_val['date_from'], $pr_val['date_to'], 0, 0, 0);
+                                if (count($bk_dates) >= 2) {
+                                    for ($i = 0; $i < count($bk_dates) - 1; ++$i) {
+                                        $dateJoin = strtotime($bk_dates[$i]);
+
+                                        if (isset($partial_avai_rooms[$pr_val['id_room']]['avai_dates'][$dateJoin])) {
+                                            if (isset($this->dltDates[$pr_val['id_room']]) && $this->dltDates[$pr_val['id_room']]) {
+                                                $this->allReqDates[] = $bk_dates[$i];
+                                            }
+                                            unset($partial_avai_rooms[$pr_val['id_room']]['avai_dates'][$dateJoin]);
+                                            unset($this->partAvaiDates[$pr_val['id_room'].$dateJoin]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        $rm_part_avai = count($partial_avai_rooms);
+                        $num_part_avai += $rm_part_avai;
+                    }
+
+                    // if (!$for_calendar)
+                    // {
+                    $booking_data['rm_data'][$key]['name'] = $product_name;
+                    $booking_data['rm_data'][$key]['id_product'] = (int) $room_type['id_product'];
+
+                    if ($search_available) {
+                        $booking_data['rm_data'][$key]['data']['available'] = $avai_rooms;
+                    }
+
+                    if ($search_unavai) {
+                        $booking_data['rm_data'][$key]['data']['unavailable'] = $unavail_rooms;
+                    }
+
+                    if ($search_booked) {
+                        $booking_data['rm_data'][$key]['data']['booked'] = $booked_rooms;
+                    }
+
+                    if ($search_partial) {
+                        $booking_data['rm_data'][$key]['data']['partially_available'] = $partial_avai_rooms;
+                    }
+
+                    if ($search_cart_rms) {
+                        $booking_data['rm_data'][$key]['data']['cart_rooms'] = $cart_rooms;
+                    }
+                    // }
+                }
+
+                if ($search_partial) {
+                    foreach ($booking_data['rm_data'] as $bk_data_key => $bk_data_val) {
+                        foreach ($bk_data_val['data']['partially_available'] as $part_rm_key => $part_rm_val) {
+                            if (empty($part_rm_val['avai_dates'])) {
+                                unset($booking_data['rm_data'][$bk_data_key]['data']['partially_available'][$part_rm_key]['avai_dates']);
+
+                                $booking_data['rm_data'][$bk_data_key]['data']['partially_available'][$part_rm_key]['detail'] = $booking_data['rm_data'][$bk_data_key]['data']['partially_available'][$part_rm_key]['booked_dates'];
+
+                                unset($booking_data['rm_data'][$bk_data_key]['data']['partially_available'][$part_rm_key]['booked_dates']);
+
+                                if ($search_booked) {
+                                    $booking_data['rm_data'][$bk_data_key]['data']['booked'] = array_merge($booking_data['rm_data'][$bk_data_key]['data']['booked'], array($booking_data['rm_data'][$bk_data_key]['data']['partially_available'][$part_rm_key]));
+                                    $num_booked += 1;
+
+                                    unset($booking_data['rm_data'][$bk_data_key]['data']['partially_available'][$part_rm_key]);
+                                }
+                                $num_part_avai -= 1;
+                            } elseif (!empty($this->allReqDates)) {
+                                unset($booking_data['rm_data'][$bk_data_key]['data']['partially_available'][$part_rm_key]['avai_dates']);
+                                unset($booking_data['rm_data'][$bk_data_key]['data']['partially_available'][$part_rm_key]['booked_dates']);
+                                if ($search_unavai) {
+                                    $booking_data['rm_data'][$bk_data_key]['data']['partially_available'][$part_rm_key]['room_comment'] = '';
+                                    $booking_data['rm_data'][$bk_data_key]['data']['unavailable'] = array_merge($booking_data['rm_data'][$bk_data_key]['data']['unavailable'], array($booking_data['rm_data'][$bk_data_key]['data']['partially_available'][$part_rm_key]));
+
+                                    $num_unavail += 1;
+
+                                    unset($booking_data['rm_data'][$bk_data_key]['data']['partially_available'][$part_rm_key]);
+                                }
+                                $num_part_avai -= 1;
+                            }
+                        }
+
+                        // Remove Cart Rooms from Partial available rooms
+                        if ($search_cart_rms) {
+                            foreach ($bk_data_val['data']['cart_rooms'] as $cart_key => $cart_val) {
+                                if (isset($this->partAvaiDates[$cart_val['id_room'].strtotime($cart_val['date_from'])])) {
+                                    $rm_data_key = $this->partAvaiDates[$cart_val['id_room'].strtotime($cart_val['date_from'])]['rm_data_key'];
+
+                                    unset($booking_data['rm_data'][$rm_data_key]['data']['partially_available'][$cart_val['id_room']]['avai_dates'][strtotime($cart_val['date_from'])]);
+
+                                    if (empty($booking_data['rm_data'][$rm_data_key]['data']['partially_available'][$cart_val['id_room']]['avai_dates'])) {
+                                        unset($booking_data['rm_data'][$rm_data_key]['data']['partially_available'][$cart_val['id_room']]);
+                                        $num_part_avai -= 1;
+                                    }
+                                }
                             }
 
-                            $partiallyAvailRooms = array();
-                            $dateWiseRoomTypes = array();
-                            break;
-                        }
-                    }
-
-                    // Don't forget to remove cart rooms
-                    if ($roomTypeDetail['roomTypes'] && $dateWiseCartRooms && isset($dateWiseCartRooms[$timeStamp])) {
-                        foreach ($dateWiseCartRooms[$timeStamp] as $cartRoomDetail) {
-                            unset($roomTypeDetail['roomTypes'][$cartRoomDetail['id_product']]['rooms'][$cartRoomDetail['id_room']]);
-
-                            if (!$roomTypeDetail['roomTypes'][$cartRoomDetail['id_product']]['rooms']) {
-                                unset($roomTypeDetail['roomTypes'][$cartRoomDetail['id_product']]);
-                            }
+                            unset($this->partAvaiDates);
                         }
                     }
                 }
-                // free space
-                unset($roomTypeDetail);
 
-                // Return room type wise instead of date wise
-                foreach ($dateWiseRoomTypes as $timeStamp => $dateWiseDetail) {
-                    foreach ($dateWiseDetail['roomTypes'] as $idProduct => $roomTypeDetail) {
-                        $partialAvailRoomType[$idProduct][$timeStamp] = array(
-                            'date_from' => $dateWiseDetail['dateFrom'],
-                            'date_to' => $dateWiseDetail['dateTo'],
-                            'rooms' => $roomTypeDetail['rooms'],
-                        );
-                        $partialRoomsList = array_unique(array_merge($partialRoomsList, array_keys($roomTypeDetail['rooms'])), SORT_NUMERIC);
-                    }
-                }
-            } else {
-                // If all dates are not covered then move all partially available room types to unavailable
-                foreach ($partiallyAvailRooms as $roomDetail) {
-                    if (!isset($unavailableRoomTypes[$roomDetail['id_product']][$roomDetail['id_room']])) {
-                        $unavailableRoomTypes[$roomDetail['id_product']][$roomDetail['id_room']] = array(
-                            'id_room' => $roomDetail['id_room'],
-                            'id_product' => $roomDetail['id_product'],
-                            'id_hotel' => $roomDetail['id_hotel'],
-                            'room_num' => $roomDetail['room_num'],
-                            'room_comment' => ''
-                        );
-                    }
+                if ($for_calendar) {
+                    unset($booking_data['rm_data']);
                 }
 
-                $partiallyAvailRooms = array();
-                $dateWiseRoomTypes = array();
+                $booking_data['stats']['total_rooms'] = $total_rooms;
+
+                if ($search_booked) {
+                    $booking_data['stats']['num_booked'] = $num_booked;
+                }
+
+                if ($search_unavai) {
+                    $booking_data['stats']['num_unavail'] = $num_unavail;
+                }
+
+                if ($search_available) {
+                    $booking_data['stats']['num_avail'] = $num_avail;
+                }
+
+                if ($search_partial) {
+                    $booking_data['stats']['num_part_avai'] = $num_part_avai;
+                }
+
+                if ($search_partial) {
+                    $booking_data['stats']['num_cart'] = $num_cart;
+                }
+
+                return $booking_data;
             }
-
-            unset($datesToCover, $timeStampWiseRooms, $partiallyAvailRooms);
         }
-
-        return array(
-            'partiallyAvailRooms' => $dateWiseRoomTypes ? $partialAvailRoomType : $dateWiseRoomTypes,
-            'unavailableRoomTypes' => $unavailableRoomTypes,
-            'partiallyAvailRoomsCount' => count($partialRoomsList),
-        );
-    }
-
-    /**
-     * $params = array(
-     *      'idHotel' => ...,
-     *      'dateFrom' => ...,
-     *      'dateTo' => ...,
-     *      'idRoomType' => ...,
-     *      'allowedIdRoomTypes' => ...,
-     *  );
-     */
-    protected function getSearchBookedRooms($params)
-    {
-        extract($params);
-
-        $sql = 'SELECT bd.`id`, bd.`id_product`, bd.`id_room`, bd.`id_hotel`, bd.`id_customer`, bd.`booking_type`, bd.`id_status` AS booking_status, bd.`comment`, rf.`room_num`, bd.`date_from`, bd.`date_to`
-                FROM `'._DB_PREFIX_.'htl_booking_detail` AS bd
-                INNER JOIN `'._DB_PREFIX_.'htl_room_information` AS rf ON (rf.`id` = bd.`id_room`)
-                WHERE bd.`id_hotel`='.(int)$idHotel.' AND bd.`is_refunded` = 0 AND bd.`is_back_order` = 0 AND IF(bd.`id_status` = '. self::STATUS_CHECKED_OUT .', bd.`date_from` <= \''.pSQL($dateFrom).'\' AND bd.`check_out` >= \''.pSQL($dateTo).'\', bd.`date_from` <= \''.pSQL($dateFrom).'\' AND bd.date_to >= \''.pSQL($dateTo).'\') AND IF('.(int)$idRoomType.' > 0, rf.`id_product` = '.(int)$idRoomType.', 1) AND rf.`id_product` IN ('.$allowedIdRoomTypes.')
-                ORDER BY bd.`id_room` ASC';
-
-        $bookedRoomTypes = array();
-        if ($booked_rooms = Db::getInstance()->executeS($sql)) {
-            foreach ($booked_rooms as $booked_k => $booked_v) {
-                if (!isset($bookedRoomTypes[$booked_v['id_product']][$booked_v['id_room']])) {
-                    $bookedRoomTypes[$booked_v['id_product']][$booked_v['id_room']] = array(
-                        'id_product' => $booked_v['id_product'],
-                        'id_room' => $booked_v['id_room'],
-                        'id_hotel' => $booked_v['id_hotel'],
-                        'room_num' => $booked_v['room_num'],
-                        'detail' => array()
-                    );
-                }
-                $bookedRoomTypes[$booked_v['id_product']][$booked_v['id_room']]['detail'][] = array(
-                    'id_htl_booking' => $booked_v['id'],
-                    'date_from' => $booked_v['date_from'],
-                    'date_to' => $booked_v['date_to'],
-                    'id_customer' => $booked_v['id_customer'],
-                    'booking_type' => $booked_v['booking_type'],
-                    'booking_status' => $booked_v['booking_status'],
-                    'comment' => $booked_v['comment'],
-                );
-            }
-            unset($booked_rooms);
-        }
-
-        return $bookedRoomTypes;
     }
 
     // This function algo is same as available rooms algo and it not similar to booked rooms algo.
     public function chechRoomBooked($id_room, $date_from, $date_to)
     {
-        $sql = 'SELECT `id`, `id_product`, `id_order`, `id_cart`, `id_room`, `id_hotel`, `id_customer`
+        $sql = 'SELECT `id_product`, `id_order`, `id_cart`, `id_room`, `id_hotel`, `id_customer`
         FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `id_room` = '.(int)$id_room.
         ' AND `is_back_order` = 0 AND `is_refunded` = 0 AND ((date_from <= \''.pSQL($date_from).'\' AND date_to > \''.
         pSQL($date_from).'\' AND date_to <= \''.pSQL($date_to).'\') OR (date_from > \''.pSQL($date_from).
@@ -1400,30 +716,14 @@ class HotelBookingDetail extends ObjectModel
      * @param [date] $dateTo   [End date of the booking]
      *
      * @return [int] [Returns number of days between two dates]
-     * @deprecated use hotelBookingDetail::getDays() instead
      */
     public function getNumberOfDays($dateFrom, $dateTo)
-    {
-        return self::getDays($dateFrom, $dateTo);
-        // $startDate = new DateTime($dateFrom);
-        // $endDate = new DateTime($dateTo);
-        // $daysDifference = $startDate->diff($endDate)->days;
-
-        // return $daysDifference;
-    }
-
-    public static function getDays($dateFrom, $dateTo)
     {
         $startDate = new DateTime($dateFrom);
         $endDate = new DateTime($dateTo);
         $daysDifference = $startDate->diff($endDate)->days;
 
         return $daysDifference;
-    }
-
-    public function generateRoomOccupancyWeight($availRoomTypeCount, $totalOccupancy, $totalAdult, $totalChildren)
-    {
-        return (10000000*(int)$availRoomTypeCount - (100000*(int)$totalOccupancy + 1000*(int)$totalAdult + 10*$totalChildren));
     }
 
     /**
@@ -1440,13 +740,6 @@ class HotelBookingDetail extends ObjectModel
         );
     }
 
-    public static function getIdHotelByIdOrder($idOrder)
-    {
-        return Db::getInstance()->getValue(
-            'SELECT `id_hotel` FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `id_order` = '.(int) $idOrder
-        );
-    }
-
     /**
      * [updateBookingOrderStatusBYOrderId :: To update the order status of a room in the booking].
      * @param [int] $order_id   [Id of the order]
@@ -1455,50 +748,56 @@ class HotelBookingDetail extends ObjectModel
      * @return [Boolean] [Returns true if successfully updated else returns false]
      */
     public function updateBookingOrderStatusByOrderId(
-        $idOrder,
-        $newStatus,
-        $idRoom,
-        $dateFrom,
-        $dateTo,
-        $statusDate = ''
+        $order_id,
+        $new_status,
+        $id_room,
+        $date_from,
+        $date_to,
+        $status_date = ''
     ) {
-        $roomBookingData = $this->getRoomBookingData($idRoom, $idOrder, $dateFrom, $dateTo);
-        $objHotelBookingDetail = new self($roomBookingData['id']);
-
-        if (Validate::isLoadedObject($objHotelBookingDetail)) {
-            if ($statusDate) {
-                $statusDate = date('Y-m-d H:i:s', strtotime($statusDate));
-            } else {
-                $statusDate = date('Y-m-d H:i:s');
-            }
-
-            if ($newStatus == self::STATUS_CHECKED_IN) {
-                $objHotelBookingDetail->id_status = $newStatus;
-                $objHotelBookingDetail->check_in = ($statusDate > $dateTo ? $dateTo : $statusDate);
-            } elseif ($newStatus == self::STATUS_CHECKED_OUT) {
-                $objHotelBookingDetail->id_status = $newStatus;
-                $objHotelBookingDetail->check_out = ($statusDate > $dateTo ? $dateTo : $statusDate);
-            } else {
-                $objHotelBookingDetail->id_status = $newStatus;
-                $objHotelBookingDetail->check_in = '';
-                $objHotelBookingDetail->check_out = '';
-            }
-
-            return $objHotelBookingDetail->save();
+        if ($status_date) {
+            $status_date = date('Y-m-d H:i:s', strtotime($status_date));
+        } else {
+            $status_date = date('Y-m-d H:i:s');
         }
 
-        return false;
+        $table = 'htl_booking_detail';
+
+        // create date to update in the table
+        if ($new_status == 2) {
+            $data = array(
+                'id_status' => $new_status,
+                'check_in' => ($status_date > $date_to ? $date_to : $status_date)
+            );
+        } elseif ($new_status == 3) {
+            $data = array(
+                'id_status' => $new_status,
+                'check_out' => ($status_date > $date_to ? $date_to : $status_date)
+            );
+        } else {
+            $data = array(
+                'id_status' => $new_status,
+                'check_in' => '',
+                'check_out' => ''
+            );
+        }
+
+        // where conditions
+        $where = 'id_order = '.(int)$order_id.' AND id_room = '.(int)$id_room.
+        ' AND `date_from` = \''.pSQL($date_from).'\' AND `date_to` = \''.pSQL($date_to).'\'';
+
+        return Db::getInstance()->update($table, $data, $where);
     }
 
     /**
-     * [dataForFrontSearch ].
+     * [DataForFrontSearch ].
      *
      * @param [date] $date_from     [Start date of the booking]
      * @param [date] $date_to       [End date of the booking]
      * @param [int]  $id_hotel      [Id of the Hotel]
      * @param [int]  $id_product    [ID of the product]
-     * @param [int]  $only_search_data [used for product page and category page for block cart]
-     * @param [int]  $adults         []
+     * @param [int]  $for_room_type [used for product page and category page for block cart]
+     * @param [int]  $adult         []
      * @param [int]  $children      []
      * @param []     $ratting       [description]
      * @param []     $amenities     [description]
@@ -1507,134 +806,126 @@ class HotelBookingDetail extends ObjectModel
      * @param [int]  $id_guest      [Id of the guest]
      *
      * @return [array] [Returns true if successfully updated else returns false]
-     *                 Note:: $only_search_data is used for product page and category page for block cart
+     *                 Note:: $for_room_type is used for product page and category page for block cart
      */
-    public function dataForFrontSearch($bookingParams)
+    public function DataForFrontSearch($date_from, $date_to, $id_hotel, $id_product = 0, $for_room_type = 0, $adult = 0, $children = 0, $ratting = -1, $amenities = 0, $price = 0, $id_cart = 0, $id_guest = 0)
     {
-        // if (Module::isInstalled('productcomments')) {
-        //     require_once _PS_MODULE_DIR_.'productcomments/ProductComment.php';
-        // }
+        if (Module::isInstalled('productcomments')) {
+            require_once _PS_MODULE_DIR_.'productcomments/ProductComment.php';
+        }
 
         $this->context = Context::getContext();
 
+        $bookingParams = array();
+        $bookingParams['date_from'] = $date_from;
+        $bookingParams['date_to'] = $date_to;
+        $bookingParams['hotel_id'] = $id_hotel;
+        $bookingParams['room_type'] = $id_product;
+        $bookingParams['adult'] = $adult;
+        $bookingParams['children'] = $children;
+        $bookingParams['num_rooms'] = 0;
+        $bookingParams['for_calendar'] = 0;
         $bookingParams['search_available'] = 1;
         $bookingParams['search_partial'] = 0;
         $bookingParams['search_booked'] = 0;
         $bookingParams['search_unavai'] = 0;
+        $bookingParams['id_cart'] = $id_cart;
+        $bookingParams['id_guest'] = $id_guest;
 
-        $bookingData = $this->getBookingData($bookingParams);
+        $booking_data = $this->getBookingData($bookingParams);
 
-        extract($this->getBookingDataParams($bookingParams));
+        if (!$for_room_type) {
+            if (!empty($booking_data)) {
+                $obj_rm_type = new HotelRoomType();
 
-        if (!$only_search_data) {
-            if (!empty($bookingData)) {
-                $objRoomType = new HotelRoomType();
-
-                foreach ($bookingData['rm_data'] as $key => $value) {
+                foreach ($booking_data['rm_data'] as $key => $value) {
                     if (empty($value['data']['available'])) {
-                        unset($bookingData['rm_data'][$key]);
+                        unset($booking_data['rm_data'][$key]);
                     } else {
-                        $prod_ratting = 0;
-                        // if (Module::isInstalled('productcomments')) {
-                        //     $prod_ratting = ProductComment::getAverageGrade($value['id_product'])['grade'];
-                        // }
-                        // if (empty($prod_ratting)) {
-                        //     $prod_ratting = 0;
-                        // }
+                        if (Module::isInstalled('productcomments')) {
+                            $prod_ratting = ProductComment::getAverageGrade($value['id_product'])['grade'];
+                        }
+                        if (empty($prod_ratting)) {
+                            $prod_ratting = 0;
+                        }
 
-                        // if ($prod_ratting < $ratting && $ratting != -1) {
-                        //     unset($bookingData['rm_data'][$key]);
-                        // } else
-                        // {
-                        $product = new Product($value['id_product'], false, $this->context->language->id);
+                        if ($prod_ratting < $ratting && $ratting != -1) {
+                            unset($booking_data['rm_data'][$key]);
+                        } else {
+                            $product = new Product($value['id_product'], false, $this->context->language->id);
 
-                        $product_feature = $product->getFrontFeaturesStatic($this->context->language->id, $value['id_product']);
+                            $product_feature = $product->getFrontFeaturesStatic($this->context->language->id, $value['id_product']);
 
-                        $prod_amen = array();
-                        if (!empty($amenities) && $amenities) {
-                            $prod_amen = $amenities;
-                            foreach ($product_feature as $a_key => $a_val) {
-                                if (($pa_key = array_search($a_val['id_feature'], $prod_amen)) !== false) {
-                                    unset($prod_amen[$pa_key]);
-                                    if (empty($prod_amen)) {
-                                        break;
+                            $prod_amen = array();
+                            if (!empty($amenities) && $amenities) {
+                                $prod_amen = $amenities;
+                                foreach ($product_feature as $a_key => $a_val) {
+                                    if (($pa_key = array_search($a_val['id_feature'], $prod_amen)) !== false) {
+                                        unset($prod_amen[$pa_key]);
+                                        if (empty($prod_amen)) {
+                                            break;
+                                        }
                                     }
                                 }
+                                if (!empty($prod_amen)) {
+                                    unset($booking_data['rm_data'][$key]);
+                                }
                             }
-                            if (!empty($prod_amen)) {
-                                unset($bookingData['rm_data'][$key]);
+
+                            if (empty($prod_amen)) {
+                                $prod_price = Product::getPriceStatic($value['id_product'], self::useTax());
+                                $productPriceWithoutReduction = $product->getPriceWithoutReduct(!self::useTax());
+                                $productFeaturePrice = HotelRoomTypeFeaturePricing::getRoomTypeFeaturePricesPerDay($value['id_product'], $date_from, $date_to, self::useTax());
+
+                                if (empty($price) || ($price['from'] <= $prod_price && $price['to'] >= $prod_price)) {
+                                    $cover_image_arr = $product->getCover($value['id_product']);
+
+                                    if (!empty($cover_image_arr)) {
+                                        $cover_img = $this->context->link->getImageLink($product->link_rewrite, $product->id.'-'.$cover_image_arr['id_image'], 'home_default');
+                                    } else {
+                                        $cover_img = $this->context->link->getImageLink($product->link_rewrite, $this->context->language->iso_code.'-default', 'home_default');
+                                    }
+
+                                    $room_left = count($booking_data['rm_data'][$key]['data']['available']);
+
+                                    $rm_dtl = $obj_rm_type->getRoomTypeInfoByIdProduct($value['id_product']);
+
+                                    $booking_data['rm_data'][$key]['name'] = $product->name;
+                                    $booking_data['rm_data'][$key]['image'] = $cover_img;
+                                    $booking_data['rm_data'][$key]['description'] = $product->description_short;
+                                    $booking_data['rm_data'][$key]['feature'] = $product_feature;
+                                    $booking_data['rm_data'][$key]['price'] = $prod_price;
+                                    $booking_data['rm_data'][$key]['price_without_reduction'] = $productPriceWithoutReduction;
+                                    $booking_data['rm_data'][$key]['feature_price'] = $productFeaturePrice;
+                                    $booking_data['rm_data'][$key]['feature_price_diff'] = $productPriceWithoutReduction - $productFeaturePrice;
+
+                                    // if ($room_left <= (int)Configuration::get('WK_ROOM_LEFT_WARNING_NUMBER'))
+                                    $booking_data['rm_data'][$key]['room_left'] = $room_left;
+
+                                    $booking_data['rm_data'][$key]['adult'] = $rm_dtl['adult'];
+                                    $booking_data['rm_data'][$key]['children'] = $rm_dtl['children'];
+
+                                    $booking_data['rm_data'][$key]['ratting'] = $prod_ratting;
+                                    if (Module::isInstalled('productcomments')) {
+                                        $booking_data['rm_data'][$key]['num_review'] = ProductComment::getCommentNumber($value['id_product']);
+                                    }
+
+                                    if (Configuration::get('PS_REWRITING_SETTINGS')) {
+                                        $booking_data['rm_data'][$key]['product_link'] = $this->context->link->getProductLink($product).'?date_from='.$date_from.'&date_to='.$date_to;
+                                    } else {
+                                        $booking_data['rm_data'][$key]['product_link'] = $this->context->link->getProductLink($product).'&date_from='.$date_from.'&date_to='.$date_to;
+                                    }
+                                } else {
+                                    unset($booking_data['rm_data'][$key]);
+                                }
                             }
                         }
-
-                        if (empty($prod_amen)) {
-                            $prod_price = Product::getPriceStatic($value['id_product'], self::useTax());
-                            $productPriceWithoutReduction = $product->getPriceWithoutReduct(!self::useTax());
-                            $productFeaturePrice = HotelRoomTypeFeaturePricing::getRoomTypeFeaturePricesPerDay($value['id_product'], $date_from, $date_to, self::useTax());
-                            $productFeaturePriceWithoutAutoAdd = HotelRoomTypeFeaturePricing::getRoomTypeFeaturePricesPerDay($value['id_product'], $date_from, $date_to, self::useTax(), 0, 0, 0, 0, 0);
-
-                            if (empty($price) || ($price['from'] <= $prod_price && $price['to'] >= $prod_price)) {
-                                $cover_image_arr = $product->getCover($value['id_product']);
-
-                                if (!empty($cover_image_arr)) {
-                                    $cover_img = $this->context->link->getImageLink($product->link_rewrite, $product->id.'-'.$cover_image_arr['id_image'], 'home_default');
-                                } else {
-                                    $cover_img = $this->context->link->getImageLink($product->link_rewrite, $this->context->language->iso_code.'-default', 'home_default');
-                                }
-
-                                $room_left = count($bookingData['rm_data'][$key]['data']['available']);
-
-                                $rm_dtl = $objRoomType->getRoomTypeInfoByIdProduct($value['id_product']);
-
-                                $bookingData['rm_data'][$key]['name'] = $product->name;
-                                $bookingData['rm_data'][$key]['image'] = $cover_img;
-                                $bookingData['rm_data'][$key]['description'] = $product->description_short;
-                                $bookingData['rm_data'][$key]['feature'] = $product_feature;
-                                $bookingData['rm_data'][$key]['price'] = $prod_price;
-                                $bookingData['rm_data'][$key]['feature_price'] = $productFeaturePrice;
-                                $bookingData['rm_data'][$key]['feature_price_withoout_auto_add'] = $productFeaturePriceWithoutAutoAdd;
-                                $bookingData['rm_data'][$key]['price_without_reduction'] = $productPriceWithoutReduction;
-                                $bookingData['rm_data'][$key]['price_without_reduction_with_auto_add'] = $productPriceWithoutReduction + ($productFeaturePrice - $productFeaturePriceWithoutAutoAdd);
-                                $bookingData['rm_data'][$key]['feature_price_diff'] = $bookingData['rm_data'][$key]['price_without_reduction_with_auto_add'] - $productFeaturePrice;
-
-                                // if ($room_left <= (int)Configuration::get('WK_ROOM_LEFT_WARNING_NUMBER'))
-                                $bookingData['rm_data'][$key]['room_left'] = $room_left;
-
-                                $bookingData['rm_data'][$key]['adults'] = $rm_dtl['adults'];
-                                $bookingData['rm_data'][$key]['children'] = $rm_dtl['children'];
-
-                                $bookingData['rm_data'][$key]['ratting'] = $prod_ratting;
-                                // if (Module::isInstalled('productcomments')) {
-                                //     $bookingData['rm_data'][$key]['num_review'] = ProductComment::getCommentNumber($value['id_product']);
-                                //  }
-
-                                // create URL with the parameters from URL
-                                $urlData = array ('date_from' => $date_from, 'date_to' => $date_to);
-                                if (!isset($occupancy)) {
-                                    $occupancy = Tools::getValue('occupancy');
-                                }
-                                if ($occupancy) {
-                                    $urlData['occupancy'] = $occupancy;
-                                }
-                                if ($location = Tools::getValue('location')) {
-                                    $urlData['location'] = $location;
-                                }
-
-                                if (Configuration::get('PS_REWRITING_SETTINGS')) {
-                                    $bookingData['rm_data'][$key]['product_link'] = $this->context->link->getProductLink($product).'?'.http_build_query($urlData);
-                                } else {
-                                    $bookingData['rm_data'][$key]['product_link'] = $this->context->link->getProductLink($product).'&'.http_build_query($urlData);
-                                }
-                            } else {
-                                unset($bookingData['rm_data'][$key]);
-                            }
-                        }
-                        // }
                     }
                 }
             }
         }
 
-        return $bookingData;
+        return $booking_data;
     }
 
     /**
@@ -1642,59 +933,31 @@ class HotelBookingDetail extends ObjectModel
      *
      * @param [date] $date_from[Start date of booking of the room to be swapped with available rooms]
      * @param [date] $date_to         [End date of booking of the room to be swapped with available rooms]
-     * @param [int]  $id_room_type       [Id of the product to which the room belongs to be swapped]
+     * @param [int]  $room_type       [Id of the product to which the room belongs to be swapped]
      * @param [int]  $hotel_id        [Id of the Hotel to which the room belongs to be swapped]
      *
      * @return [array|false] [Returs array of the available rooms for swapping if rooms found else returnss false]
      */
-    public function getAvailableRoomsForReallocation($date_from, $date_to, $id_room_type, $hotel_id, $room_types_to_upgrade = 0)
+    public function getAvailableRoomsForReallocation($date_from, $date_to, $room_type, $hotel_id)
     {
-        $context = Context::getContext();
-        if (isset($context->cookie->id_cart)) {
-            $current_admin_cart_id = $context->cookie->id_cart;
+        if (isset($_COOKIE['wk_id_cart'])) {
+            $current_admin_cart_id = $_COOKIE['wk_id_cart'];
         }
-        $exclude_ids = 'SELECT `id_room` FROM `'._DB_PREFIX_.'htl_booking_detail`
-            WHERE `date_from` < \''.pSQL($date_to).'\' AND `date_to` > \''.pSQL($date_from).'\'
-            AND `is_refunded`=0 AND `is_back_order`=0
-            UNION
-            SELECT hri.`id` AS id_room
-            FROM `'._DB_PREFIX_.'htl_room_information` AS hri
-            INNER JOIN `'._DB_PREFIX_.'htl_room_disable_dates` AS hrdd ON (hrdd.`id_room_type` = hri.`id_product` AND hrdd.`id_room` = hri.`id`)
-            WHERE hri.`id_hotel`='.(int)$hotel_id.($id_room_type ? ' AND `id_product` = '.(int)$id_room_type : '').'
-            AND hri.`id_status` = '. HotelRoomInformation::STATUS_TEMPORARY_INACTIVE .'
-            AND (hrdd.`date_from` <= \''.pSql($date_to).'\' AND hrdd.`date_to` >= \''.pSql($date_from).'\')';
 
         if (isset($current_admin_cart_id) && $current_admin_cart_id) {
             $sql = 'SELECT `id` AS `id_room`, `id_product`, `id_hotel`, `room_num`, `comment` AS `room_comment`
             FROM `'._DB_PREFIX_.'htl_room_information`
-            WHERE `id_hotel`='.(int)$hotel_id.($id_room_type ? ' AND `id_product` = '.(int)$id_room_type : '').'
-            AND (id_status = '. HotelRoomInformation::STATUS_ACTIVE .' or id_status = '. HotelRoomInformation::STATUS_TEMPORARY_INACTIVE .')
-            AND `id` NOT IN ('.$exclude_ids.')
+            WHERE `id_hotel`='.(int)$hotel_id.' AND `id_product`='.(int)$room_type.' AND id_status = 1
+            AND `id` NOT IN (SELECT `id_room` FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `date_from` < \''.
+            pSQL($date_to).'\' AND `date_to` > \''.pSQL($date_from).'\' AND `is_refunded`=0 AND `is_back_order`=0)
             AND `id` NOT IN (SELECT `id_room` FROM `'._DB_PREFIX_.'htl_cart_booking_data` WHERE `id_cart`='.
             (int)$current_admin_cart_id.')';
         } else {
             $sql = 'SELECT `id` AS `id_room`, `id_product`, `id_hotel`, `room_num`, `comment` AS `room_comment`
-            FROM `'._DB_PREFIX_.'htl_room_information`
-            WHERE `id_hotel`='.(int)$hotel_id.($id_room_type ? ' AND `id_product` = '.(int)$id_room_type : '').'
-            AND (id_status = '. HotelRoomInformation::STATUS_ACTIVE .' or id_status = '. HotelRoomInformation::STATUS_TEMPORARY_INACTIVE .')
-            AND `id` NOT IN ('.$exclude_ids.')';
+            FROM `'._DB_PREFIX_.'htl_room_information` WHERE `id_hotel`='.(int)$hotel_id.' AND `id_product`='.(int)$room_type.' AND id_status = 1 AND `id` NOT IN (SELECT `id_room` FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `date_from` < \''.pSQL($date_to).'\' AND `date_to` > \''.pSQL($date_from).'\' AND `is_refunded`=0 AND `is_back_order`=0)';
         }
-
-        if ($avail_rooms = Db::getInstance()->executeS($sql)) {
-            // if requested for room type upgrade options also then get room type upgrade options
-            if ($room_types_to_upgrade) {
-                $availableRoomTypes = array();
-                $context = Context::getContext();
-                foreach ($avail_rooms as $roomInfo) {
-                    $availableRoomTypes[$roomInfo['id_product']]['id_product'] = $roomInfo['id_product'];
-                    $objProduct = new Product($roomInfo['id_product'], false, $context->language->id);
-                    $availableRoomTypes[$roomInfo['id_product']]['room_type_name'] = $objProduct->name;
-                    $availableRoomTypes[$roomInfo['id_product']]['rooms'][] = $roomInfo;
-                }
-
-                return $availableRoomTypes;
-            }
-
+        $avail_rooms = Db::getInstance()->executeS($sql);
+        if ($avail_rooms) {
             return $avail_rooms;
         }
 
@@ -1710,151 +973,48 @@ class HotelBookingDetail extends ObjectModel
         *
         * @return [array|false] [Returs array of the available rooms for swapping if rooms found else returnss false]
         */
-    public function getAvailableRoomsForSwapping($date_from, $date_to, $id_room_type, $hotel_id, $id_room)
+    public function getAvailableRoomsForSwapping($date_from, $date_to, $room_type, $hotel_id, $id_room)
     {
-        $sql = 'SELECT `id` as `id_hotel_booking`, `id_room`, `id_product`, `id_hotel`, `room_num`, `comment` AS `room_comment`
-            FROM `'._DB_PREFIX_.'htl_booking_detail`
-            WHERE `id_hotel` = '.(int)$hotel_id.' AND `id_product` = '.(int)$id_room_type.'
-            AND `date_from` = \''.pSQL($date_from).'\' AND `date_to` = \''.pSQL($date_to).'\'
-            AND `id_room`!='.(int)$id_room.' AND `is_refunded` = 0 AND `is_back_order` = 0';
+        $sql = 'SELECT `id` AS `id_room`, `id_product`, `id_hotel`, `room_num`, `comment` AS `room_comment` FROM `'._DB_PREFIX_.'htl_room_information` WHERE `id_hotel`='.(int)$hotel_id.' AND `id_product`='.(int)$room_type.
+        ' AND `id_status` = 1 AND `id` IN (SELECT `id_room` FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `date_from` = \''.pSQL($date_from).'\' AND `date_to` = \''.pSQL($date_to).'\' AND `id_room`!='.(int)$id_room.' AND `is_refunded`=0 AND `is_back_order`=0)';
 
         return Db::getInstance()->executeS($sql);
     }
 
     /**
-     * @deprecated : use reallocateBooking() instead
      * [reallocateRoomWithAvailableSameRoomType :: To reallocate rooms with available rooms in case of reallocation of the room].
-     * @param [int]  $currentRoomId [id of the room to be reallocated]
-     * @param [date] $dateFrom       [start date of the booking of the room]
-     * @param [date] $dateTo         [end date of the booking of the room]
-     * @param [date] $swappedRoomId [id of the room with which the $current_room_id will be reallocated]
-     * @param [int]  $idOrder [id of the order]
+     * @param [int]  $current_room_id [Id of the room to be reallocated]
+     * @param [date] $date_from       [start date of the booking of the room]
+     * @param [date] $date_to         [end date of the booking of the room]
+     * @param [date] $swapped_room_id [Id of the room with which the $current_room_id will be reallocated]
+     *
      * @return [boolean] [true if rooms successfully reallocated else returns false]
      */
-    public function reallocateRoomWithAvailableSameRoomType($currentRoomId, $dateFrom, $dateTo, $swappedRoomId, $idOrder = 0)
+    public function reallocateRoomWithAvailableSameRoomType($current_room_id, $date_from, $date_to, $swapped_room_id)
     {
-        $result = false;
+        $date_from = date('Y-m-d H:i:s', strtotime($date_from));
+        $date_to = date('Y-m-d H:i:s', strtotime($date_to));
+        $table = 'htl_cart_booking_data';
+        $table2 = 'htl_booking_detail';
+        $data = array('id_room' => $swapped_room_id);
+        $where = 'date_from=\''.pSQL($date_from).'\' AND date_to=\''.pSQL($date_to).'\' AND id_room='.
+        (int)$current_room_id;
 
-        $dateFrom = date('Y-m-d H:i:s', strtotime($dateFrom));
-        $dateTo = date('Y-m-d H:i:s', strtotime($dateTo));
-
-        if ($idHotelBooking = Db::getInstance()->getValue(
-            'SELECT `id` FROM `'._DB_PREFIX_.'htl_booking_detail`
-            WHERE date_from = \''.pSQL($dateFrom).'\'
-            AND date_to = \''.pSQL($dateTo).'\'
-            AND id_room = '.(int) $currentRoomId.
-            ((int) $idOrder ? ' AND id_order = '.(int) $idOrder : '')
-        )) {
-            $result = $this->reallocateBooking($idHotelBooking, $swappedRoomId);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Reallocate the room in the booking with the available sent room
-     * @param [int] $idHotelBooking : id of the hotel booking which room has to be reallocated
-     * @param [int] $idRoom : id of the room which has to assigned in reallocation
-     * @return boolean
-     */
-    public function reallocateBooking($idHotelBooking, $idRoom, $priceDiffTaxExcl = 0)
-    {
-        $result = true;
-        // get the cart booking data for the given booking
-        if (Validate::isLoadedObject($objHotelBooking = new HotelBookingDetail($idHotelBooking))) {
-            $objHotelCartBooking = new HotelCartBookingData();
-            if ($cartBookingInfo = $objHotelCartBooking->getRoomRowByIdProductIdRoomInDateRange(
-                $objHotelBooking->id_cart,
-                $objHotelBooking->id_product,
-                $objHotelBooking->date_from,
-                $objHotelBooking->date_to,
-                $objHotelBooking->id_room
+        if ($result = Db::getInstance()->update($table, $data, $where)) {
+            if($room_num = Db::getInstance()->getValue(
+                'SELECT `room_num` FROM `'._DB_PREFIX_.'htl_room_information` WHERE `id` = '.$swapped_room_id
             )) {
-                // Reallocate the rooms in the room cart booking table
-                if (Validate::isLoadedObject($objHotelCartBooking = new HotelCartBookingData($cartBookingInfo['id']))) {
-                    $objHotelCartBooking->id_room = $idRoom;
-                    $result &= $objHotelCartBooking->save();
-                }
+                $data['room_num'] = $room_num;
             }
-
-            // Reallocate the rooms in the room booking table
-            $objHotelRoomInfo = new HotelRoomInformation($idRoom);
-            $idNewRoomType = $objHotelRoomInfo->id_product;
-            if ($objHotelBooking->id_product != $idNewRoomType) {
-                $objHotelBooking->id_product = $idNewRoomType;
-                $objProduct = new Product($idNewRoomType, false, Configuration::get('PS_LANG_DEFAULT'));
-                $objHotelBooking->room_type_name = $objProduct->name;
-
-                // change product name in order detail table
-                $objOrderDetail = new OrderDetail((int) $objHotelBooking->id_order_detail);
-                $objOrderDetail->product_name = $objProduct->name;
-
-                // manage the prices in the order tables for the price diffrence
-                if ($priceDiffTaxExcl != 0) {
-                    $taxCalculator = $objOrderDetail->getTaxCalculator();
-                    $priceDiffTaxIncl = Tools::ps_round($taxCalculator->addTaxes($priceDiffTaxExcl), _PS_PRICE_COMPUTE_PRECISION_);
-
-                    // set price changes in htl_booking_detail table
-                    $objHotelBooking->total_price_tax_excl += (float)$priceDiffTaxExcl;
-                    $objHotelBooking->total_price_tax_incl += (float)$priceDiffTaxIncl;
-
-                    // set price changes in order_detail table
-                    $roomTypeTotalPrice = HotelRoomTypeFeaturePricing::getRoomTypeTotalPrice(
-                        $idNewRoomType,
-                        $objHotelBooking->date_from,
-                        $objHotelBooking->date_to
-                    );
-
-                    $objOrderDetail->unit_price_tax_excl = Product::getPriceStatic($idNewRoomType, false, null, _PS_PRICE_COMPUTE_PRECISION_);
-                    $objOrderDetail->unit_price_tax_incl = Tools::ps_round(
-                        $taxCalculator->addTaxes($objOrderDetail->unit_price_tax_excl),
-                        _PS_PRICE_COMPUTE_PRECISION_
-                    );
-
-                    $objOrderDetail->total_price_tax_excl += (float)$priceDiffTaxExcl;
-                    $objOrderDetail->total_price_tax_incl += (float)$priceDiffTaxIncl;
-
-                    // set price changes in orders table
-                    $objOrder = new Order($objOrderDetail->id_order);
-                    $objOrder->total_products += (float)$priceDiffTaxExcl;
-                    $objOrder->total_products_wt += (float)$priceDiffTaxIncl;
-                    $objOrder->total_paid += (float)$priceDiffTaxIncl;
-                    $objOrder->total_paid_tax_excl += (float)$priceDiffTaxExcl;
-                    $objOrder->total_paid_tax_incl += (float)$priceDiffTaxIncl;
-
-                    $result &= $objOrder->update();
-
-                    // update taxes in order detail
-                    $result &= $objOrderDetail->updateTaxAmount($objOrder);
-                }
-
-                $result &= $objOrderDetail->update();
+            if ($result2 = Db::getInstance()->update($table2, $data, $where)) {
+                return true;
             }
-
-            $objHotelBooking->id_room = $idRoom;
-            $objHotelBooking->room_num = $objHotelRoomInfo->room_num;
-            // set backorder to 0 as available reallocate rooms will always be free
-            $objHotelBooking->is_back_order = 0;
-            $result &= $objHotelBooking->save();
-
-            if ($result) {
-                Hook::exec(
-                    'actionRoomReallocateAfter',
-                    array(
-                        'id_htl_booking' => $idHotelBooking,
-                        'id_room' => $idRoom
-                    )
-                );
-            }
-        } else {
-            $result = false;
+            return false;
         }
-
-        return $result;
+        return false;
     }
 
     /**
-     * @deprecated : use swapBooking() instead
      * [swapRoomWithAvailableSameRoomType :: To swap rooms with available rooms in case of reallocation of the room].
      * @param [int]  $current_room_id [Id of the room to be swapped]
      * @param [date] $date_from       [start date of the booking of the room]
@@ -1863,107 +1023,44 @@ class HotelBookingDetail extends ObjectModel
      *
      * @return [boolean] [true if rooms successfully swapped else returns false]
      */
-    public function swapRoomWithAvailableSameRoomType($idRoomFrom, $dateFrom, $dateTo, $idRoomTo, $idOrderFrom = 0, $idOrderTo = 0)
+    public function swapRoomWithAvailableSameRoomType($current_room_id, $date_from, $date_to, $swapped_room_id)
     {
-        $result = false;
+        $date_from = date('Y-m-d H:i:s', strtotime($date_from));
+        $date_to = date('Y-m-d H:i:s', strtotime($date_to));
 
-        $dateFrom = date('Y-m-d H:i:s', strtotime($dateFrom));
-        $dateTo = date('Y-m-d H:i:s', strtotime($dateTo));
-
-        // Get the booking details for the given rooms as per given parameters
-        $idHotelBookingFrom = Db::getInstance()->getValue(
-            'SELECT `id` FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `is_refunded` = 0
-            AND `date_from`=\''.pSQL($dateFrom).'\'
-            AND `date_to`=\''.pSQL($dateTo).'\'
-            AND `id_room`='.(int)$idRoomFrom.
-            ((int) $idOrderFrom ? ' AND id_order = '.(int) $idOrderFrom : '')
+        $idcrt1 = Db::getInstance()->getValue(
+            'SELECT `id` FROM `'._DB_PREFIX_.'htl_cart_booking_data` WHERE `date_from`=\''.pSQL($date_from).
+            '\' AND `date_to`=\''.pSQL($date_to).'\' AND `id_room`='.(int)$swapped_room_id
+        );
+        $idcrt2 = Db::getInstance()->getValue(
+            'SELECT `id` FROM `'._DB_PREFIX_.'htl_cart_booking_data` WHERE `date_from`=\''.pSQL($date_from).
+            '\' AND `date_to`=\''.pSQL($date_to).'\' AND `id_room`='.(int)$current_room_id
         );
 
-        $idHotelBookingTo = Db::getInstance()->getValue(
-            'SELECT `id` FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `is_refunded` = 0
-            AND `date_from`=\''.pSQL($dateFrom).'\'
-            AND `date_to`=\''.pSQL($dateTo).'\'
-            AND `id_room`='.(int)$idRoomTo.
-            ((int) $idOrderTo ? ' AND id_order = '.(int) $idOrderTo : '')
+        $swap_room = Db::getInstance()->getRow(
+            'SELECT `id`, `room_num` FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `date_from`=\''.pSQL($date_from).
+            '\' AND `date_to`=\''.pSQL($date_to).'\' AND `id_room`='.(int)$swapped_room_id
         );
+        $curr_room = Db::getInstance()->getRow(
+            'SELECT `id`, `room_num` FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `date_from`=\''.pSQL($date_from).
+            '\' AND `date_to`=\''.pSQL($date_to).'\' AND `id_room`='.(int)$current_room_id
+        );
+        $sql = 'UPDATE `'._DB_PREFIX_.'htl_cart_booking_data` SET `id_room`=IF(`id`='.(int)$idcrt1.','.
+        (int)$current_room_id.','.(int)$swapped_room_id.') WHERE `id` IN('.(int)$idcrt1.','.(int)$idcrt2.')';
 
-        if ($idHotelBookingFrom && $idHotelBookingTo) {
-            $result = $this->swapBooking($idHotelBookingFrom, $idHotelBookingTo);
-        }
+        $sql1 = 'UPDATE `'._DB_PREFIX_.'htl_booking_detail`
+            SET `id_room`=IF(`id`='.(int)$swap_room['id'].','.(int)$current_room_id.','.(int)$swapped_room_id.'),
+            `room_num`=IF(`id`='.(int)$swap_room['id'].',\''.$curr_room['room_num'].'\',\''.$swap_room['room_num'].'\')
+            WHERE `id` IN('.(int)$swap_room['id'].','.(int)$curr_room.')';
 
-        return $result;
-    }
-
-    public function swapBooking($idHotelBookingFrom, $idHotelBookingTo)
-    {
-        $result = true;
-        // get the cart booking data for the given booking
-        if (Validate::isLoadedObject($objHotelBookingFrom = new HotelBookingDetail($idHotelBookingFrom))
-            && Validate::isLoadedObject($objHotelBookingTo = new HotelBookingDetail($idHotelBookingTo))
-        ) {
-            // Swap the rooms in the room cart booking table
-            $objHotelCartBooking = new HotelCartBookingData();
-            $cartBookingInfoFrom = $objHotelCartBooking->getRoomRowByIdProductIdRoomInDateRange(
-                $objHotelBookingFrom->id_cart,
-                $objHotelBookingFrom->id_product,
-                $objHotelBookingFrom->date_from,
-                $objHotelBookingFrom->date_to,
-                $objHotelBookingFrom->id_room
-            );
-            $cartBookingInfoTo = $objHotelCartBooking->getRoomRowByIdProductIdRoomInDateRange(
-                $objHotelBookingTo->id_cart,
-                $objHotelBookingTo->id_product,
-                $objHotelBookingTo->date_from,
-                $objHotelBookingTo->date_to,
-                $objHotelBookingTo->id_room
-            );
-
-            if ($cartBookingInfoFrom && $cartBookingInfoTo) {
-                if (Validate::isLoadedObject($objHotelCartBookingFrom = new HotelCartBookingData($cartBookingInfoFrom['id']))
-                    && Validate::isLoadedObject($objHotelCartBookingTo = new HotelCartBookingData($cartBookingInfoTo['id']))
-                ) {
-                    $objHotelCartBookingFrom->id_room = $objHotelCartBookingTo->id_room;
-                    $objHotelCartBookingTo->id_room = $objHotelCartBookingFrom->id_room;
-                    $result &= $objHotelCartBookingFrom->save();
-                    $result &= $objHotelCartBookingTo->save();
-                }
+        if ($result = Db::getInstance()->execute($sql)) {
+            $result2 = Db::getInstance()->execute($sql1);
+            if ($result2) {
+                return true;
             }
-
-            // Swap the rooms in the room booking table
-            // also transfer the backorder status of the room from which room is being swapped
-            $idRoomFrom = $objHotelBookingFrom->id_room;
-            $roomNumFrom = $objHotelBookingFrom->room_num;
-            $roomFromBackOrder = $objHotelBookingFrom->is_back_order;
-
-            $idRoomTo = $objHotelBookingTo->id_room;
-            $roomNumTo = $objHotelBookingTo->room_num;
-            $roomToBackOrder = $objHotelBookingTo->is_back_order;
-
-            $objHotelBookingFrom->id_room = $idRoomTo;
-            $objHotelBookingFrom->room_num = $roomNumTo;
-            $objHotelBookingFrom->is_back_order = $roomToBackOrder;
-
-            $objHotelBookingTo->id_room = $idRoomFrom;
-            $objHotelBookingTo->room_num = $roomNumFrom;
-            $objHotelBookingTo->is_back_order = $roomFromBackOrder;
-
-            $result &= $objHotelBookingFrom->save();
-            $result &= $objHotelBookingTo->save();
-
-            if ($result) {
-                Hook::exec(
-                    'actionRoomSwapAfter',
-                    array(
-                        'id_htl_booking_from' => $idHotelBookingFrom,
-                        'id_htl_booking_to' => $idHotelBookingTo
-                    )
-                );
-            }
-        } else {
-            $result = false;
+            return false;
         }
-
-        return $result;
+        return false;
     }
 
     /**
@@ -1975,11 +1072,10 @@ class HotelBookingDetail extends ObjectModel
      *
      * @return [boolean] [true if updated otherwise false]
      */
-    public function updateOrderRefundStatus($id_order, $date_from = false, $date_to = false, $id_rooms = array(), $is_refunded = 1)
+    public function updateOrderRefundStatus($id_order, $date_from = false, $date_to = false, $id_rooms = array())
     {
         $table = 'htl_booking_detail';
-        $data = array('is_refunded' => (int) $is_refunded);
-
+        $data = array('is_refunded' => 1);
         if ($id_rooms) {
             foreach ($id_rooms as $key_rm => $val_rm) {
                 $where = 'id_order='.(int)$id_order.' AND id_room = '.(int)$val_rm['id_room'].' AND `date_from`= \''.
@@ -1987,15 +1083,8 @@ class HotelBookingDetail extends ObjectModel
                 $result = Db::getInstance()->update($table, $data, $where);
             }
         } else {
-            $result = Db::getInstance()->update($table, $data, 'id_order='.(int)$id_order);
+            return Db::getInstance()->update($table, $data, 'id_order='.(int)$id_order);
         }
-
-        // if automatic overbooking resolution is enabled
-        if ($result && Configuration::get('PS_OVERBOOKING_AUTO_RESOLVE') && $is_refunded) {
-            // if room is getting free and this room is not already in back order then resolve the overbookings for this free room
-            $this->resolveOverBookings();
-        }
-
         return $result;
     }
 
@@ -2039,16 +1128,15 @@ class HotelBookingDetail extends ObjectModel
      *
      * @return [Boolean] [True if deleted else false]
      */
-    public function deleteOrderedRoomFromOrder($idOrder, $idHotel, $idRoom, $dateFrom, $dateTo)
+    public function deleteOrderedRoomFromOrder($id_order, $id_hotel, $id_room, $date_from, $date_to)
     {
-        $roomBookingData = $this->getRoomBookingData($idRoom, $idOrder, $dateFrom, $dateTo);
-        $objHotelBookingDetail = new self($roomBookingData['id']);
+        return Db::getInstance()->delete(
+            'htl_booking_detail',
+            '`id_order`='.(int) $id_order.' AND `id_hotel`='.(int) $id_hotel.' AND `id_room`='.(int) $id_room.
+            ' AND `date_from`=\''.pSQL($date_from).'\' AND `date_to`=\''.pSQL($date_to).'\''
+        );
 
-        if (Validate::isLoadedObject($objHotelBookingDetail)) {
-            return $objHotelBookingDetail->delete();
-        }
-
-        return false;
+        return $delete;
     }
 
     public function getRoomBookinInformationForDateRangeByOrder(
@@ -2067,68 +1155,45 @@ class HotelBookingDetail extends ObjectModel
     }
 
     public function UpdateHotelCartHotelOrderOnOrderEdit(
-        $idOrder,
-        $idRoom,
-        $oldDateFrom,
-        $oldDateTo,
-        $newDateFrom,
-        $newDateTo,
-        $occupancy,
-        $newTotalPrice = null
+        $id_order,
+        $id_room,
+        $old_date_from,
+        $old_date_to,
+        $new_date_from,
+        $new_date_to
     ) {
-        // retrieve HotelBookingDetail row
-        $roomBookingData = $this->getRoomBookingData($idRoom, $idOrder, $oldDateFrom, $oldDateTo);
-        $objHotelBookingDetail = new self($roomBookingData['id']);
-        if (Validate::isLoadedObject($objHotelBookingDetail)) {
-            // retrieve HotelCartBookingData row
-            $idHotelCartBookingData = Db::getInstance()->getValue(
-                'SELECT `id`
-                FROM `'._DB_PREFIX_.'htl_cart_booking_data`
-                WHERE date_from = "'.pSQL($oldDateFrom).'" AND date_to = "'.pSQL($oldDateTo).'"
-                AND id_room = '.(int) $idRoom.' AND `id_order` = '.(int) $idOrder
-            );
+        $rowByIdOrderIdRoom = Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `id_room`='.(int)$id_room.' AND `id_order`='.(int)$id_order);
+        $numDays = $this->getNumberOfDays($old_date_from, $old_date_to);
+        $paidUnitRoomPriceTE = $rowByIdOrderIdRoom['total_price_tax_excl']/$numDays;
+        $paidUnitRoomPriceTI = $rowByIdOrderIdRoom['total_price_tax_incl']/$numDays;
 
-            $objHotelCartBookingData = new HotelCartBookingData($idHotelCartBookingData);
-            if (Validate::isLoadedObject($objHotelCartBookingData)) {
-                // calculate new prices
-                $newTotalPriceTE = '';
-                $newTotalPriceTI = '';
-                $newNumDays = $this->getNumberOfDays($newDateFrom, $newDateTo);
-                if ($newTotalPrice) {
-                    $newTotalPriceTE = $newTotalPrice['tax_excl'];
-                    $newTotalPriceTI = $newTotalPrice['tax_incl'];
-                } else {
-                    $oldNumDays = $this->getNumberOfDays($oldDateFrom, $oldDateTo);
-                    $unitRoomPriceTE = $objHotelBookingDetail->total_price_tax_excl / $oldNumDays;
-                    $unitRoomPriceTI = $objHotelBookingDetail->total_price_tax_incl / $oldNumDays;
-                    $newTotalPriceTE = $unitRoomPriceTE * $newNumDays;
-                    $newTotalPriceTI = $unitRoomPriceTI * $newNumDays;
-                }
+        $newNumDays = $this->getNumberOfDays($new_date_from, $new_date_to);
+        $newTotalPriceTE = $paidUnitRoomPriceTE * $newNumDays;
+        $newTotalPriceTI = $paidUnitRoomPriceTI * $newNumDays;
+        //$total_price = HotelRoomTypeFeaturePricing::getRoomTypeTotalPrice($rowByIdOrderIdRoom['id_product'], $new_date_from, $new_date_to);
+        $table = 'htl_cart_booking_data';
+        $table1 = 'htl_booking_detail';
+        $num_days = $this->getNumberOfDays($new_date_from, $new_date_to);
+        $data_cart = array(
+            'date_from' => $new_date_from,
+            'date_to' => $new_date_to,
+            'quantity' => $num_days
+        );
+        $data_order = array(
+            'date_from' => $new_date_from,
+            'date_to' => $new_date_to,
+            'total_price_tax_excl' => $newTotalPriceTE,
+            'total_price_tax_incl' => $newTotalPriceTI
+        );
 
-                // update $objHotelCartBookingData
-                $objHotelCartBookingData->date_from = $newDateFrom;
-                $objHotelCartBookingData->date_to = $newDateTo;
-                $objHotelCartBookingData->quantity = $newNumDays;
-                $objHotelCartBookingData->adults = $occupancy['adults'];
-                $objHotelCartBookingData->children = $occupancy['children'];
-                $objHotelCartBookingData->child_ages = json_encode($occupancy['child_ages']);
+        $where = 'id_order = '.(int)$id_order.' AND id_room = '.(int)$id_room.' AND date_from= \''.pSQL($old_date_from).
+        '\' AND date_to = \''.pSQL($old_date_to).'\' AND `is_refunded`=0 AND `is_back_order`=0';
 
-                // update $objHotelBookingDetail
-                $objHotelBookingDetail->date_from = $newDateFrom;
-                $objHotelBookingDetail->date_to = $newDateTo;
-                $objHotelBookingDetail->total_price_tax_excl = Tools::ps_round($newTotalPriceTE, 6);
-                $objHotelBookingDetail->total_price_tax_incl = Tools::ps_round($newTotalPriceTI, 6);
-                $objHotelBookingDetail->adults = $occupancy['adults'];
-                $objHotelBookingDetail->children = $occupancy['children'];
-                $objHotelBookingDetail->child_ages = json_encode($occupancy['child_ages']);
+        $result = Db::getInstance()->update($table, $data_cart, $where);
 
-                if ($objHotelCartBookingData->save() && $objHotelBookingDetail->save()) {
-                    return true;
-                }
-            }
-        }
+        $result1 = Db::getInstance()->update($table1, $data_order, $where);
 
-        return false;
+        return $result;
     }
 
     /**
@@ -2167,20 +1232,17 @@ class HotelBookingDetail extends ObjectModel
             $objHtlBranchInfo = new HotelBranchInformation();
 
             foreach ($order_detail_data as $key => $value) {
-                $order_detail_data[$key]['room_type'] = $value['room_type_name'];
-                // Check if product is still available
-                if (Validate::isLoadedObject($objProduct = new Product((int) $value['id_product'], Configuration::get('PS_LANG_DEFAULT')))
-                    && $productCoverImg = Product::getCover($value['id_product'])
-                ) {
-                    $order_detail_data[$key]['image_link'] = $context->link->getImageLink(
-                        $objProduct->link_rewrite[Configuration::get('PS_LANG_DEFAULT')],
-                        $productCoverImg['id_image'], 'small_default'
-                    );
+                $product_image_id = Product::getCover($value['id_product']);
+                $link_rewrite = ((new Product((int) $value['id_product'], Configuration::get('PS_LANG_DEFAULT')))->link_rewrite[Configuration::get('PS_LANG_DEFAULT')]);
+
+                if ($product_image_id) {
+                    $order_detail_data[$key]['image_link'] = $context->link->getImageLink($link_rewrite, $product_image_id['id_image'], 'small_default');
                 } else {
-                    $order_detail_data[$key]['image_link'] = $context->link->getImageLink('', $context->language->iso_code.'-default', 'small_default');
+                    $order_detail_data[$key]['image_link'] = $context->link->getImageLink($link_rewrite, $context->language->iso_code.'-default', 'small_default');
                 }
 
                 $objOrderDetail = new OrderDetail($value['id_order_detail']);
+                $order_detail_data[$key]['room_type'] = $objOrderDetail->product_name;
                 $order_detail_data[$key]['original_unit_price_tax_excl'] = $objOrderDetail->unit_price_tax_excl;
                 $order_detail_data[$key]['original_unit_price_tax_incl'] = $objOrderDetail->unit_price_tax_incl;
                 $order_detail_data[$key]['unit_price_without_reduction_tax_excl'] = $objOrderDetail->unit_price_tax_excl + $objOrderDetail->reduction_amount_tax_excl;
@@ -2192,8 +1254,6 @@ class HotelBookingDetail extends ObjectModel
                 $order_detail_data[$key]['paid_unit_price_tax_incl'] = $value['total_price_tax_incl'] / $num_days;
 
                 $order_detail_data[$key]['feature_price_diff'] = (float)($order_detail_data[$key]['unit_price_without_reduction_tax_incl'] - $order_detail_data[$key]['paid_unit_price_tax_incl']);
-
-                $order_detail_data[$key]['child_ages'] = json_decode($value['child_ages']);
 
                 // Check if this booking as any refund history then enter refund data
                 if ($refundInfo = OrderReturnCore::getOrdersReturnDetail($id_order, 0, $value['id'])) {
@@ -2217,20 +1277,6 @@ class HotelBookingDetail extends ObjectModel
     {
         return Db::getInstance()->getValue(
             'SELECT MAX(`id_order_detail`) FROM `'._DB_PREFIX_.'order_detail` WHERE `id_order`='.(int)$id_order
-        );
-    }
-
-    public function getLastInsertedRoomIdOrderDetail($id_order)
-    {
-        return Db::getInstance()->getValue(
-            'SELECT MAX(`id_order_detail`) FROM `'._DB_PREFIX_.'order_detail` WHERE `is_booking_product` = 1 AND `id_order`='.(int)$id_order
-        );
-    }
-
-    public function getLastInsertedServiceIdOrderDetail($id_order, $id_product)
-    {
-        return Db::getInstance()->getValue(
-            'SELECT MAX(`id_order_detail`) FROM `'._DB_PREFIX_.'order_detail` WHERE `is_booking_product` = 0 AND `product_id`='.(int) $id_product.' AND `id_order`='.(int)$id_order
         );
     }
 
@@ -2301,7 +1347,7 @@ class HotelBookingDetail extends ObjectModel
     }
 
     /**
-     * [createQloAppsBookingByChannels create booking on QloApps commig from different channels]
+     * [createQloAppsBookingByChannels create booking on Qloapps commig from different channels]
      * @param  [array] $params [array containing details of orders]
      * @return [boolean] [true if order is created or returns false]
      */
@@ -2343,7 +1389,7 @@ class HotelBookingDetail extends ObjectModel
     }
 
     /**
-     * [createQloCustomerChannelCustomerInfo create customer in QloApps from supplied information from channel manager]
+     * [createQloCustomerChannelCustomerInfo create customer in Qloapps from supplied information from channel manager]
      * @param  [array] $params [array containg customer information]
      * @return [int|false]     [return customer Id if customer created successfully else returns false]
      */
@@ -2375,7 +1421,7 @@ class HotelBookingDetail extends ObjectModel
     }
 
     /**
-     * [createQloCustomerAddressByChannelCustomerInfo create customer's Address in QloApps from supplied information from channel manager]
+     * [createQloCustomerAddressByChannelCustomerInfo create customer's Address in Qloapps from supplied information from channel manager]
      * @param  [array] $params [array containg customer information]
      * @return [int|false]     [return customer address Id if address created successfully else returns false]
      */
@@ -2404,7 +1450,7 @@ class HotelBookingDetail extends ObjectModel
     }
 
     /**
-     * [createQloCartForBookingFromChannel create cart in QloApps from supplied cart information from channel manager]
+     * [createQloCartForBookingFromChannel create cart in Qloapps from supplied cart information from channel manager]
      * @param  [array] $params [array containg channel cart information]
      * @return [int|false]     [return cart Id if cart created successfully else returns false]
      */
@@ -2467,8 +1513,8 @@ class HotelBookingDetail extends ObjectModel
         $date_to = date("Y-m-d", strtotime($params['date_to']));
         $id_product = $params['id_room_type'];
 
-        $objBookingDetail = new HotelBookingDetail();
-        $num_day = $objBookingDetail->getNumberOfDays($date_from, $date_to); //quantity of product
+        $obj_booking_dtl = new HotelBookingDetail();
+        $num_day = $obj_booking_dtl->getNumberOfDays($date_from, $date_to); //quantity of product
         $product = new Product($id_product, false, Configuration::get('PS_LANG_DEFAULT'));
         $obj_room_type = new HotelRoomType();
         $room_info_by_id_product = $obj_room_type->getRoomTypeInfoByIdProduct($id_product);
@@ -2487,17 +1533,8 @@ class HotelBookingDetail extends ObjectModel
                     }
                 }
                 /*END*/
-                $objBookingDetail = new HotelBookingDetail();
-                $bookingParams = array(
-                    'date_from' => $date_from,
-                    'date_to' => $date_to,
-                    'hotel_id' => $id_hotel,
-                    'id_room_type' => $id_product,
-                    'only_search_data' => 1,
-                    'id_cart' => $id_cart,
-                    'id_guest' => $this->context->cookie->id_guest,
-                );
-                $hotel_room_data = $objBookingDetail->dataForFrontSearch($bookingParams);
+                $obj_booking_dtl = new HotelBookingDetail();
+                $hotel_room_data = $obj_booking_dtl->DataForFrontSearch($date_from, $date_to, $id_hotel, $id_product, 1, 0, 0, -1, 0, 0, $id_cart, $this->context->cookie->id_guest);
                 $total_available_rooms = $hotel_room_data['stats']['num_avail'];
 
                 if ($total_available_rooms < $params['req_qty']) {
@@ -2522,7 +1559,7 @@ class HotelBookingDetail extends ObjectModel
             $id_customer = $this->context->cart->id_customer;
             $id_currency = $this->context->cart->id_currency;
 
-            $hotel_room_info_arr = $hotel_room_data['rm_data'][$id_product]['data']['available'];
+            $hotel_room_info_arr = $hotel_room_data['rm_data'][0]['data']['available'];
             $chkQty = 0;
             foreach ($hotel_room_info_arr as $key_hotel_room_info => $val_hotel_room_info) {
                 if ($chkQty < $params['req_qty']) {
@@ -2534,7 +1571,7 @@ class HotelBookingDetail extends ObjectModel
                     $obj_htl_cart_booking_data->id_product = $val_hotel_room_info['id_product'];
                     $obj_htl_cart_booking_data->id_room = $val_hotel_room_info['id_room'];
                     $obj_htl_cart_booking_data->id_hotel = $val_hotel_room_info['id_hotel'];
-                    $obj_htl_cart_booking_data->booking_type = HotelBookingDetail::ALLOTMENT_AUTO;
+                    $obj_htl_cart_booking_data->booking_type = 1;
                     $obj_htl_cart_booking_data->quantity = $num_day;
                     $obj_htl_cart_booking_data->date_from = $date_from;
                     $obj_htl_cart_booking_data->date_to = $date_to;
@@ -2563,105 +1600,37 @@ class HotelBookingDetail extends ObjectModel
         }
     }
 
-    public function deleteHotelOrderInfo($idOrder)
+    public function deleteHotelOrderInfo($id_order)
     {
-        $result = true;
-        $objHotelCartBookingData = new HotelCartBookingData();
-        $bookingsCartData = $objHotelCartBookingData->getCartCurrentDataByOrderId($idOrder);
-        if (is_array($bookingsCartData) && count($bookingsCartData)) {
-            foreach ($bookingsData as $bookingCartData) {
-                $objHotelCartBookingData = new HotelCartBookingData($bookingCartData['id']);
-                if (Validate::isLoadedObject($objHotelCartBookingData)) {
-                    $result &= $objHotelCartBookingData->delete();
-                }
-            }
+        $cartTable = 'htl_cart_booking_data';
+        $orderTable = 'htl_booking_detail';
+        $condition = 'id_order = '.(int)$id_order;
+        if (Db::getInstance()->delete($orderTable, $condition)) {
+            return Db::getInstance()->delete($cartTable, $condition);
         }
-
-        $bookingsData = $this->getBookingDataByOrderId($idOrder);
-        if (is_array($bookingsData) && count($bookingsData)) {
-            foreach ($bookingsData as $bookingData) {
-                $objHotelBookingDetail = new self($bookingData['id']);
-                if (Validate::isLoadedObject($objHotelBookingDetail)) {
-                    $result &= $objHotelBookingDetail->delete();
-                }
-            }
-        }
-
-        return $result;
+        return false;
     }
 
-    public function deleteHotelOrderRoomInfo($idOrder, $idProduct, $idRoom)
+    public function deleteHotelOrderRoomInfo($id_order, $id_product, $id_room)
     {
-        $result = Db::getInstance()->executeS(
-            'SELECT `id`
-            FROM `'._DB_PREFIX_.'htl_cart_booking_data`
-            WHERE `id_order` = '.(int) $idOrder.' AND `id_product` = '.(int) $idProduct.'
-            AND `id_room` = '.(int) $idRoom
-        );
-
-        $return = true;
-        if (is_array($result) && count($result)) {
-            foreach ($result as $row) {
-                $objHotelCartBookingData = new HotelCartBookingData($row['id']);
-                if (Validate::isLoadedObject($objHotelCartBookingData)) {
-                    $return &= $objHotelCartBookingData->delete();
-                }
-            }
+        $cartTable = 'htl_cart_booking_data';
+        $orderTable = 'htl_booking_detail';
+        $condition = 'id_order = '.(int)$id_order.' AND id_product = '.(int)$id_product.' AND id_room = '.(int)$id_room;
+        if (Db::getInstance()->delete($orderTable, $condition)) {
+            return Db::getInstance()->delete($cartTable, $condition);
         }
-
-        $result = Db::getInstance()->executeS(
-            'SELECT `id`
-            FROM `'._DB_PREFIX_.'htl_booking_detail`
-            WHERE `id_order` = '.(int) $idOrder.' AND `id_product` = '.(int) $idProduct.'
-            AND `id_room` = '.(int) $idRoom
-        );
-
-        if (is_array($result) && count($result)) {
-            foreach ($result as $row) {
-                $objHotelBookingDetail = new self($row['id']);
-                if (Validate::isLoadedObject($objHotelBookingDetail)) {
-                    $return &= $objHotelBookingDetail->delete();
-                }
-            }
-        }
-
-        return $return;
+        return false;
     }
 
-    public function deleteHotelOrderRoomTypeInfo($idOrder, $idProduct)
+    public function deleteHotelOrderRoomTypeInfo($id_order, $id_product)
     {
-        $result = Db::getInstance()->executeS(
-            'SELECT `id`
-            FROM `'._DB_PREFIX_.'htl_cart_booking_data`
-            WHERE `id_order` = '.(int) $idOrder.' AND `id_product` = '.(int) $idProduct
-        );
-
-        $return = true;
-        if (is_array($result) && count($result)) {
-            foreach ($result as $row) {
-                $objHotelCartBookingData = new HotelCartBookingData($row['id']);
-                if (Validate::isLoadedObject($objHotelCartBookingData)) {
-                    $return &= $objHotelCartBookingData->delete();
-                }
-            }
+        $cartTable = 'htl_cart_booking_data';
+        $orderTable = 'htl_booking_detail';
+        $condition = 'id_order = '.(int)$id_order.' AND id_product = '.(int)$id_product;
+        if (Db::getInstance()->delete($orderTable, $condition)) {
+            return Db::getInstance()->delete($cartTable, $condition);
         }
-
-        $result = Db::getInstance()->executeS(
-            'SELECT `id`
-            FROM `'._DB_PREFIX_.'htl_booking_detail`
-            WHERE `id_order` = '.(int) $idOrder.' AND `id_product` = '.(int) $idProduct
-        );
-
-        if (is_array($result) && count($result)) {
-            foreach ($result as $row) {
-                $objHotelBookingDetail = new self($row['id']);
-                if (Validate::isLoadedObject($objHotelBookingDetail)) {
-                    $return &= $objHotelBookingDetail->delete();
-                }
-            }
-        }
-
-        return $return;
+        return false;
     }
 
     public function enterHotelOrderBookingFormCartBookingData($id_cart)
@@ -2691,7 +1660,7 @@ class HotelBookingDetail extends ObjectModel
                     $objHtlBooking->id_hotel = $objCartBooking->id_hotel;
                     $objHtlBooking->id_customer = $cart->id_customer;
                     $objHtlBooking->booking_type = $objCartBooking->booking_type;
-                    $objHtlBooking->id_status = self::STATUS_ALLOTED;
+                    $objHtlBooking->id_status = 1;
                     $objHtlBooking->comment = $objCartBooking->comment;
 
                     // For Back Order(Because of cart lock)
@@ -2713,8 +1682,6 @@ class HotelBookingDetail extends ObjectModel
 
     public function updateHotelOrderRoomDurationInfo($id_order, $id_product, $id_room, $update_params)
     {
-        Tools::displayAsDeprecated();
-
         $cartTable = 'htl_cart_booking_data';
         $orderTable = 'htl_booking_detail';
         $condition = '`id_order` = '.(int)$id_order.' AND `id_product` = '.(int)$id_product.
@@ -2759,19 +1726,11 @@ class HotelBookingDetail extends ObjectModel
 
             // Add new entry to the table
             if ($orderDetail->save()) {
-                $bookingsData = self::getOrderInfoIdOrderIdProduct($id_order, $id_product);
-                if (is_array($bookingsData) && count($bookingsData)) {
-                    $result = true;
-                    foreach ($bookingsData as $bookingData) {
-                        $objHotelBookingDetail = new self($bookingData['id']);
-                        if (Validate::isLoadedObject($objHotelBookingDetail)) {
-                            $objHotelBookingDetail->id_order_detail = $orderDetail->id_order_detail;
-                            $result &= $objHotelBookingDetail->save();
-                        }
-                    }
-
-                    return $result;
-                }
+                return Db::getInstance()->update(
+                    'htl_booking_detail',
+                    array('id_order_detail' => $orderDetail->id_order_detail),
+                    '`id_order` = '.(int)$id_order.' AND `id_product` = '.(int)$id_product
+                );
             }
         }
         return false;
@@ -2794,51 +1753,13 @@ class HotelBookingDetail extends ObjectModel
         );
     }
 
-    public function getRoomBookingData($idRoom, $idOrder, $date_from, $date_to)
+    public function getRoomBookingData($idRoom, $idOrder)
     {
-        $sql = 'SELECT `id`, `id_product`, `id_order_detail`, `id_hotel`, `id_customer`, `booking_type`, `id_status`, `check_in`, `check_out`
+        $sql = 'SELECT `id_product`, `id_order_detail`, `id_hotel`, `id_customer`, `booking_type`, `id_status`, `check_in`, `check_out`
                 FROM `'._DB_PREFIX_.'htl_booking_detail`
-                WHERE `id_order`='.(int)$idOrder.' AND `id_room`='.(int)$idRoom.'
-                AND `date_from`=\''.pSQL($date_from).'\' AND `date_to`= \''.pSQL($date_to).'\'';
+                WHERE `id_order`='.(int)$idOrder.' AND `id_room`='.(int)$idRoom;
 
         return Db::getInstance()->getRow($sql);
-    }
-
-    public static function getAllHotelOrderStatus()
-    {
-        $moduleInstance = Module::getInstanceByName('hotelreservationsystem');
-
-        $pages = array(
-            'STATUS_ALLOTED' => array(
-                'id_status' => self::STATUS_ALLOTED,
-                'name' => $moduleInstance->l('Alloted', 'hotelreservationsystem')
-            ),
-            'STATUS_CHECKED_IN' => array(
-                'id_status' => self::STATUS_CHECKED_IN,
-                'name' => $moduleInstance->l('Checked In', 'hotelreservationsystem')
-            ),
-            'STATUS_CHECKED_OUT' => array(
-                'id_status' => self::STATUS_CHECKED_OUT,
-                'name' => $moduleInstance->l('Checked Out', 'hotelreservationsystem')
-            ),
-        );
-        return $pages;
-    }
-
-    public static function getAllAllotmentTypes()
-    {
-        $moduleInstance = Module::getInstanceByName('hotelreservationsystem');
-        $allotments = array(
-            array(
-                'id_allotment' => self::ALLOTMENT_AUTO,
-                'name' => $moduleInstance->l('Auto Allotment', 'hotelreservationsystem')
-            ),
-            array(
-                'id_allotment' => self::ALLOTMENT_MANUAL,
-                'name' => $moduleInstance->l('Manual Allotment', 'hotelreservationsystem')
-            ),
-        );
-        return $allotments;
     }
 
     // Webservice funcions
@@ -2856,373 +1777,5 @@ class HotelBookingDetail extends ObjectModel
             Configuration::get('PS_OS_REFUND'),
             Configuration::get('PS_OS_ERROR'),
         ));
-    }
-
-    // process the booking tables changes when a booking refund/cancellation is processed
-    public function processRefundInBookingTables()
-    {
-        if (Validate::isLoadedObject($this)) {
-            $reduction_amount = array(
-                'total_price_tax_excl' => 0,
-                'total_price_tax_incl' => 0,
-                'total_products_tax_excl' => 0,
-                'total_products_tax_incl' => 0,
-            );
-            $objOrder = new Order($this->id_order);
-            $orderTotalPaid = $objOrder->getTotalPaid();
-
-            // things to do if order is not paid
-            if ((float) $orderTotalPaid <= 0) {
-                $objHotelBookingDemands = new HotelBookingDemands();
-                $objRoomTypeServiceProductOrderDetail = new RoomTypeServiceProductOrderDetail();
-
-                $reduction_amount['total_price_tax_excl'] = Tools::ps_round((float) $this->total_price_tax_excl, 6);
-                $reduction_amount['total_products_tax_excl'] = Tools::ps_round((float) $this->total_price_tax_excl, 6);
-                $reduction_amount['total_price_tax_incl'] = Tools::ps_round((float) $this->total_price_tax_incl, 6);
-                $reduction_amount['total_products_tax_incl'] = Tools::ps_round((float) $this->total_price_tax_incl, 6);
-
-                // reduce facilities amount from order and services_detail
-                if ($roomDemands = $objHotelBookingDemands->getRoomTypeBookingExtraDemands(
-                    $this->id_order,
-                    $this->id_product,
-                    $this->id_room,
-                    $this->date_from,
-                    $this->date_to,
-                    0
-                )) {
-                    foreach ($roomDemands as $roomDemand) {
-                        $objHotelBookingDemands = new HotelBookingDemands($roomDemand['id_booking_demand']);
-                        $reduction_amount['total_price_tax_excl'] += Tools::ps_round((float) $objHotelBookingDemands->total_price_tax_excl, 6);
-                        $reduction_amount['total_price_tax_incl'] += Tools::ps_round((float) $objHotelBookingDemands->total_price_tax_incl, 6);
-                        $objHotelBookingDemands->total_price_tax_excl = 0;
-                        $objHotelBookingDemands->total_price_tax_incl = 0;
-                        $objHotelBookingDemands->save();
-                    }
-                }
-
-                // reduce services amount from order and services_detail
-                if ($roomServices = $objRoomTypeServiceProductOrderDetail->getSelectedServicesForRoom(
-                    $this->id
-                )) {
-                    foreach ($roomServices['additional_services'] as $roomService) {
-                        $objRoomTypeServiceProductOrderDetail = new RoomTypeServiceProductOrderDetail(
-                            $roomService['id_room_type_service_product_order_detail']
-                        );
-                        $reduction_amount['total_price_tax_excl'] += Tools::ps_round((float) $objRoomTypeServiceProductOrderDetail->total_price_tax_excl, 6);
-                        $reduction_amount['total_products_tax_excl'] += Tools::ps_round((float) $objRoomTypeServiceProductOrderDetail->total_price_tax_excl, 6);
-                        $reduction_amount['total_price_tax_incl'] += Tools::ps_round((float) $objRoomTypeServiceProductOrderDetail->total_price_tax_incl, 6);
-                        $reduction_amount['total_products_tax_incl'] += Tools::ps_round((float) $objRoomTypeServiceProductOrderDetail->total_price_tax_incl, 6);
-
-                        if (Validate::isLoadedObject($objOrderDetail = new OrderDetail($objRoomTypeServiceProductOrderDetail->id_order_detail))) {
-                            $objOrderDetail->product_quantity_refunded += $objRoomTypeServiceProductOrderDetail->quantity;
-                            if ($objOrderDetail->product_quantity_refunded > $objOrderDetail->product_quantity) {
-                                $objOrderDetail->product_quantity_refunded = $objOrderDetail->product_quantity;
-                            }
-
-                            $objOrderDetail->total_price_tax_excl -= Tools::ps_round((float) $objRoomTypeServiceProductOrderDetail->total_price_tax_excl, 6);
-                            $objOrderDetail->total_price_tax_incl -= Tools::ps_round((float) $objRoomTypeServiceProductOrderDetail->total_price_tax_incl, 6);
-
-                            $objOrderDetail->save();
-                        }
-
-                        $objRoomTypeServiceProductOrderDetail->total_price_tax_excl = 0;
-                        $objRoomTypeServiceProductOrderDetail->total_price_tax_incl = 0;
-                        $objRoomTypeServiceProductOrderDetail->save();
-                    }
-                }
-            }
-
-            // enter refunded quantity in the order detail table
-            $idOrderDetail = $this->id_order_detail;
-            if (Validate::isLoadedObject($objOrderDetail = new OrderDetail($idOrderDetail))) {
-                $numDays = $this->getNumberOfDays(
-                    $this->date_from,
-                    $this->date_to
-                );
-
-                $objOrderDetail->product_quantity_refunded += $numDays;
-                if ($objOrderDetail->product_quantity_refunded > $objOrderDetail->product_quantity) {
-                    $objOrderDetail->product_quantity_refunded = $objOrderDetail->product_quantity;
-                }
-
-                if ((float) $orderTotalPaid <= 0) {
-                    // reduce room amount from order and order detail
-                    $objOrderDetail->total_price_tax_incl -= Tools::ps_round((float) $this->total_price_tax_incl, 6);
-                    $objOrderDetail->total_price_tax_excl -= Tools::ps_round((float) $this->total_price_tax_excl, 6);
-                    if (Validate::isLoadedObject($objOrder = new Order($this->id_order))) {
-                        $objOrder->total_paid -= $reduction_amount['total_price_tax_incl'];
-                        $objOrder->total_paid_tax_excl -= Tools::ps_round((float) $reduction_amount['total_price_tax_excl'], 6);
-                        $objOrder->total_paid_tax_incl -= Tools::ps_round((float) $reduction_amount['total_price_tax_incl'], 6);
-                        $objOrder->total_products -= Tools::ps_round((float) $reduction_amount['total_products_tax_excl'], 6);
-                        $objOrder->total_products_wt -= Tools::ps_round((float) $reduction_amount['total_products_tax_incl'], 6);
-                        $objOrder->save();
-                    }
-                }
-
-                $objOrderDetail->save();
-            }
-
-            // as refund is completed then set the booking as refunded
-            $this->is_refunded = 1;
-            if ((float) $orderTotalPaid <= 0) {
-                // Reduce room amount from htl_booking_detail
-                $this->is_cancelled = 1;
-                $this->total_price_tax_excl = 0;
-                $this->total_price_tax_incl = 0;
-            }
-
-            $this->save();
-
-            return true;
-        }
-
-        return false;
-    }
-
-    public function setBookingCancellationMessage($message, $byAdmin = 0)
-    {
-        if (Validate::isLoadedObject($this)) {
-            // First save the message for the admin for the refund
-            $objectMessage = new Message();
-            $objectMessage->message = $message;
-            $objectMessage->id_cart = (int)$this->id_cart;
-            $objectMessage->id_customer = (int)($this->id_customer);
-            $objectMessage->id_order = (int)$this->id_order;
-            $objectMessage->private = 1;
-
-            // If cancelled by admin then set the employee id who is doing this cancellation else put 0
-            $context = Context::getContext();
-            if ($byAdmin) {
-                $objectMessage->id_employee = (int)$context->employee->id;
-            } else {
-                $objectMessage->id_employee = 0;
-            }
-
-            $objectMessage->add();
-
-            // save this message for the customer
-            $objCustomer = new Customer($this->id_customer);
-            $idCustomerThread = CustomerThread::getIdCustomerThreadByEmailAndIdOrder($objCustomer->email, $this->id_order);
-            if (!$idCustomerThread) {
-                $objCustomerThread = new CustomerThread();
-                $objCustomerThread->id_contact = 0;
-                $objCustomerThread->id_customer = (int)$this->id_customer;
-                $objCustomerThread->id_shop = (int)$context->shop->id;
-                $objCustomerThread->id_order = (int)$this->id_order;
-                $objCustomerThread->id_lang = (int)$context->language->id;
-                $objCustomerThread->email = $objCustomer->email;
-                $objCustomerThread->status = 'open';
-                $objCustomerThread->token = Tools::passwdGen(12);
-                $objCustomerThread->add();
-            } else {
-                $objCustomerThread = new CustomerThread((int)$idCustomerThread);
-            }
-
-            $objCustomerMessage = new CustomerMessage();
-            $objCustomerMessage->id_customer_thread = $objCustomerThread->id;
-
-            // If cancelled by admin then set the employee id who is doing this cancellation else put 0
-            if ($byAdmin) {
-                $objCustomerMessage->id_employee = (int)$context->employee->id;
-            } else {
-                $objCustomerMessage->id_employee = 0;
-            }
-
-            $objCustomerMessage->message = $message;
-            $objCustomerMessage->private = 0;
-
-            $objCustomerMessage->add();
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Get overbooked rooms in the order|hotel
-     * @param [int] $idOrder : id of the order
-     * @param [int] $idHotel : id of the hotel
-     * @param [string] $dateFrom
-     * @param [string] $dateTo
-     * @param [int] $datewiseBreakup : send 1 to get overbooked rooms in datewise breakup
-     * @param [int] $roomCount : send 1 to get the count of the rooms overbooked only
-     * @param [int] $bookedRoomFlag : send 0 for no action | send 1 to get booked room info | send 2 to get overbooked rooms which are free
-     *
-     * @return array | integer : array of overbooked rooms | count of overbooked rooms
-     */
-    public function getOverbookedRooms(
-        $idOrder = 0,
-        $idHotel = 0,
-        $dateFrom = '',
-        $dateTo = '',
-        $datewiseBreakup = 0,
-        $roomCount = 0,
-        $bookedRoomInfoFlag = 0
-    ) {
-        $result = array();
-
-        $sql = 'SELECT';
-        if ($roomCount) {
-            $sql .= ' COUNT(*)';
-        } else {
-            $sql .= ' *';
-        }
-
-        $sql .= ' FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `is_back_order` = 1 AND `is_refunded` = 0 AND `is_cancelled` = 0';
-
-        if ($idOrder) {
-            $sql .= ' AND `id_order` = '.(int) $idOrder;
-        }
-        if ($idHotel) {
-            $sql .= ' AND `id_hotel` = '.(int) $idHotel;
-        }
-
-        if ($datewiseBreakup && $dateFrom && $dateTo) {
-            for ($currentDate = $dateFrom; $currentDate < $dateTo; $currentDate = date('Y-m-d', strtotime('+1 day', strtotime($currentDate)))) {
-                $dateSql = $sql . ' AND `date_from` <= \''.pSQL($currentDate).'\' AND `date_to` > \''.pSQL($currentDate).'\'';
-
-                if ($roomCount) {
-                    $result[$currentDate] = Db::getInstance()->getValue($dateSql);
-                } else {
-                    $result[$currentDate] = Db::getInstance()->executeS($dateSql);
-                }
-            }
-        } else {
-            if ($dateFrom && $dateTo) {
-                $sql .= ' AND `date_from` < \''.pSQL($dateTo).'\' AND `date_to` > \''.pSQL($dateFrom).'\'';
-            }
-
-            if ($roomCount) {
-                $result = Db::getInstance()->getValue($sql);
-            } else {
-                $result = Db::getInstance()->executeS($sql);
-            }
-        }
-
-        if ($bookedRoomInfoFlag && !$roomCount && $result) {
-            $link = new Link();
-            foreach ($result as $key => $bookingInfo) {
-                $result[$key]['booked_room_info'] = $this->chechRoomBooked($bookingInfo['id_room'], $bookingInfo['date_from'], $bookingInfo['date_to']);
-                $result[$key]['orders_filter_link'] = $link->getAdminLink('AdminOrders');
-
-                // if need only rooms which are available to resolve overbooking the unset booked rooms
-                if ($bookedRoomInfoFlag == 2 && $result[$key]['booked_room_info']) {
-                    unset($result[$key]);
-                }
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Get all the orders which are in overbooking
-     * @param integer $onlyFutureDates : for orders which bookings dates are in future
-     * @return array
-     */
-    public function getOverBookedOrders($onlyFutureDates = 0)
-    {
-        $sql = 'SELECT DISTINCT `id_order` FROM `'._DB_PREFIX_.'htl_booking_detail` WHERE `is_back_order` = 1 AND `is_refunded` = 0 AND `is_cancelled` = 0';
-
-        if ($onlyFutureDates) {
-            $sql .= ' AND `date_to` > \''.pSQL(date('Y-m-d')).'\'';
-        }
-        $sql .= ' ORDER BY `id_order` ASC';
-
-        $result = Db::getInstance()->executeS($sql);
-
-        return array_column($result, 'id_order');
-    }
-
-    // Resolve overbookings by checking current available rooms
-    // Overbookings resolution will only be done if all overbookings are getting resolved in the order
-    public function resolveOverBookings($idHotelBooking = 0)
-    {
-        $result = false;
-
-        $overBookedOrders = array();
-        if ($idHotelBooking) {
-            if (Validate::isLoadedObject($objHtlBookingDetail = new HotelBookingDetail($idHotelBooking))) {
-                $overBookedOrders = array($objHtlBookingDetail->id_order);
-            }
-        } else {
-            $overBookedOrders = $this->getOverBookedOrders(1);
-        }
-
-        if ($overBookedOrders) {
-            foreach ($overBookedOrders as $idOrder) {
-                // get all overbooked rooms in the order so that we can decide status of the order after overbooking resolved
-                $overBookedRooms = $this->getOverbookedRooms($idOrder);
-                $totalOverBookedInOrder = count($overBookedRooms);
-
-                // if request for specific booking resolve
-                if ($idHotelBooking) {
-                    $overBookedRooms = array((array)($objHtlBookingDetail));
-                }
-
-                if ($overBookedRooms) {
-                    $resolvableOverbookings = array();
-                    foreach($overBookedRooms as $roomBooking) {
-                        $params = array(
-                            'idHotel' => $roomBooking['id_hotel'],
-                            'dateFrom' => $roomBooking['date_from'],
-                            'dateTo' => $roomBooking['date_to'],
-                            'idRoomType' => $roomBooking['id_product'],
-                            'searchOccupancy' => 0,
-                            'allowedIdRoomTypes' => implode(",", array($roomBooking['id_product']))
-                        );
-
-                        if ($availableRooms = $this->getSearchAvailableRooms($params)) {
-                            if (isset($availableRooms['availableRoomTypes']['roomTypes'][$roomBooking['id_product']]['rooms'])
-                                && $availableRooms['availableRoomTypes']['roomTypes'][$roomBooking['id_product']]['rooms']
-                            ) {
-                                $availableRoomsInfo = $availableRooms['availableRoomTypes']['roomTypes'][$roomBooking['id_product']]['rooms'];
-                                if ($roomIdsAvailable = array_column($availableRoomsInfo, 'id_room')) {
-                                    // If room is still there in the available rooms list then we can resolve its overbooking
-                                    if (in_array($roomBooking['id_room'], $roomIdsAvailable)) {
-                                        $resolvableOverbookings[] = $roomBooking['id'];
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // if request for specific booking Or all overbooked rooms are resolved then resolve the overbooking by setting is_back_order to 0
-                    if ($idHotelBooking || (count($resolvableOverbookings) == $totalOverBookedInOrder)) {
-                        foreach ($resolvableOverbookings as $idHtlBookingDtl) {
-                            $objBookingDetail = new HotelBookingDetail($idHtlBookingDtl);
-                            $objBookingDetail->is_back_order = 0;
-                            $objBookingDetail->update();
-
-                            $result = true;
-                        }
-
-                        // After all overbookings are resolved we can update the status of the order
-                        if (count($resolvableOverbookings) == $totalOverBookedInOrder) {
-                            $objOrder = new Order($idOrder);
-                            $idOrderState = 0;
-                            if ($objOrder->current_state == Configuration::get('PS_OS_OVERBOOKING_PAID')) {
-                                $idOrderState = Configuration::get('PS_OS_PAYMENT_ACCEPTED');
-                            } elseif ($objOrder->current_state == Configuration::get('PS_OS_OVERBOOKING_PARTIAL_PAID')) {
-                                $idOrderState = Configuration::get('PS_OS_PARTIAL_PAYMENT_ACCEPTED');
-                            } elseif ($objOrder->current_state == Configuration::get('PS_OS_OVERBOOKING_UNPAID')) {
-                                $idOrderState = Configuration::get('PS_OS_AWAITING_PAYMENT');
-                            }
-
-                            // if we have order state to change
-                            if ($idOrderState) {
-                                $objOrderHistory = new OrderHistory();
-                                $objOrderHistory->id_order = (int)$idOrder;
-                                $objOrderHistory->changeIdOrderState((int)$idOrderState, $objOrder, true);
-                                $objOrderHistory->add();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return $result;
     }
 }

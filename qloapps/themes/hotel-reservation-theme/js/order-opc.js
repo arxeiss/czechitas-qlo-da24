@@ -33,45 +33,6 @@ $(document).ready(function()
 		$(this).closest('.card').find('.step-edit').addClass('hidden');
 	});
 
-	// room price details tooltip
-	if ($('.room_price_detail_block .room-price-detail').length) {
-		$('.room_price_detail_block .room-price-detail').each(function (i, element) {
-			$(this).find('img').tooltip({
-				content: $(this).closest('.price_block').find('.room-price-detail-container').html(),
-				items: "span",
-				trigger : 'hover',
-				tooltipClass: "room-price-detail-tooltip",
-				open: function(event, ui)
-				{
-					if (typeof(event.originalEvent) === 'undefined')
-					{
-						return false;
-					}
-
-					var $id = $(ui.tooltip).attr('id');
-
-					if ($('div.ui-tooltip').not('#' + $id).length) {
-						return false;
-					}
-				},
-				close: function(event, ui)
-				{
-					ui.tooltip.hover(function()
-					{
-						$(this).stop(true).fadeTo(400, 1);
-					},
-					function()
-					{
-						$(this).fadeOut('400', function()
-						{
-							$(this).remove();
-						});
-					});
-				}
-			});
-		});
-	}
-
 	// BY WEBKUL
 	// FOR ADVANCED PAYMENT
 	var payment_type = $(".payment_type:checked").val();
@@ -89,44 +50,6 @@ $(document).ready(function()
 			$("#partial_data").slideDown();
 	});
 
-	// customer guest booking
-	function initGuestbookingcontainer() {
-		if ($("#customer_guest_detail:checked").val() == 1) {
-			$('#checkout-guest-info-block').hide('slow');
-			$('#customer-guest-detail-container').show('slow');
-		} else {
-			$('#customer-guest-detail-container').hide('slow');
-			$('#checkout-guest-info-block').show('slow');
-		}
-	}
-	function validateCustomerGuestDetailForm() {
-		$('#customer_guest_detail_form input.validate').each(function (index, element) {
-			if (!validate_field(element)) {
-				if ($('#cgv').prop('checked') == 1) {
-					$('#cgv').trigger('click');
-				}
-			}
-		});
-	}
-	initGuestbookingcontainer();
-	$("#customer_guest_detail").on('change',function() {
-		initGuestbookingcontainer();
-	});
-	if ($("#customer_guest_detail:checked").val() == 1) {
-		validateCustomerGuestDetailForm();
-	}
-
-	$('#customer_guest_detail_form').on('change', function(e) {
-		$.ajax({
-			type: 'POST',
-			url: orderOpcUrl,
-			async: false,
-			cache: false,
-			dataType : "json",
-			data: $(this).serialize()+'&method=submitCustomerGuestDetail&ajax=true&token=' + static_token
-		});
-	});
-
 	// GUEST CHECKOUT / NEW ACCOUNT MANAGEMENT
 	if ((typeof isLogged == 'undefined' || !isLogged) || (typeof isGuest !== 'undefined' && isGuest))
 	{
@@ -140,6 +63,7 @@ $(document).ready(function()
 				$('.is_customer_param').show();
 				$('#opc_account_form').slideDown('slow');
 				$('#is_new_customer').val('1');
+				$('#opc_account_choice, #opc_invoice_address').hide();
 				if (typeof bindUniform !=='undefined')
 					bindUniform();
 			});
@@ -148,6 +72,7 @@ $(document).ready(function()
 				$('.is_customer_param').hide();
 				$('#opc_account_form').slideDown('slow');
 				$('#is_new_customer').val('0');
+				$('#opc_account_choice, #opc_invoice_address').hide();
 				$('#new_account_title').html(txtInstantCheckout);
 				$('#submitAccount').attr({id : 'submitGuestAccount', name : 'submitGuestAccount'});
 				if (typeof bindUniform !=='undefined')
@@ -173,19 +98,11 @@ $(document).ready(function()
 		// LOGIN FORM
 		$(document).on('click', '#openLoginFormBlock', function(e){
 			e.preventDefault();
-			$('#openNewAccountBlock').show(200);
-			$('.already_registered_block').hide(200);
-			$('#login_form_content').slideDown(200);
-			$('#new_account_form').slideUp(200);
+			$('#openNewAccountBlock').show();
+			$('.already_registered_block').hide();
+			$('#login_form_content').slideDown('slow');
+			$('#new_account_form').slideUp('slow');
 		});
-
-		$(document).on('click', '#idAccountChoice', function(e) {
-			e.preventDefault();
-			$('#login_form_content').slideUp(200);
-			$('#new_account_form').slideDown(200);
-			$('.already_registered_block').show(200);
-		});
-
 		// LOGIN FORM SENDING
 		$(document).on('click', '#SubmitLogin', function(e)
 		{
@@ -245,10 +162,9 @@ $(document).ready(function()
 			e.preventDefault();
 			$('#opc_new_account-overlay, #opc_delivery_methods-overlay, #opc_payment_methods-overlay').fadeIn('slow')
 
-            var callingFile = '';
+			var callingFile = '';
             var advApiParam = '';
             var params = '';
-            var isTransforming = false;
 
             if ($(this).attr('data-adv-api')) {
                 advApiParam = '&isAdvApi=1';
@@ -261,12 +177,8 @@ $(document).ready(function()
 			}
 			else
 			{
-				if ($('#opc_account_form #passwd').val().length > 0) {
-					params = 'method=transformGuestAccount&';
-					isTransforming = true;
-				} else {
-					params = 'method=editCustomer&';
-				}
+				callingFile = orderOpcUrl;
+				params = 'method=editCustomer&';
 			}
 
 			$('#opc_account_form input:visible, #opc_account_form input[type=hidden]').each(function() {
@@ -287,6 +199,8 @@ $(document).ready(function()
 			$('#opc_account_form select:visible').each(function() {
 				params += encodeURIComponent($(this).attr('name'))+'='+encodeURIComponent($(this).val())+'&';
 			});
+			params += 'customer_lastname='+encodeURIComponent($('#customer_lastname').val())+'&';
+			params += 'customer_firstname='+encodeURIComponent($('#customer_firstname').val())+'&';
 			params += 'alias='+encodeURIComponent($('#alias').val())+'&';
 			params += 'other='+encodeURIComponent($('#other').val())+'&';
 			params += 'is_new_customer='+encodeURIComponent($('#is_new_customer').val())+'&';
@@ -300,7 +214,7 @@ $(document).ready(function()
 				async: false,
 				cache: false,
 				dataType : "json",
-				data: 'ajax=true&'+params+'&token=' + static_token,
+				data: 'ajax=true&'+params+'&token=' + static_token ,
 				success: function(jsonData)
 				{
 					if (jsonData.hasError)
@@ -327,10 +241,6 @@ $(document).ready(function()
 						$('#opc_account_errors').slideUp('slow', function(){
 							$(this).html('');
 						});
-
-						if (isTransforming) {
-							location.reload();
-						}
 					}
 
 					isGuest = parseInt($('#is_new_customer').val()) == 1 ? 0 : 1;
@@ -346,13 +256,32 @@ $(document).ready(function()
 						static_token = jsonData.token;
 
 						// It's not a new customer
-						if (PS_REGISTRATION_PROCESS_TYPE && $('#opc_id_customer').val() !== '0') {
-							saveAddress('delivery', function() {
-								location.reload();
-							});
+						if ($('#opc_id_customer').val() !== '0')
+							if (!saveAddress('delivery'))
+								return false;
+
+						// update id_customer
+						$('#opc_id_customer').val(jsonData.id_customer);
+
+						if ($('#invoice_address:checked').length !== 0)
+						{
+							if (!saveAddress('invoice'))
+								return false;
 						}
 
-						location.reload();
+						// update id_customer
+						$('#opc_id_customer').val(jsonData.id_customer);
+
+						// force to refresh carrier list
+						if (isGuest)
+						{
+							isLogged = 1;
+							$('#opc_account_saved').fadeIn('slow');
+							$('#submitAccount').hide();
+							updateAddressSelection(advApiParam);
+						}
+						else
+							updateNewAccountToAddressBlock(advApiParam);
 					}
 					//$('#guest-info-block, #opc_new_account-overlay, #opc_delivery_methods-overlay, #opc_payment_methods-overlay').fadeIn('slow');
 				},
@@ -400,6 +329,46 @@ $(document).ready(function()
 	}
 	if (typeof(open_multishipping_fancybox) !== 'undefined' && open_multishipping_fancybox)
 		$('#link_multishipping_form').click();
+
+	// fancybox for extra bed requirement edit on checkout page
+	$('body').on('click', '.open_rooms_extra_demands', function() {
+		var idProduct = $(this).attr('id_product');
+		var dateFrom = $(this).attr('date_from');
+		var dateTo = $(this).attr('date_to');
+		$.fancybox({
+			href: "#rooms_extra_demands",
+		    autoSize : true,
+		    autoScale : true,
+			maxWidth : '100%',
+			'hideOnContentClick': false,
+			beforeLoad: function () {
+				$.ajax({
+					type: 'POST',
+					headers: {
+						"cache-control": "no-cache"
+					},
+					url: orderOpcUrl,
+					dataType: 'html',
+					cache: false,
+					data: {
+						date_from: dateFrom,
+						date_to: dateTo,
+						id_product: idProduct,
+						method: 'getRoomTypeBookingDemands',
+						ajax: true
+					},
+					success: function(result) {
+						$('#rooms_type_extra_demands').find('#room_type_demands_desc').html('');
+						$('#rooms_type_extra_demands').find('#room_type_demands_desc').append(result);
+					},
+				});
+			},
+			afterClose: function() {
+				// reload so that changes prices will reflect everywhere
+				location.reload();
+			},
+		});
+	});
 
 	function close_accordion_section() {
         $('.accordion .accordion-section-title').removeClass('active');
@@ -498,92 +467,6 @@ $(document).ready(function()
 			}
 		});
     });
-
-	$(document).on('click', '.change_room_type_service_product', function() {
-		updateServiceProducts(this);
-	});
-
-	$(document).on('click', '#rooms_extra_services .qty_up', function(e) {
-        e.preventDefault();
-        qtyfield = $(this).closest('.qty_container').find('input.qty');
-        var newQuantity = parseInt(qtyfield.val()) + 1;
-		if (qtyfield.data('max_quantity') && qtyfield.data('max_quantity') < newQuantity) {
-            newQuantity = qtyfield.data('max_quantity');
-			if (qtyfield.val() != qtyfield.data('max_quantity')) {
-				qtyfield.trigger('focusout');
-			} else {
-				showErrorMessage(txtMaxQuantityAdded);
-			}
-        } else {
-			qtyfield.val(newQuantity).trigger('focusout');
-		}
-    });
-
-    $(document).on('click', '#rooms_extra_services .qty_down', function(e) {
-        e.preventDefault();
-        qtyfield = $(this).closest('.qty_container').find('input.qty');
-        var currentVal = parseInt(qtyfield.val());
-        if (!isNaN(currentVal) && currentVal > 1) {
-            qtyfield.val(currentVal - 1).trigger('focusout');
-        } else {
-            qtyfield.val(1);
-			if (currentVal != 1) {
-				qtyfield.trigger('focusout');
-			}
-        }
-    });
-
-    $(document).on('focusout', '#rooms_extra_services .qty', function(e) {
-        var qty_wntd = $(this).val();
-        if (qty_wntd == '' || !$.isNumeric(qty_wntd)) {
-            $(this).val(1);
-        }
-		if ($(this).data('max_quantity') && $(this).data('max_quantity') < qty_wntd) {
-            $(this).val(qtyfield.data('max_quantity'));
-        }
-		if ($(this).closest('.room_demand_block').find('.change_room_type_service_product').is(':checked')) {
-			updateServiceProducts($(this).closest('.room_demand_block').find('.change_room_type_service_product'));
-		}
-    });
-
-	function updateServiceProducts(element)
-	{
-		var operator = $(element).is(':checked') ? 'up' : 'down';
-		var id_product = $(element).val();
-		var id_cart_booking = $(element).data('id_cart_booking');
-		var qty = $(element).closest('.room_demand_block').find('input.qty').val();
-		if (typeof(qty) == 'undefined') {
-			qty = 1;
-		}
-		$.ajax({
-			type: 'POST',
-			headers: {
-				"cache-control": "no-cache"
-			},
-			url: baseUri + '?rand=' + new Date().getTime(),
-			dataType: 'JSON',
-			cache: false,
-			data: {
-				operator: operator,
-				id_product: id_product,
-				id_cart_booking: id_cart_booking,
-				qty: qty,
-				updateServiceProduct: true,
-				controller: 'cart',
-				ajax: true,
-				token: static_token
-			},
-			success: function(jsonData) {
-				if (!jsonData.hasError) {
-					showSuccessMessage(txtExtraDemandSucc);
-				} else {
-					showErrorMessage(jsonData.errors);
-
-				}
-			}
-		});
-
-	}
 });
 
 function updateCarrierList(json)
@@ -630,8 +513,8 @@ function updatePaymentMethodsDisplay()
 
 function updateAddressSelection(is_adv_api)
 {
-	var idAddress_delivery = $('#opc_id_address_delivery').val();
-	var idAddress_invoice = $('#opc_id_address_invoice').val();
+	var idAddress_delivery = ($('#opc_id_address_delivery').length == 1 ? $('#opc_id_address_delivery').val() : $('#id_address_delivery').val());
+	var idAddress_invoice = ($('#opc_id_address_invoice').length == 1 ? $('#opc_id_address_invoice').val() : ($('#addressesAreEquals:checked').length == 1 ? idAddress_delivery : ($('#id_address_invoice').length == 1 ? $('#id_address_invoice').val() : idAddress_delivery)));
 
 	$('#opc_account-overlay').fadeIn('slow');
 	$('#opc_delivery_methods-overlay').fadeIn('slow');
@@ -912,17 +795,18 @@ function confirmFreeOrder()
 		url: orderOpcUrl + '?rand=' + new Date().getTime(),
 		async: true,
 		cache: false,
-		dataType : 'JSON',
+		dataType : "html",
 		data: 'ajax=true&method=makeFreeOrder&token=' + static_token ,
-		success: function(response)
+		success: function(html)
 		{
-			if (response.success) {
-				$('#confirmOrder').prop('disabled', false);
-				if (isGuest) {
-					document.location.href = guestTrackingUrl+'?id_order='+encodeURIComponent(response.reference)+'&email='+encodeURIComponent(response.email);
-				} else {
-					document.location.href = response.order_confirmation_url;
-				}
+			$('#confirmOrder').prop('disabled', false);
+			var array_split = html.split(':');
+			if (array_split[0] == 'freeorder')
+			{
+				if (isGuest)
+					document.location.href = guestTrackingUrl+'?id_order='+encodeURIComponent(array_split[1])+'&email='+encodeURIComponent(array_split[2]);
+				else
+					document.location.href = historyUrl;
 			}
 		},
 		error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -947,7 +831,7 @@ function confirmFreeOrder()
 	});
 }
 
-function saveAddress(type, callback)
+function saveAddress(type)
 {
 	if (type !== 'delivery' && type !== 'invoice')
 		return false;
@@ -955,6 +839,8 @@ function saveAddress(type, callback)
 	var params = 'firstname=' + encodeURIComponent($('#firstname' + (type == 'invoice' ? '_invoice' : '')).val()) + '&lastname=' + encodeURIComponent($('#lastname' + (type == 'invoice' ? '_invoice' : '')).val()) + '&';
 	if ($('#company' + (type == 'invoice' ? '_invoice' : '')).length)
 		params += 'company=' + encodeURIComponent($('#company' + (type == 'invoice' ? '_invoice' : '')).val()) + '&';
+	if ($('#vat_number' + (type == 'invoice' ? '_invoice' : '')).length)
+		params += 'vat_number='+encodeURIComponent($('#vat_number' + (type == 'invoice' ? '_invoice' : '')).val()) + '&';
 	if ($('#dni' + (type == 'invoice' ? '_invoice' : '')).length)
 		params += 'dni=' + encodeURIComponent($('#dni' + (type == 'invoice' ? '_invoice' : '')).val())+'&';
 	if ($('#address1' + (type == 'invoice' ? '_invoice' : '')).length)
@@ -983,6 +869,8 @@ function saveAddress(type, callback)
 		params += 'opc_id_address_invoice=' + parseInt($('#opc_id_address_invoice').val()) + '&';
 	// Clean the last &
 	params = params.substr(0, params.length-1);
+
+	var result = false;
 
 	$.ajax({
 		type: 'POST',
@@ -1013,16 +901,14 @@ function saveAddress(type, callback)
 					});
 				});
 				$('#guest-info-block, #opc_account-overlay, #opc_delivery_methods-overlay, #opc_payment_methods-overlay').fadeOut('slow');
+				result = false;
 			}
 			else
 			{
 				// update addresses id
 				$('input#opc_id_address_delivery').val(jsonData.id_address_delivery);
 				$('input#opc_id_address_invoice').val(jsonData.id_address_invoice);
-
-				if (typeof callback === 'function') {
-					callback();
-				}
+				result = true;
 			}
 		},
 		error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -1046,6 +932,8 @@ function saveAddress(type, callback)
 			$('#guest-info-block, #opc_account-overlay, #opc_delivery_methods-overlay, #opc_payment_methods-overlay').fadeOut('slow');
 		}
 		});
+
+	return result;
 }
 
 function updateNewAccountToAddressBlock(is_adv_api)
@@ -1314,16 +1202,3 @@ function multishippingMode(it)
 		bindUniform();
 	}
 }
-
-$(document).on('click', '.btn-edit-guest-info', function(e) {
-	e.preventDefault();
-	$('#collapse-guest-info .card-body:nth-child(1)').hide();
-	$('#collapse-guest-info .card-body:nth-child(2)').toggleClass('hidden');
-});
-
-$(document).on('keydown', '#new_account_form input', function(e) {
-	if (e.keyCode === 13) {
-		e.preventDefault();
-		$('#new_account_form #opc_account_form:visible button[type="submit"]').click();
-	}
-});

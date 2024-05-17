@@ -23,7 +23,6 @@
 *  @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
 *  International Registered Trademark & Property of PrestaShop SA
 */
-require_once (_PS_TOOL_DIR_.'defuse/php-encryption/defuse-crypto.phar');
 
 class InstallModelInstall extends InstallAbstractModel
 {
@@ -70,7 +69,6 @@ class InstallModelInstall extends InstallAbstractModel
             $this->setError($this->language->l('%s folder is not writable (check permissions)', dirname(self::SETTINGS_FILE)));
             return false;
         }
-        $key = \Defuse\Crypto\Key::createNewRandomKey();
 
         // Generate settings content and write file
         $settings_constants = array(
@@ -84,11 +82,16 @@ class InstallModelInstall extends InstallAbstractModel
             '_PS_CACHE_ENABLED_' => '0',
             '_COOKIE_KEY_' => Tools::passwdGen(56),
             '_COOKIE_IV_' => Tools::passwdGen(8),
-            '_NEW_COOKIE_KEY_' => $key->saveToAsciiSafeString(),
             '_PS_CREATION_DATE_' => date('Y-m-d'),
             '_PS_VERSION_' => _PS_INSTALL_VERSION_,
             '_QLOAPPS_VERSION_' => _QLO_INSTALL_VERSION_,
         );
+
+        // If mcrypt is activated, add Rijndael 128 configuration
+        if (function_exists('mcrypt_encrypt')) {
+            $settings_constants['_RIJNDAEL_KEY_'] = Tools::passwdGen(mcrypt_get_key_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC));
+            $settings_constants['_RIJNDAEL_IV_'] = base64_encode(mcrypt_create_iv(mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC), MCRYPT_RAND));
+        }
 
         $settings_content = "<?php\n";
 
@@ -339,7 +342,7 @@ class InstallModelInstall extends InstallAbstractModel
             if (InstallSession::getInstance()->safe_mode) {
                 Language::checkAndAddLanguage($iso, false, true, $params_lang);
             } else {
-                Language::downloadAndInstallLanguagePack($iso, _QLO_INSTALL_VERSION_, $params_lang);
+                Language::downloadAndInstallLanguagePack($iso, _PS_INSTALL_VERSION_, $params_lang);
             }
 
             Language::loadLanguages();
@@ -443,7 +446,6 @@ class InstallModelInstall extends InstallAbstractModel
             'shop_activity' => '',
             'shop_country' => 'us',
             'shop_timezone' => 'US/Eastern',
-            'enable_ssl' => false,
             'use_smtp' => false,
             'smtp_encryption' => 'off',
             'smtp_port' => 25,
@@ -477,10 +479,6 @@ class InstallModelInstall extends InstallAbstractModel
         Configuration::updateGlobalValue('PS_LOCALE_COUNTRY',            $data['shop_country']);
         Configuration::updateGlobalValue('PS_TIMEZONE',                $data['shop_timezone']);
         Configuration::updateGlobalValue('PS_CONFIGURATION_AGREMENT',        (int)$data['configuration_agrement']);
-
-        // Set SSL configuration
-        Configuration::updateGlobalValue('PS_SSL_ENABLED', (int) $data['enable_ssl']);
-        Configuration::updateGlobalValue('PS_SSL_ENABLED_EVERYWHERE', (int) $data['enable_ssl']);
 
         // Set mails configuration
         Configuration::updateGlobalValue('PS_MAIL_METHOD',            ($data['use_smtp']) ? 2 : 1);
@@ -658,25 +656,21 @@ class InstallModelInstall extends InstallAbstractModel
                 'wktestimonialblock',
                 'bankwire',
                 'cheque',
+                'paypal',
                 'blockmyaccount',
-                'blockcurrencies',
                 'blocklanguages',
-                'qlohotelreview',
+                'blockcurrencies',
+                'productcomments',
                 'wkfooterlangcurrencyblock',
                 'wkfooterpaymentinfoblockcontainer',
                 'wkfooteraboutblock',
                 'wkfooterpaymentblock',
                 'wkfooternotificationblock',
                 'blocknavigationmenu',
-                'dashguestcycle',
-                'dashoccupancy',
                 'dashactivity',
                 'dashtrends',
-                'dashavailability',
-                'dashperformance',
-                'dashproducts',
                 'dashgoals',
-                'dashinsights',
+                'dashproducts',
                 'graphnvd3',
                 'statsdata',
                 'statsvisits',
@@ -697,10 +691,8 @@ class InstallModelInstall extends InstallAbstractModel
                 'statsbestvouchers',
                 'statsbestcustomers',
                 'statsequipment',
-                'qlostatsserviceproducts',
                 'blockcart',
                 'blockuserinfo',
-                'qlochannelmanagerconnector',
             );
         }
         return $modules;

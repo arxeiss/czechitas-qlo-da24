@@ -49,7 +49,6 @@
   <!-- <tab id="Merchandise_Returns" name="H&#xE0;ng h&#xF3;a tr&#x1EA3; l&#x1EA1;i"/> -->
   <tab id="Modules" name="Modules v&#xE0; d&#x1ECB;ch v&#x1EE5;"/>
   <tab id="Modules_1" name="Modules v&#xE0; d&#x1ECB;ch v&#x1EE5;"/>
-  <tab id="Modules_Catalog" name="Modules Catalog"/>
   <tab id="Modules_Themes_Catalog" name="Danh m&#x1EE5;c Module &amp; Giao di&#x1EC7;n"/>
   <tab id="Monitoring" name="Gi&#xE1;m s&#xE1;t"/>
   <tab id="Multistore" name="Multistore"/>
@@ -65,8 +64,7 @@
   <tab id="Preferences" name="T&#xF9;y ch&#x1ECD;n"/>
   <tab id="Preferences_1" name="T&#xF9;y ch&#x1ECD;n"/>
   <tab id="Price_Rules" name="Khuy&#x1EBF;n m&#x1EA1;i"/>
-  <tab id="Products" name="Quản lý sản phẩm dịch vụ"/>
-  <tab id="Room_Types" name="Quản lý loại phòng"/>
+  <tab id="Products" name="S&#x1EA3;n ph&#x1EA9;m"/>
   <tab id="Products_1" name="S&#x1EA3;n ph&#x1EA9;m"/>
   <tab id="Profiles" name="H&#x1ED3; s&#x1A1; c&#xE1; nh&#xE2;n"/>
   <tab id="Quick_Access" name="Truy c&#x1EAD;p nhanh"/>

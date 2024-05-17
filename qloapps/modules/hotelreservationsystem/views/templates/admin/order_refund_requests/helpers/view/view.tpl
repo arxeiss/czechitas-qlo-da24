@@ -10,11 +10,11 @@
 					{if isset($customer_name)}
 						<div class="row">
 							<div class="col-sm-12">
-								<h3><i class="icon-info-circle"></i> &nbsp;{l s="Customer Details" mod='hotelreservationsystem'}</h3>
+								<h3><i class="icon-info-circle"></i> &nbsp;{l s="Customer Details" mod="hotelreservationsystem"}</h3>
 							</div>
 							<div class="form-group">
 								<div class="col-sm-3">
-									<strong>{l s='Customer name' mod='hotelreservationsystem'} :</strong>
+									<strong>{l s='Customer Name' mod='hotelreservationsystem'} :</strong>
 								</div>
 								<div class="col-sm-9">
 									{$customer_name|escape:'html':'UTF-8'}
@@ -22,7 +22,7 @@
 							</div>
 							<div class="form-group">
 								<div class="col-sm-3">
-									<strong>{l s='Customer email' mod='hotelreservationsystem'} :</strong>
+									<strong>{l s='Customer Email' mod='hotelreservationsystem'} :</strong>
 								</div>
 								<div class="col-sm-9">
 									<a target="_blank" href="{$link->getAdminLink('AdminCustomers')|escape:'htmlall':'UTF-8'}&amp;id_customer={$orderReturnInfo['id_customer']|escape:'html':'UTF-8'}&amp;viewcustomer">{$customer_email|escape:'html':'UTF-8'}</a>
@@ -49,36 +49,20 @@
 					</div>
 				</div>
 
-				<div class="panel">
+				<div class="row panel">
 					<div class="col-sm-12">
-						<h3><i class="icon-info-circle"></i> &nbsp;{l s="Booking Details" mod='hotelreservationsystem'}</h3>
+						<h3><i class="icon-info-circle"></i> &nbsp;{l s="Booking Details" mod="hotelreservationsystem"}</h3>
 					</div>
 
 					<input type="hidden" name="id_order_return" value="{$orderReturnInfo['id']|escape:'html':'UTF-8'}">
 
-					<div class="form-wrapper">
-                        <div class="form-group row">
-							<div class="col-sm-3">
-								<strong>{l s='Order Id' mod='hotelreservationsystem'} :</strong>
-							</div>
-							<div class="col-sm-9">
-                                <a href="{$link->getAdminLink('AdminOrders')|escape:'html':'UTF-8'}&amp;vieworder&amp;id_order={$orderInfo['id']|escape:'html':'UTF-8'}">#{$orderInfo['id']|escape:'html':'UTF-8'}</a>
-							</div>
-						</div>
+					<div class="col-sm-12">
 						<div class="form-group row">
 							<div class="col-sm-3">
-								<strong>{l s='Total order amount' mod='hotelreservationsystem'} :</strong>
+								<strong>{l s='Total Order Amount' mod='hotelreservationsystem'} :</strong>
 							</div>
 							<div class="col-sm-9">
 								{displayPrice price=$orderInfo['total_paid_tax_incl'] currency=$orderInfo['id_currency']}
-							</div>
-						</div>
-						<div class="form-group row">
-							<div class="col-sm-3">
-								<strong>{l s='Total paid amount' mod='hotelreservationsystem'} :</strong>
-							</div>
-							<div class="col-sm-9">
-								{displayPrice price=$orderTotalPaid currency=$orderInfo['id_currency']}
 							</div>
 						</div>
 						<div class="form-group row">
@@ -112,12 +96,12 @@
 							<div class="form-group">
 								<div class="col-sm-12">
 									<label for="id_refund_state" class="control-label">
-										<p><span title="" data-toggle="tooltip" class="label-tooltip" data-original-title='{l s="List of booking requested for refund by the customer." mod='hotelreservationsystem'}'><strong>{l s="Bookings requested for refund" mod='hotelreservationsystem'}</strong></span> :
+										<p><span title="" data-toggle="tooltip" class="label-tooltip" data-original-title='{l s="List of booking requested for refund by the customer." mod="hotelreservationsystem"}'><strong>{l s="Bookings requested for refund" mod="hotelreservationsystem"}</strong></span> :
 										</p>
 									</label>
 								</div>
 								<div class="col-sm-12">
-									<table class="table" id="rooms_refund_info">
+									<table class="table">
 										<tr>
 											{if !$isRefundCompleted}
 												<th></th>
@@ -126,12 +110,12 @@
 											<th>{l s='Room type' mod='hotelreservationsystem'}</th>
 											<th>{l s='Hotel' mod='hotelreservationsystem'}</th>
 											<th>{l s='Duration' mod='hotelreservationsystem'}</th>
-											<th>{l s='Total cost (tax incl.)' mod='hotelreservationsystem'}</th>
-											<th>{l s='Total paid amount (tax incl.)' mod='hotelreservationsystem'}</th>
+											<th>{l s='Total rooms paid (tax incl.)'}</th>
+											<th>{l s='Additional facilities price (tax incl.)'}</th>
 											{if !$isRefundCompleted}
 												<th>{l s='Rooms cancelation charges' mod='hotelreservationsystem'}</th>
 											{/if}
-											{if $orderTotalPaid|floatval}
+											{if $hasOrderPaid}
 												<th>{l s='Refund amount' mod='hotelreservationsystem'}</th>
 											{/if}
 										</tr>
@@ -144,54 +128,19 @@
 												<td>{$booking['room_type_name']|escape:'htmlall':'UTF-8'}</td>
 												<td>{$booking['hotel_name']|escape:'htmlall':'UTF-8'}</td>
 												<td>{$booking['date_from']|date_format:"%d-%m-%Y"} {l s='To' mod='hotelreservationsystem'} {$booking['date_to']|date_format:"%d-%m-%Y"}</td>
-												<td>
-													{displayPrice price=($booking['total_price_tax_incl'] + $booking['extra_service_total_price_tax_incl']) currency=$orderCurrency['id']}
-													<span class="price_info">
-														&nbsp;<img src="{$info_icon_path|escape:'htmlall':'UTF-8'}" />
-													</span>
-													<div class="price_info_container" style="display: none;">
-														<div>
-															<label>{l s='Room cost:' mod='hotelreservationsystem'}</label>
-															<span class="pull-right">{displayPrice price=$booking['total_price_tax_incl'] currency=$orderCurrency['id']}</span>
-														</div>
-														<div>
-															<label>{l s='Services cost:' mod='hotelreservationsystem'}</label>
-															<span class="pull-right">{displayPrice price=$booking['extra_service_total_price_tax_incl'] currency=$orderCurrency['id']}</span>
-														</div>
-													</div>
-												</td>
-												<td>
-													{displayPrice price=($booking['room_paid_amount'] + $booking['extra_service_total_paid_amount']) currency=$orderCurrency['id']}
-													<span class="price_info">
-														&nbsp;<img src="{$info_icon_path|escape:'htmlall':'UTF-8'}" />
-													</span>
-													<div class="price_info_container" style="display: none;">
-														<div>
-															<label>{l s='Room paid amount:' mod='hotelreservationsystem'}</label>
-															<span class="pull-right">{displayPrice price=$booking['room_paid_amount'] currency=$orderCurrency['id']}</span>
-														</div>
-														<div>
-															<label>{l s='Services paid amount:' mod='hotelreservationsystem'}</label>
-															<span class="pull-right">{displayPrice price=$booking['extra_service_total_paid_amount'] currency=$orderCurrency['id']}</span>
-														</div>
-													</div>
-												</td>
+												<td>{displayPrice price=$booking['total_paid_amount'] currency=$orderCurrency['id']}</td>
+												<td>{displayPrice price=$booking['extra_demands_price_tax_incl'] currency=$orderCurrency['id']}</td>
 												{if !$isRefundCompleted}
-													<td>
-														{displayPrice price=$booking['cancelation_charge'] currency=$orderCurrency['id']}
-														{if $booking['reduction_type'] == HotelOrderRefundRules::WK_REFUND_RULE_PAYMENT_TYPE_PERCENTAGE}
-															<p class="help-block">{Tools::ps_round($booking['reduction_value'], 2)}{l s='% of' mod='hotelreservationsystem'} {displayPrice price=($booking['total_price_tax_incl'] + $booking['extra_service_total_price_tax_incl']) currency=$orderCurrency['id']}</p>
-														{/if}
-													</td>
+													<td>{displayPrice price=$booking['cancelation_charge'] currency=$orderCurrency['id']}</td>
 												{/if}
-												{if $orderTotalPaid|floatval}
+												{if $hasOrderPaid}
 													<td>
 														<div class="input-group">
 															{if $isRefundCompleted}
 																{displayPrice price=$booking['refunded_amount'] currency=$orderCurrency['id']}
 															{else}
 																<span class="input-group-addon">{$orderCurrency['sign']|escape:'html':'UTF-8'}</span>
-																<input placeholder="" type="text" name="refund_amounts[{$booking['id_order_return_detail']|escape:'html':'UTF-8'}]" value="{if ($booking['room_paid_amount'] + $booking['extra_service_total_paid_amount'] - $booking['cancelation_charge']) > 0}{Tools::ps_round(($booking['room_paid_amount'] + $booking['extra_service_total_paid_amount'] - $booking['cancelation_charge']), 2)}{else}0{/if}">
+																<input placeholder="" type="text" name="refund_amounts[{$booking['id_order_return_detail']|escape:'html':'UTF-8'}]">
 																<span class="input-group-addon">{l s='tax incl.' mod='hotelreservationsystem'}</span>
 															{/if}
 														</div>
@@ -210,76 +159,47 @@
 							{if $currentStateInfo['refunded']}
 								<div class="form-group row">
 									<div class="col-sm-3">
-										<strong>{l s='Refunded amount:' mod='hotelreservationsystem'}</strong>
+										<strong>{l s='Payment Mode' mod='hotelreservationsystem'} :</strong>
+									</div>
+									<div class="col-sm-9">
+										{$orderReturnInfo['payment_mode']|escape:'html':'UTF-8'}
+									</div>
+								</div>
+								<div class="form-group row">
+									<div class="col-sm-3">
+										<strong>{l s='Transaction Id' mod='hotelreservationsystem'} :</strong>
+									</div>
+									<div class="col-sm-9">
+										{$orderReturnInfo['id_transaction']|escape:'html':'UTF-8'}
+									</div>
+								</div>
+								<div class="form-group row">
+									<div class="col-sm-3">
+										<strong>{l s='Refunded Amount' mod='hotelreservationsystem'} :</strong>
 									</div>
 									<div class="col-sm-9">
 										{displayPrice price=$orderReturnInfo['refunded_amount'] currency=$orderInfo['id_currency']}
 									</div>
 								</div>
-
-								{if $orderReturnInfo['payment_mode'] != '' && $orderReturnInfo['id_transaction'] != ''}
-									<div class="form-group row">
-										<div class="col-sm-3">
-											<strong>{l s='Payment mode:' mod='hotelreservationsystem'}</strong>
-										</div>
-										<div class="col-sm-9">
-											{$orderReturnInfo['payment_mode']|escape:'html':'UTF-8'}
-										</div>
-									</div>
-									<div class="form-group row">
-										<div class="col-sm-3">
-											<strong>{l s='Transaction ID:' mod='hotelreservationsystem'}</strong>
-										</div>
-										<div class="col-sm-9">
-											{$orderReturnInfo['id_transaction']|escape:'html':'UTF-8'}
-										</div>
-									</div>
-								{/if}
-
-								{if isset($orderReturnInfo['return_type'])}
-									{if $orderReturnInfo['return_type'] == OrderReturn::RETURN_TYPE_CART_RULE}
-										<div class="form-group row">
-											<div class="col-sm-3">
-												<strong>{l s='Voucher ID:' mod='hotelreservationsystem'}</strong>
-											</div>
-											<div class="col-sm-9">
-												<a href="{$link->getAdminLink('AdminCartRules')}&updatecart_rule&id_cart_rule={$orderReturnInfo['id_return_type']}" target="_blank">#{$orderReturnInfo['id_return_type']}</a>
-											</div>
-										</div>
-									{elseif $orderReturnInfo['return_type'] == OrderReturn::RETURN_TYPE_ORDER_SLIP}
-										<div class="form-group row">
-											<div class="col-sm-3">
-												<strong>{l s='Credit Slip ID:' mod='hotelreservationsystem'}</strong>
-											</div>
-											<div class="col-sm-9">
-												#{$orderReturnInfo['id_return_type']}
-												<a class="btn btn-default" href="{$link->getAdminLink('AdminPdf')}&submitAction=generateOrderSlipPDF&id_order_slip={$orderReturnInfo['id_return_type']}" title="#{Configuration::get('PS_CREDIT_SLIP_PREFIX', $current_id_lang)}{$orderReturnInfo['id_return_type']|string_format:'%06d'}">
-													<i class="icon-file-text"></i>
-													{l s='Download' mod='hotelreservationsystem'}
-												</a>
-											</div>
-										</div>
-									{/if}
-								{/if}
 							{/if}
 						{else}
 							<div class="form-group">
 								<div class="col-sm-3">
 									<label for="id_refund_state" class="control-label">
-										<span title="" data-toggle="tooltip" class="label-tooltip" data-original-title="{l s='Select new state for refund request.' mod='hotelreservationsystem'}"> {l s='Room refund state' mod='hotelreservationsystem'}</span> :
+										<span title="" data-toggle="tooltip" class="label-tooltip" data-original-title="{l s='Select new state for refund request.' mod='hotelreservationsystem'}"> {l s='Room Refund State' mod='hotelreservationsystem'}</span> :
 									</label>
 								</div>
 								<div class="col-sm-3">
 									<select id="id_refund_state" name="id_refund_state">
 										{foreach from=$refundStatuses item=state}
-											<option refunded="{$state['refunded']|escape:'html':'UTF-8'}" denied="{$state['denied']|escape:'html':'UTF-8'}" value="{$state['id_order_return_state']|intval}"{if isset($currentStateInfo) && $state['id_order_return_state'] == $currentStateInfo['id']} selected="selected"{/if}>{$state['name']|escape:'html':'UTF-8'}</option>
+											<option refunded="{$state['refunded']|escape:'html':'UTF-8'}" denied="{$state['denied']|escape:'html':'UTF-8'}" value="{$state['id_order_return_state']|intval}"{if isset($currentStateInfo) && $state['id_order_return_state'] == $currentStateInfo['id']} selected="selected" disabled="disabled"{/if}>{$state['name']|escape:'html':'UTF-8'}</option>
 										{/foreach}
 									</select>
 								</div>
 							</div>
 
 							{* Fields to submit refund information *}
-							{if $orderTotalPaid|floatval}
+							{if $hasOrderPaid}
 								<div class="refunded_state_fields" style="display:none;">
 									<div class="form-group">
 										<div class="col-sm-3">
@@ -287,7 +207,7 @@
 										<div class="col-sm-3">
 											<div class="checkbox">
 												<label>
-													<input value="1" type="checkbox" name="generateCreditSlip" id="generateCreditSlip"/> &nbsp;{l s='Create Credit Slip' mod='hotelreservationsystem'}
+													<input value="1" type="checkbox" name="generateCreditSlip" id="generateCreditSlip"/> &nbsp;{l s='Create Refund Slip' mod='hotelreservationsystem'}
 												</label>
 											</div>
 										</div>
@@ -308,7 +228,7 @@
 											<div class="form-group">
 												<div class="col-sm-3">
 													<label for="payment_method" class="control-label">
-														<span title="" data-toggle="tooltip" class="label-tooltip" data-original-title="{l s='Select the method of payment through which you have refunded to the customer.' mod='hotelreservationsystem'}">{l s='Payment method' mod='hotelreservationsystem'}</span> :
+														<span title="" data-toggle="tooltip" class="label-tooltip" data-original-title="{l s='Select the method of payment through which you have refunded to the customer.' mod='hotelreservationsystem'}">{l s='Payment Method' mod="hotelreservationsystem"}</span> :
 													</label>
 												</div>
 												<div class="col-sm-3">
@@ -316,15 +236,15 @@
 														{foreach $paymentMethods as $paymentMod}
 															<option value="{$paymentMod|escape:'html':'UTF-8'}">{$paymentMod|escape:'html':'UTF-8'}</option>
 														{/foreach}
-														<option value="0">{l s='Others' mod='hotelreservationsystem'}</option>
+														<option value="0">{l s='Others' mod="hotelreservationsystem"}</option>
 													<select>
 												</div>
 											</div>
 										{/if}
 										<div class="form-group other_payment_mode" {if isset($paymentMethods) && $paymentMethods|count}style="display:none;"{/if}>
 											<div class="col-sm-3">
-												<label for="other_payment_mode" class="control-label required">
-													<span title="" data-toggle="tooltip" class="label-tooltip" data-original-title="{l s='Enter the mode of payment through which you have refunded to the customer.' mod='hotelreservationsystem'}">{l s='Payment mode name' mod='hotelreservationsystem'}</span> :
+												<label for="other_payment_mode" class="control-label">
+													<span title="" data-toggle="tooltip" class="label-tooltip" data-original-title="{l s='Enter the mode of payment through which you have refunded to the customer.' mod='hotelreservationsystem'}">{l s='Payment Mode Name' mod="hotelreservationsystem"}</span> :
 												</label>
 											</div>
 											<div class="col-sm-3">
@@ -333,8 +253,8 @@
 										</div>
 										<div class="form-group">
 											<div class="col-sm-3">
-												<label for="id_transaction" class="control-label required">
-													<span title="" data-toggle="tooltip" class="label-tooltip" data-original-title="{l s='Enter the Transaction Id of the payment through which you have refunded to the customer.' mod='hotelreservationsystem'}">{l s='Transaction ID' mod='hotelreservationsystem'}</span> :
+												<label for="id_transaction" class="control-label">
+													<span title="" data-toggle="tooltip" class="label-tooltip" data-original-title="{l s='Enter the Transaction Id of the payment through which you have refunded to the customer.' mod='hotelreservationsystem'}">{l s='Transaction Id' mod='hotelreservationsystem'}</span> :
 												</label>
 											</div>
 											<div class="col-sm-3">
@@ -342,17 +262,41 @@
 											</div>
 										</div>
 									</div>
-									<div class="form-group">
-										<div class="col-sm-3">
-										</div>
-										<div class="col-sm-3">
-											<div class="checkbox">
-												<label>
-													<input value="1" type="checkbox" name="generateDiscount" id="generateDiscount"/> &nbsp;{l s='Create Voucher' mod='hotelreservationsystem'}
-												</label>
+									{if $orderReturnInfo['by_admin']}
+										<div class="form-group">
+											<div class="col-sm-3">
+											</div>
+											<div class="col-sm-3">
+												<div class="checkbox">
+													<label>
+														<input value="1" type="checkbox" name="generateDiscount" id="generateDiscount"/> &nbsp;{l s='Create Voucher' mod='hotelreservationsystem'}
+													</label>
+												</div>
 											</div>
 										</div>
-									</div>
+										{* <div class="form-group">
+											<div class="col-sm-3">
+											</div>
+											<div class="col-sm-3">
+												<div class="checkbox">
+													<label>
+														<input value="1" type="checkbox" name="disable_date_range"/> &nbsp;{l s='Disable For Date Range' mod='hotelreservationsystem'}
+													</label>
+												</div>
+											</div>
+										</div> *}
+										{* <div class="form-group">
+											<div class="col-sm-3">
+											</div>
+											<div class="col-sm-3">
+												<div class="checkbox">
+													<label>
+														<input value="1" type="checkbox" name="unavailable_for_order"/> &nbsp;{l s='Unavailable For Order' mod='hotelreservationsystem'}
+													</label>
+												</div>
+											</div> *}
+										</div>
+									{/if}
 								</div>
 							{/if}
 						{/if}
@@ -366,9 +310,6 @@
 							<i class="process-icon-cancel"></i>{l s='Cancel' mod='hotelreservationsystem'}
 						</a>
 						<button type="submit" name="submitRefundReqBookings" class="btn btn-default pull-right">
-							<i class="process-icon-save"></i> {l s='Save' mod='hotelreservationsystem'}
-						</button>
-						<button type="submit" name="submitRefundReqBookingsAndStay" class="btn btn-default pull-right">
 							<i class="process-icon-save"></i> {l s='Save and stay' mod='hotelreservationsystem'}
 						</button>
 					</div>
