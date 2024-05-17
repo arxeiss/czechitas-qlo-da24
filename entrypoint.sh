@@ -40,6 +40,24 @@ else
     chmod -R 664 /var/www/html/download && chmod -R u+rwX,go+rX /var/www/html/download
   fi
 
-    exec apache2-foreground
+
+#  settup settings.inc.php
+
+  MYSQL_SERVER=${ENV_MYSQL_SERVER:-mysql}
+  MYSQL_SCHEMA=${ENV_MYSQL_SCHEMA:-qloapps_schema}
+  MYSQL_USER=${ENV_MYSQL_USER:-qloapps_user}
+  MYSQL_PASS=${ENV_MYSQL_PASS:-qloapps_pass}
+  MYSQL_PREFIX=${ENV_MYSQL_PREFIX:-}
+
+
+variable_names=("MYSQL_SERVER" "MYSQL_SCHEMA" "MYSQL_USER" "MYSQL_PASS" "MYSQL_PREFIX")
+
+# Loop through the array and echo the name and value of each variable
+for var_name in "${variable_names[@]}"; do
+    value=${!var_name}  # Indirect expansion to get the value of the variable by its name
+    echo "${var_name}=${value}"
+done
+
+  exec apache2-foreground
 fi
 

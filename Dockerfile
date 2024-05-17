@@ -26,13 +26,12 @@ RUN service apache2 restart
 RUN echo "alias ll='ls -la'" >> ~/.bashrc
 
 
-
-COPY --chown=root:www-data qloapps /data/source
-
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
 CMD ["apache2-foreground", "bash", "init"]
+
+
+COPY --chown=root:www-data qloapps /data/source
+

@@ -4,17 +4,17 @@ services:
   qloapps:
     image: docker.io/tomaswidlak/czechitas-qloapps:ins
     ports:
-      - "8100:80"
+      - "8888:80"
     environment:
-      - MYSQL_HOST=mysql
-      - MYSQL_DATABASE=qloapps_schema
-      - MYSQL_USER=qloapps_user
-      - MYSQL_PASSWORD=qloapps_pass
+      ENV_MYSQL_SERVER: ${MYSQL_SERVER}
+      ENV_MYSQL_SCHEMA: ${MYSQL_SCHEMA}
+      ENV_MYSQL_USER: ${MYSQL_USER}
+      ENV_MYSQL_PASS: ${MYSQL_PASS}
+      ENV_MYSQL_PREFIX: ${MYSQL_PREFIX}
     depends_on:
       - mysql
     volumes:
       - ./appData:/var/www/html
-#    command: ['init']
 
   mysql:
     image: mysql:5.7
@@ -22,8 +22,8 @@ services:
       - ./mysql:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: qloapps_schema
-      MYSQL_USER: qloapps_user
-      MYSQL_PASSWORD: qloapps_pass
+      MYSQL_DATABASE: ${MYSQL_SCHEMA}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASS}
     ports:
       - "33067:3306"
