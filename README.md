@@ -1,4 +1,4 @@
-# 
+#
 
 
 
@@ -17,7 +17,7 @@ rm qloapps/.git -rf
 docker build -t tomaswidlak/czechitas-qloapps:<tag> .
 ```
 
-### Push 
+### Push
 ```bash
 docker push tomaswidlak/czechitas-qloapps:<tag>
 ```
@@ -39,10 +39,10 @@ sudo rm -rf ./test/mysql
 
 
 
-## Running the app 
+## Running the app
 First run image with `init` command (more in `/test/docker-compose.yaml`). After app installation, run container without init command
 
-## Test app credentials 
+## Test app credentials
 
 - Website name : `[[twTestWebsiteName]]`
 - Name: `[[twTestName]]`
@@ -51,3 +51,8 @@ First run image with `init` command (more in `/test/docker-compose.yaml`). After
 
 - email: `testEmail@test.com`
 - pass: `UmXe@8F6k*Rt7o`
+
+# TODO
+1. Neodesilat emaily
+1. Nastavit logo
+1.
