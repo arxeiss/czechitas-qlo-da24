@@ -20,6 +20,14 @@ RUN echo "upload_max_filesize = 16M" > /usr/local/etc/php/conf.d/uploads.ini
 # Enable Apache modules
 RUN a2enmod rewrite
 
+# Request heades
+RUN a2enmod headers
+RUN echo " \n\n \
+<IfModule mod_headers.c> \n \
+    RequestHeader set X-FORWARDED-PROTO \"https\" \n \
+    RequestHeader set X-FORWARDED-PORT \"443\" \n \
+</IfModule>" \ >> /etc/apache2/apache2.conf
+
 # Restart Apache to apply changes
 RUN service apache2 restart
 
