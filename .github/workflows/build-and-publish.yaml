@@ -38,3 +38,10 @@
                   run: |
                       docker build --label="org.opencontainers.image.source=${{ github.event.repository.html_url }}" -t ghcr.io/${{ github.repository }}:master .
                       docker push ghcr.io/${{ github.repository }}:master
+
+                - name: Trigger Deployment pipeline
+                  env:
+                    GH_TOKEN: ${{ secrets.GH_PAT }}
+                  run: |
+                      # Example:
+                      gh workflow run test-hackathon24.yaml --repo czechitas/terraform --ref main
