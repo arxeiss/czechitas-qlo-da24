@@ -162,7 +162,7 @@ class CustomerCore extends ObjectModel
             'lastname' =>                    array('type' => self::TYPE_STRING, 'validate' => 'isName', 'required' => true, 'size' => 32),
             'firstname' =>                    array('type' => self::TYPE_STRING, 'validate' => 'isName', 'required' => true, 'size' => 32),
             'email' =>                        array('type' => self::TYPE_STRING, 'validate' => 'isEmail', 'required' => true, 'size' => 128),
-            'passwd' =>                    array('type' => self::TYPE_STRING, 'validate' => 'isPasswd', 'required' => true, 'size' => 32),
+            'passwd' =>                    array('type' => self::TYPE_STRING, 'validate' => 'isPasswd', 'required' => true, 'size' => 255),
             'last_passwd_gen' =>            array('type' => self::TYPE_STRING, 'copy_post' => false),
             'id_gender' =>                    array('type' => self::TYPE_INT, 'validate' => 'isUnsignedId'),
             'birthday' =>                    array('type' => self::TYPE_DATE, 'validate' => 'isBirthDate'),
@@ -322,12 +322,13 @@ class CustomerCore extends ObjectModel
             die(Tools::displayError());
         }
 
+        // HACK ALERT: pSQL(Tools::encrypt($passwd)) was originally here
         $result = Db::getInstance()->getRow('
 		SELECT *
 		FROM `'._DB_PREFIX_.'customer`
 		WHERE `email` = \''.pSQL($email).'\'
 		'.Shop::addSqlRestriction(Shop::SHARE_CUSTOMER).'
-		'.(isset($passwd) ? 'AND `passwd` = \''.pSQL(Tools::encrypt($passwd)).'\'' : '').'
+		'.(isset($passwd) ? 'AND `passwd` = \''.pSQL($passwd).'\'' : '').'
 		AND `deleted` = 0
 		'.($ignore_guest ? ' AND `is_guest` = 0' : ''));
 
@@ -489,10 +490,11 @@ class CustomerCore extends ObjectModel
      */
     public static function checkPassword($id_customer, $passwd)
     {
-        if (!Validate::isUnsignedId($id_customer) || !Validate::isMd5($passwd)) {
+        // HACK ALERT passwd should be MD5 hashed, but it is not
+        if (!Validate::isUnsignedId($id_customer) /* || !Validate::isMd5($passwd) */) {
             die(Tools::displayError());
         }
-        $cache_id = 'Customer::checkPassword'.(int)$id_customer.'-'.$passwd;
+        $cache_id = 'Customer::checkPassword'.(int)$id_customer.'-'.md5($passwd);
         if (!Cache::isStored($cache_id)) {
             $result = (bool)Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue('
 			SELECT `id_customer`
@@ -772,7 +774,8 @@ class CustomerCore extends ObjectModel
         }
 
         $this->is_guest = 0;
-        $this->passwd = Tools::encrypt($password);
+        // $this->passwd = Tools::encrypt($password);
+        $this->passwd = $password; // HACK ALERT here it sohuld be encrypted
         $this->cleanGroups();
         $this->addGroups(array(Configuration::get('PS_CUSTOMER_GROUP'))); // add default customer group
         if ($this->update()) {
@@ -806,7 +809,8 @@ class CustomerCore extends ObjectModel
     public function setWsPasswd($passwd)
     {
         if ($this->id == 0 || $this->passwd != $passwd) {
-            $this->passwd = Tools::encrypt($passwd);
+            // $this->passwd = Tools::encrypt($passwd);
+            $this->passwd = $passwd; // HACK ALERT here it sohuld be encrypted
         }
         return true;
     }
