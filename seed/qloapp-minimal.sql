@@ -9597,3 +9597,7 @@ INSERT INTO `ps_zone_shop` (`id_zone`, `id_shop`) VALUES
 (8,	1);
 
 -- 2024-05-23 21:13:48
+
+
+INSERT INTO `ps_module` VALUES (49,'mymodule',1,'1.0.0');
+INSERT INTO ps_module_shop (id_module, id_shop, enable_device) VALUES (49, 1, 7);
