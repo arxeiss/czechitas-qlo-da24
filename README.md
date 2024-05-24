@@ -26,6 +26,10 @@ docker push tomaswidlak/czechitas-qloapps:<tag>
 ### Quick build
 ```bash
 docker build -t tomaswidlak/czechitas-qloapps:legacy .
+```
+
+```bash
+docker build -t tomaswidlak/czechitas-qloapps:legacy .
 docker push tomaswidlak/czechitas-qloapps:legacy
 ```
 cleanup
