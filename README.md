@@ -67,4 +67,4 @@ First run image with `init` command (more in `/test/docker-compose.yaml`). After
 # TODO
 1. Neodesilat emaily
 1. Nastavit logo
-1.
+
