@@ -13,3 +13,4 @@ define('_PS_CREATION_DATE_', '2024-05-17');
 if (!defined('_PS_VERSION_'))
 	define('_PS_VERSION_', '1.6.1.23');
 define('_QLOAPPS_VERSION_', '1.5.1.0');
+define('_MYMODULE_API_TOKEN_', getenv('ENV_MYMODULE_API_TOKEN') ?: 'my_static_token');

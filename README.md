@@ -62,6 +62,8 @@ First run image with `init` command (more in `/test/docker-compose.yaml`). After
 - email: `testEmail@test.com`
 - pass: `UmXe@8F6k*Rt7o`
 
+- token: `my_static_token`
+
 # TODO
 1. Neodesilat emaily
 1. Nastavit logo

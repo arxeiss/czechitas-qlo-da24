@@ -6,7 +6,7 @@ class MyModuleProductModuleFrontController extends ModuleFrontController
         parent::initContent();
 
         // Define a static token
-        $static_token = 'my_static_token';
+        $static_token = constant('_MYMODULE_API_TOKEN_');
 
         // Get token from request
         $token = Tools::getValue('token');
@@ -18,15 +18,24 @@ class MyModuleProductModuleFrontController extends ModuleFrontController
         }
 
 
-        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            $this->get();
-        } else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $postData = file_get_contents('php://input');
-            $data = json_decode($postData, true);
-            $this->post($data);
-        } else{
-            $this->sendResponse(['error' => 'Invalid request method'], 405);
+        switch ($_SERVER['REQUEST_METHOD']) {
+            case 'GET':
+                $this->get();
+                break;
+            case 'POST':
+                $postData = file_get_contents('php://input');
+                $data = json_decode($postData, true);
+                $this->post($data);
+                break;
+            case 'PUT':
+                $postData = file_get_contents('php://input');
+                $data = json_decode($postData, true);
+                $this->put($data);
+                break;
+            default:
+                $this->sendResponse(['error' => 'Invalid request method'], 405);
         }
+
     }
 
 
@@ -48,7 +57,13 @@ class MyModuleProductModuleFrontController extends ModuleFrontController
         $productData = [
             'id' => $product->id,
             'name' => $product->name,
+            'description' => $product->description,
+            'description_short' => $product->description_short,
             'price' => $product->price,
+            'quantity' => $product->quantity,
+            'new' => $product->new,
+            'active' => $product->active,
+
             // Add other product details as needed
         ];
 
@@ -58,10 +73,18 @@ class MyModuleProductModuleFrontController extends ModuleFrontController
 
     private function post($data)
     {
-        $productId = isset($data['id']) ? (int)$data['id'] : 0;
-        $newName = isset($data['name']) ? $data['name'] : '';
+        $this->sendResponse(['error' => 'Invalid request method'], 405);
+    }
 
-        if (!$productId || !$newName) {
+
+    private function put($data)
+    {
+        $productId = isset($data['id']) ? (int)$data['id'] : null;
+        $name = isset($data['name']) ? $data['name'] : null;
+        $description = isset($data['description']) ? $data['description'] : null;
+        $description_short = isset($data['description_short']) ? $data['description_short'] : null;
+
+        if (!$productId) {
             $this->sendResponse(['error' => 'Product ID and new name are required'], 400);
             return;
         }
@@ -72,13 +95,22 @@ class MyModuleProductModuleFrontController extends ModuleFrontController
             return;
         }
 
-        $product->name = [$this->context->language->id => $newName];
+        if($name) {
+            $product->name = [$this->context->language->id => $name];
+        }
+        if($description) {
+            $product->description = [$this->context->language->id => $description];
+        }
+        if($description_short) {
+            $product->description_short = [$this->context->language->id => $description_short];
+        }
         if ($product->update()) {
             $this->sendResponse(['success' => 'Product name updated successfully']);
         } else {
             $this->sendResponse(['error' => 'Failed to update product name'], 500);
         }
     }
+
 
     private function sendResponse($data, $status = 200)
     {
