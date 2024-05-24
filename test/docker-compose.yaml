@@ -11,6 +11,7 @@ services:
       ENV_MYSQL_USER: ${MYSQL_USER}
       ENV_MYSQL_PASS: ${MYSQL_PASS}
       ENV_MYSQL_PREFIX: ${MYSQL_PREFIX}
+      ENV_MYMODULE_API_TOKEN: ${API_TOKEN}
     depends_on:
       - mysql
     volumes:

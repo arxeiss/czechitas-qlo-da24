@@ -26,6 +26,10 @@ docker push tomaswidlak/czechitas-qloapps:<tag>
 ### Quick build
 ```bash
 docker build -t tomaswidlak/czechitas-qloapps:legacy .
+```
+
+```bash
+docker build -t tomaswidlak/czechitas-qloapps:legacy .
 docker push tomaswidlak/czechitas-qloapps:legacy
 ```
 cleanup
@@ -37,7 +41,13 @@ sudo rm -rf ./test/mysql
 ```
 
 
-
+### REDEPLOY full
+```bash
+docker build -t tomaswidlak/czechitas-qloapps:legacy .
+docker push tomaswidlak/czechitas-qloapps:legacy
+sudo rm -rf ./test/appData
+sudo rm -rf ./test/mysql
+```
 
 ## Running the app
 First run image with `init` command (more in `/test/docker-compose.yaml`). After app installation, run container without init command
@@ -52,7 +62,9 @@ First run image with `init` command (more in `/test/docker-compose.yaml`). After
 - email: `testEmail@test.com`
 - pass: `UmXe@8F6k*Rt7o`
 
+- token: `my_static_token`
+
 # TODO
 1. Neodesilat emaily
 1. Nastavit logo
-1.
+

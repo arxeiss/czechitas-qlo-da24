@@ -1412,7 +1412,7 @@ INSERT INTO `ps_configuration` (`id_configuration`, `id_shop_group`, `id_shop`, 
 (7,	NULL,	NULL,	'PS_GROUP_FEATURE_ACTIVE',	'0',	'0000-00-00 00:00:00',	'0000-00-00 00:00:00'),
 (8,	NULL,	NULL,	'PS_CURRENCY_DEFAULT',	'3',	'0000-00-00 00:00:00',	'2021-05-05 21:30:01'),
 (9,	NULL,	NULL,	'PS_COUNTRY_DEFAULT',	'17',	'0000-00-00 00:00:00',	'2021-05-05 21:27:36'),
-(10,	NULL,	NULL,	'PS_REWRITING_SETTINGS',	'0',	'0000-00-00 00:00:00',	'2022-11-23 13:44:23'),
+(10,	NULL,	NULL,	'PS_REWRITING_SETTINGS',	'1',	'0000-00-00 00:00:00',	'2022-11-23 13:44:23'),
 (11,	NULL,	NULL,	'PS_ORDER_OUT_OF_STOCK',	'0',	'0000-00-00 00:00:00',	'0000-00-00 00:00:00'),
 (12,	NULL,	NULL,	'PS_LAST_QTIES',	'3',	'0000-00-00 00:00:00',	'0000-00-00 00:00:00'),
 (13,	NULL,	NULL,	'PS_CART_REDIRECT',	'1',	'0000-00-00 00:00:00',	'0000-00-00 00:00:00'),
@@ -9597,3 +9597,7 @@ INSERT INTO `ps_zone_shop` (`id_zone`, `id_shop`) VALUES
 (8,	1);
 
 -- 2024-05-23 21:13:48
+
+
+INSERT INTO `ps_module` VALUES (49,'mymodule',1,'1.0.0');
+INSERT INTO ps_module_shop (id_module, id_shop, enable_device) VALUES (49, 1, 7);
