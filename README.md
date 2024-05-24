@@ -41,7 +41,13 @@ sudo rm -rf ./test/mysql
 ```
 
 
-
+### REDEPLOY full
+```bash
+docker build -t tomaswidlak/czechitas-qloapps:legacy .
+docker push tomaswidlak/czechitas-qloapps:legacy
+sudo rm -rf ./test/appData
+sudo rm -rf ./test/mysql
+```
 
 ## Running the app
 First run image with `init` command (more in `/test/docker-compose.yaml`). After app installation, run container without init command
